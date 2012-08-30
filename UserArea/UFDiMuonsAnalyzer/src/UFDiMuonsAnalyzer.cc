@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.1 2012/08/27 14:20:46 jhugon Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.2 2012/08/30 09:45:12 jhugon Exp $
 //
 //
 
@@ -1335,10 +1335,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     bzero(&_metInfo,sizeof(_MetInfo));
 
     if( mets.isValid() ){
-      _metInfo.metPx = (*mets)[0].px();
-      _metInfo.metPy = (*mets)[0].py();
-      _metInfo.metPt = (*mets)[0].pt();
-      _metInfo.metPhi= (*mets)[0].phi();
+      _metInfo.px = (*mets)[0].px();
+      _metInfo.py = (*mets)[0].py();
+      _metInfo.pt = (*mets)[0].pt();
+      _metInfo.phi= (*mets)[0].phi();
       _metInfo.sumEt = (*mets)[0].sumEt();
     }
 
@@ -1356,72 +1356,72 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       //First Get PU Id's
 
       for(unsigned int i=0; i<jets->size(); i++){
-        _pfJetInfo.nPFjets++;
+        _pfJetInfo.nJets++;
         if( i<10 ){
           const pat::Jet& jet = jets->at(i);
-          _pfJetInfo.pfJetPx[i] = jet.px();
-          _pfJetInfo.pfJetPy[i] = jet.py();
-          _pfJetInfo.pfJetPz[i] = jet.pz();
-          _pfJetInfo.pfJetPt[i] = jet.pt();
-          _pfJetInfo.pfJetEta[i]= jet.eta();
-          _pfJetInfo.pfJetPhi[i]= jet.phi();
-          _pfJetInfo.pfJetM[i]  = jet.mass();
-          _pfJetInfo.pfJetPartonFlavour[i] = jet.partonFlavour();
+          _pfJetInfo.px[i] = jet.px();
+          _pfJetInfo.py[i] = jet.py();
+          _pfJetInfo.pz[i] = jet.pz();
+          _pfJetInfo.pt[i] = jet.pt();
+          _pfJetInfo.eta[i]= jet.eta();
+          _pfJetInfo.phi[i]= jet.phi();
+          _pfJetInfo.mass[i]  = jet.mass();
+          _pfJetInfo.partonFlavour[i] = jet.partonFlavour();
 	  // Energy Fractions
-          _pfJetInfo.pfJetCHF[i]  = jet.chargedHadronEnergyFraction();
-          _pfJetInfo.pfJetNHF[i]  = jet.neutralHadronEnergyFraction();
-          _pfJetInfo.pfJetCEF[i]  = jet.chargedEmEnergyFraction();
-          _pfJetInfo.pfJetNEF[i]  = jet.neutralEmEnergyFraction();
-          _pfJetInfo.pfJetMuF[i]  = jet.muonEnergyFraction();
-          _pfJetInfo.pfJetHFHF[i]  = jet.HFHadronEnergyFraction();
-          _pfJetInfo.pfJetHFEF[i]  = jet.HFEMEnergyFraction();
+          _pfJetInfo.chf[i]  = jet.chargedHadronEnergyFraction();
+          _pfJetInfo.nhf[i]  = jet.neutralHadronEnergyFraction();
+          _pfJetInfo.cef[i]  = jet.chargedEmEnergyFraction();
+          _pfJetInfo.nef[i]  = jet.neutralEmEnergyFraction();
+          _pfJetInfo.muf[i]  = jet.muonEnergyFraction();
+          _pfJetInfo.hfhf[i]  = jet.HFHadronEnergyFraction();
+          _pfJetInfo.hfef[i]  = jet.HFEMEnergyFraction();
 	  // Multiplicities
-          _pfJetInfo.pfJetCM[i]  = jet.chargedMultiplicity();
-          _pfJetInfo.pfJetCHM[i]  = jet.chargedHadronMultiplicity();
-          _pfJetInfo.pfJetNHM[i]  = jet.neutralHadronMultiplicity();
-          _pfJetInfo.pfJetCEM[i]  = jet.electronMultiplicity();
-          _pfJetInfo.pfJetNEM[i]  = jet.photonMultiplicity();
-          _pfJetInfo.pfJetMuM[i]  = jet.muonMultiplicity();
-          _pfJetInfo.pfJetHFHM[i]  = jet.HFHadronMultiplicity();
-          _pfJetInfo.pfJetHFEM[i]  = jet.HFEMMultiplicity();
+          _pfJetInfo.cm[i]  = jet.chargedMultiplicity();
+          _pfJetInfo.chm[i]  = jet.chargedHadronMultiplicity();
+          _pfJetInfo.nhm[i]  = jet.neutralHadronMultiplicity();
+          _pfJetInfo.cem[i]  = jet.electronMultiplicity();
+          _pfJetInfo.nem[i]  = jet.photonMultiplicity();
+          _pfJetInfo.mum[i]  = jet.muonMultiplicity();
+          _pfJetInfo.hfhm[i]  = jet.HFHadronMultiplicity();
+          _pfJetInfo.hfem[i]  = jet.HFEMMultiplicity();
           //               _pfJetInfo.pfJetCh[i] = jet.jetCharge();
           // Get JEC Uncertainty
           jecUncCalculator->setJetEta(jet.eta());
           jecUncCalculator->setJetPt(jet.pt()); // here you must use the CORRECTED jet pt
-          _pfJetInfo.pfJetJECUnc[i] = jecUncCalculator->getUncertainty(true);
-          _pfJetInfo.pfJetJECFactor[i]  = jet.jecFactor("Uncorrected");
+          _pfJetInfo.jecUnc[i] = jecUncCalculator->getUncertainty(true);
+          _pfJetInfo.jecFactor[i]  = jet.jecFactor("Uncorrected");
 	  //PAT matched Generator Jet
 	  const reco::GenJet* genJet = jet.genJet();
 	  if (genJet != NULL)
 	    {
-	      _pfJetInfo.pfJetGenMatched[i] = true;
-	      _pfJetInfo.pfJetGenPx[i] = genJet->px();
-	      _pfJetInfo.pfJetGenPy[i] = genJet->py();
-	      _pfJetInfo.pfJetGenPz[i] = genJet->pz();
-	      _pfJetInfo.pfJetGenPt[i] = genJet->pt();
-	      _pfJetInfo.pfJetGenEta[i]= genJet->eta();
-	      _pfJetInfo.pfJetGenPhi[i]= genJet->phi();
-	      _pfJetInfo.pfJetGenM[i]  = genJet->mass();
+	      _pfJetInfo.genMatched[i] = true;
+	      _pfJetInfo.genPx[i] = genJet->px();
+	      _pfJetInfo.genPy[i] = genJet->py();
+	      _pfJetInfo.genPz[i] = genJet->pz();
+	      _pfJetInfo.genPt[i] = genJet->pt();
+	      _pfJetInfo.genEta[i]= genJet->eta();
+	      _pfJetInfo.genPhi[i]= genJet->phi();
+	      _pfJetInfo.genMass[i]  = genJet->mass();
 	      double genJetEnergy = genJet->energy();
-	      _pfJetInfo.pfJetGenEMF[i]  = genJet->emEnergy()/genJetEnergy;
-	      _pfJetInfo.pfJetGenHadF[i]  = genJet->hadEnergy()/genJetEnergy;
-	      _pfJetInfo.pfJetGenInvF[i]  = genJet->invisibleEnergy()/genJetEnergy;
-	      _pfJetInfo.pfJetGenAuxF[i]  = genJet->auxiliaryEnergy()/genJetEnergy;
+	      _pfJetInfo.genEMF[i]  = genJet->emEnergy()/genJetEnergy;
+	      _pfJetInfo.genHadF[i]  = genJet->hadEnergy()/genJetEnergy;
+	      _pfJetInfo.genInvF[i]  = genJet->invisibleEnergy()/genJetEnergy;
+	      _pfJetInfo.genAuxF[i]  = genJet->auxiliaryEnergy()/genJetEnergy;
 	    }
 	  else
 	    {
-	      _pfJetInfo.pfJetGenMatched[i] = false;
-	      _pfJetInfo.pfJetGenPx[i] =-1;
-	      _pfJetInfo.pfJetGenPy[i] =-1;
-	      _pfJetInfo.pfJetGenPz[i] =-1;
-	      _pfJetInfo.pfJetGenPt[i] =-1;
-	      _pfJetInfo.pfJetGenEta[i]=-1;
-	      _pfJetInfo.pfJetGenPhi[i]=-1;
-	      _pfJetInfo.pfJetGenM[i]  =-1;
-	      _pfJetInfo.pfJetGenEMF[i]  =-1;
-	      _pfJetInfo.pfJetGenHadF[i]  =-1;
-	      _pfJetInfo.pfJetGenInvF[i]  =-1;
-	      _pfJetInfo.pfJetGenAuxF[i]  =-1;
+	      _pfJetInfo.genMatched[i] = false;
+	      _pfJetInfo.genPx[i] =-1;
+	      _pfJetInfo.genPy[i] =-1;
+	      _pfJetInfo.genPz[i] =-1;
+	      _pfJetInfo.genPt[i] =-1;
+	      _pfJetInfo.genEta[i]=-1;
+	      _pfJetInfo.genPhi[i]=-1;
+	      _pfJetInfo.genMass[i]  =-1;
+	      _pfJetInfo.genEMF[i]  =-1;
+	      _pfJetInfo.genHadF[i]  =-1;
+	      _pfJetInfo.genInvF[i]  =-1;
+	      _pfJetInfo.genAuxF[i]  =-1;
 	    }
 	  
         }
@@ -1477,15 +1477,15 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       reco::GenJetCollection sortedGenJets = (*genJets);
       sort(sortedGenJets.begin(), sortedGenJets.end(), sortGenJetFunc);
       for(unsigned int i=0; i<sortedGenJets.size(); i++){
-        _genJetInfo.nGenJets++;
+        _genJetInfo.nJets++;
         if( i<10 ){
-          _genJetInfo.genJetPx[i] = sortedGenJets[i].px();
-          _genJetInfo.genJetPy[i] = sortedGenJets[i].py();
-          _genJetInfo.genJetPz[i] = sortedGenJets[i].pz();
-          _genJetInfo.genJetPt[i] = sortedGenJets[i].pt();
-          _genJetInfo.genJetEta[i] = sortedGenJets[i].eta();
-          _genJetInfo.genJetPhi[i] = sortedGenJets[i].phi();
-          _genJetInfo.genJetM[i] = sortedGenJets[i].mass();
+          _genJetInfo.px[i] = sortedGenJets[i].px();
+          _genJetInfo.py[i] = sortedGenJets[i].py();
+          _genJetInfo.pz[i] = sortedGenJets[i].pz();
+          _genJetInfo.pt[i] = sortedGenJets[i].pt();
+          _genJetInfo.eta[i] = sortedGenJets[i].eta();
+          _genJetInfo.phi[i] = sortedGenJets[i].phi();
+          _genJetInfo.mass[i] = sortedGenJets[i].mass();
         }
       }
     }
@@ -1638,8 +1638,8 @@ void UFDiMuonsAnalyzer::beginJob()
   _outTree->Branch("vertexY",             &_vertexY            ,"vertexY/F");              
   _outTree->Branch("vertexZ",             &_vertexZ            ,"vertexZ/F");              
 
-  _outTree->Branch("met",    &_metInfo,   "metPx/F:metPy/F:metPt/F:metPhi/F:sumEt/F");
-  _outTree->Branch("pfJets", &_pfJetInfo, "nPFjets/I:pfJetPx[10]/F:pfJetPy[10]/F:pfJetPz[10]/F:pfJetPt[10]/F:pfJetEta[10]/F:pfJetPhi[10]/F:pfJetM[10]/F:pfJetCharge[10]/I:pfJetCHF[10]/F:pfJetNHF[10]/F:pfJetCEF[10]/F:pfJetNEF[10]/F:pfJetMuF[10]/F:pfJetHFHF[10]/F:pfJetHFEF[10]/F:pfJetCM[10]/I:pfJetCHM[10]/I:pfJetNHM[10]/I:pfJetCEM[10]/I:pfJetNEM[10]/I:pfJetMuM[10]/I:pfJetHFHM[10]/I:pfJetHFEM[10]/I:pfJetJECFactor[10]/F:pfJetGenPx[10]/F:pfJetGenPy[10]/F:pfJetGenPz[10]/F:pfJetGenPt[10]/F:pfJetGenEta[10]/F:pfJetGenPhi[10]/F:pfJetGenM[10]/F:pfJetGenEMF[10]/F:pfJetGenHadF[10]/F:pfJetGenInvF[10]/F:pfJetGenAux[10]/F");
+  _outTree->Branch("met",    &_metInfo,   "px/F:py/F:pt/F:phi/F:sumEt/F");
+  _outTree->Branch("pfJets", &_pfJetInfo, "nJets/I:px[10]/F:py[10]/F:pz[10]/F:pt[10]/F:eta[10]/F:phi[10]/F:mass[10]/F:charge[10]/I:partonFlavour[10]:chf[10]/F:nhf[10]/F:cef[10]/F:nef[10]/F:muf[10]/F:hfhf[10]/F:hfef[10]/F:cm[10]/I:chm[10]/I:nhm[10]/I:cem[10]/I:nem[10]/I:mum[10]/I:hfhm[10]/I:hfem[10]/I:jecFactor[10]/F:jecUnc[10]/F:genPx[10]/F:genPy[10]/F:genPz[10]/F:genPt[10]/F:genEta[10]/F:genPhi[10]/F:genMass[10]/F:genEMF[10]/F:genHadF[10]/F:genInvF[10]/F:genAux[10]/F");
 
   _outTree->Branch("puJetFullDisc", 	&_puJetFullDisc 	 ,"puJetFullDisc[10]/F");              
   _outTree->Branch("puJetFullId", 	&_puJetFullId   	,"puJetFullId[10]/F");              
@@ -1666,7 +1666,7 @@ void UFDiMuonsAnalyzer::beginJob()
     _outTree->Branch("true1PreFSR"   , &_true1PreFSR	, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
     _outTree->Branch("true2PreFSR"   , &_true2PreFSR	, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
 
-    _outTree->Branch("genJets", &_genJetInfo, "nGenJets/I:genJetPx[10]/F:genJetPy[10]/F:genJetPz[10]/F:genJetPt[10]/F:genJetEta[10]/F:genJetPhi[10]/F:genJetM[10]/F:genJetCharge[10]/I");
+    _outTree->Branch("genJets", &_genJetInfo, "nJets/I:px[10]/F:py[10]/F:pz[10]/F:pt[10]/F:eta[10]/F:phi[10]/F:mass[10]/F:charge[10]/I");
 
     _outTree->Branch("nPU", 	&_nPU   	,"nPU/I");              
   }

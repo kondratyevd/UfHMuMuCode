@@ -103,93 +103,92 @@ typedef struct {
 
 //MET
 typedef struct {
-  float metPx;
-  float metPy;
-  float metPt;
-  float metPhi;
+  float px;
+  float py;
+  float pt;
+  float phi;
   float sumEt;
 } _MetInfo;
 
 
 // pf Jets
 typedef struct {
-  int   nPFjets;
-  float pfJetPx[10];
-  float pfJetPy[10];
-  float pfJetPz[10];
-  float pfJetPt[10];
-  float pfJetEta[10];
-  float pfJetPhi[10];
-  float pfJetM[10];
-  int   pfJetCharge[10];
-  int   pfJetPartonFlavour[10];
+  int   nJets;
+  float px[10];
+  float py[10];
+  float pz[10];
+  float pt[10];
+  float eta[10];
+  float phi[10];
+  float mass[10];
+  int   charge[10];
+  int   partonFlavour[10];
   /////// Energy Fractions //////
   //Charged Hadron
-  float pfJetCHF[10];
+  float chf[10];
   //NeutralHadron
-  float pfJetNHF[10];
+  float nhf[10];
   //Charged EM
-  float pfJetCEF[10];
+  float cef[10];
   //Neutral EM
-  float pfJetNEF[10];
+  float nef[10];
   //Mu
-  float pfJetMuF[10];
+  float muf[10];
   // HF Hadron Fraction
-  float pfJetHFHF[10];
+  float hfhf[10];
   // HF EM Fraction
-  float pfJetHFEF[10];
+  float hfef[10];
   /////// Multiplicities //////
-  // Total Charged
-  int pfJetCM[10];
-  //Charged Hadron
-  int pfJetCHM[10];
-  //NeutralHadron
-  int pfJetNHM[10];
-  //Charged EM
-  int pfJetCEM[10];
-  //Neutral EM
-  int pfJetNEM[10];
-  //Mu
-  int pfJetMuM[10];
-  // HF Hadron Fraction
-  int pfJetHFHM[10];
-  // HF EM Fraction
-  int pfJetHFEM[10];
+  // Total Charged Mult
+  int cm[10];
+  //Charged Hadron Mult
+  int chm[10];
+  //NeutralHadron Mult
+  int nhm[10];
+  //Charged EM Mult
+  int cem[10];
+  //Neutral EM Mult
+  int nem[10];
+  //Mu Mult
+  int mum[10];
+  // HF Hadron Mult
+  int hfhm[10];
+  // HF EM Mult
+  int hfem[10];
   // Jet Correction Factor--Above momentum is already corrected!!
   // This factor will return momentum to uncorrected value!!
-  float pfJetJECFactor[10];
+  float jecFactor[10];
   // Jet Energy Correction Uncertainty
-  float pfJetJECUnc[10];
+  float jecUnc[10];
   // Gen Jet Values
-  bool pfJetGenMatched[10];
-  float pfJetGenPx[10];
-  float pfJetGenPy[10];
-  float pfJetGenPz[10];
-  float pfJetGenPt[10];
-  float pfJetGenEta[10];
-  float pfJetGenPhi[10];
-  float pfJetGenM[10];
+  bool genMatched[10];
+  float genPx[10];
+  float genPy[10];
+  float genPz[10];
+  float genPt[10];
+  float genEta[10];
+  float genPhi[10];
+  float genMass[10];
   ///// Gen Jet Energy Fractions ///////
   // EM Fraction
-  float pfJetGenEMF[10];
+  float genEMF[10];
   // Had Fraction
-  float pfJetGenHadF[10];
+  float genHadF[10];
   // Invisible Fraction
-  float pfJetGenInvF[10];
+  float genInvF[10];
   // Auxiliary Fraction (Undecayed Sigmas, etc.)
-  float pfJetGenAuxF[10];
+  float genAuxF[10];
 } _PFJetInfo;
-
 
 // generator level jets
 typedef struct {
-  int nGenJets;
-  float genJetPx[10];
-  float genJetPy[10];
-  float genJetPz[10];
-  float genJetPt[10];
-  float genJetEta[10];
-  float genJetPhi[10];
-  float genJetM[10];
-  int   genJetCharge[10];
+  int nJets;
+  float px[10];
+  float py[10];
+  float pz[10];
+  float pt[10];
+  float eta[10];
+  float phi[10];
+  float mass[10];
+  int   charge[10];
 } _GenJetInfo;
