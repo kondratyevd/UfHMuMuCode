@@ -24,6 +24,7 @@
 <use   name="TrackingTools/Records"/>
 <use   name="HLTrigger/HLTcore"/>
 <use   name="CondFormats/JetMETObjects"/>
+<use   name="JetMETCorrections/Objects"/>
 <use   name="DataFormats/PatCandidates"/>
 <use   name="PhysicsTools/Utilities"/>
 <flags   EDM_PLUGIN="1"/>

@@ -145,6 +145,7 @@ process.outpath = cms.EndPath()
 
 process.source.fileNames.extend(
 [
+#"file:/data/uftrig01b/jhugon/hmumu/devNtupler/testFiles/VBFHToMM_M125_8TeV-powheg-pythia6-tauola-RECO_1.root"
 ]
 )
 

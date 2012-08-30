@@ -122,6 +122,7 @@ typedef struct {
   float pfJetPhi[10];
   float pfJetM[10];
   int   pfJetCharge[10];
+  int   pfJetPartonFlavour[10];
   /////// Energy Fractions //////
   //Charged Hadron
   float pfJetCHF[10];
@@ -157,6 +158,8 @@ typedef struct {
   // Jet Correction Factor--Above momentum is already corrected!!
   // This factor will return momentum to uncorrected value!!
   float pfJetJECFactor[10];
+  // Jet Energy Correction Uncertainty
+  float pfJetJECUnc[10];
   // Gen Jet Values
   bool pfJetGenMatched[10];
   float pfJetGenPx[10];

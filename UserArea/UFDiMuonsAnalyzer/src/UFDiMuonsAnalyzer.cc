@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.44 2012/08/27 13:59:37 jhugon Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.1 2012/08/27 14:20:46 jhugon Exp $
 //
 //
 
@@ -125,6 +125,9 @@ Implementation:
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
 #include <algorithm>
+#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
 
 // PU Info
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
@@ -1343,13 +1346,19 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     if( pfJetsTag.label() != "null" ) iEvent.getByLabel(pfJetsTag, jets);
     bzero(&_pfJetInfo,sizeof(_PFJetInfo));
 
+    // Get JEC Uncertainty Calculator
+    edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
+    iSetup.get<JetCorrectionsRecord>().get("AK5PF",JetCorParColl); 
+    JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
+    JetCorrectionUncertainty *jecUncCalculator = new JetCorrectionUncertainty(JetCorPar);
+
     if( jets.isValid() ){
       //First Get PU Id's
 
       for(unsigned int i=0; i<jets->size(); i++){
         _pfJetInfo.nPFjets++;
         if( i<10 ){
-	  const pat::Jet& jet = jets->at(i);
+          const pat::Jet& jet = jets->at(i);
           _pfJetInfo.pfJetPx[i] = jet.px();
           _pfJetInfo.pfJetPy[i] = jet.py();
           _pfJetInfo.pfJetPz[i] = jet.pz();
@@ -1357,6 +1366,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
           _pfJetInfo.pfJetEta[i]= jet.eta();
           _pfJetInfo.pfJetPhi[i]= jet.phi();
           _pfJetInfo.pfJetM[i]  = jet.mass();
+          _pfJetInfo.pfJetPartonFlavour[i] = jet.partonFlavour();
 	  // Energy Fractions
           _pfJetInfo.pfJetCHF[i]  = jet.chargedHadronEnergyFraction();
           _pfJetInfo.pfJetNHF[i]  = jet.neutralHadronEnergyFraction();
@@ -1375,6 +1385,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
           _pfJetInfo.pfJetHFHM[i]  = jet.HFHadronMultiplicity();
           _pfJetInfo.pfJetHFEM[i]  = jet.HFEMMultiplicity();
           //               _pfJetInfo.pfJetCh[i] = jet.jetCharge();
+          // Get JEC Uncertainty
+          jecUncCalculator->setJetEta(jet.eta());
+          jecUncCalculator->setJetPt(jet.pt()); // here you must use the CORRECTED jet pt
+          _pfJetInfo.pfJetJECUnc[i] = jecUncCalculator->getUncertainty(true);
           _pfJetInfo.pfJetJECFactor[i]  = jet.jecFactor("Uncorrected");
 	  //PAT matched Generator Jet
 	  const reco::GenJet* genJet = jet.genJet();
