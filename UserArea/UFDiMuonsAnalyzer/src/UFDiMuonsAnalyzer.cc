@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.2 2012/08/30 09:45:12 jhugon Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.3 2012/08/30 11:35:06 jhugon Exp $
 //
 //
 
@@ -906,8 +906,20 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     }
 
     _muon1.normChiSquare=trackref->normalizedChi2();
-    _muon1.d0= mu.innerTrack()->dxy( beamSpotHandle->position() );
-    _muon1.dz= mu.innerTrack()->dz ( beamSpotHandle->position() );
+    _muon1.d0_BS= mu.innerTrack()->dxy( beamSpotHandle->position() );
+    _muon1.dz_BS= mu.innerTrack()->dz ( beamSpotHandle->position() );
+
+    for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
+         vtx!=vertices->end(); ++vtx){
+
+      if (!vtx->isValid()) continue;
+  
+      _muon1.d0_PV= trackref->dxy( vtx->position() );
+      _muon1.dz_PV= trackref->dz ( vtx->position() );
+    
+      //exit at the first available vertex
+      break;
+    }
 
     _muon1.numPixelLayers   = trackref->hitPattern().pixelLayersWithMeasurement();   
     _muon1.numTrackerLayers = trackref->hitPattern().trackerLayersWithMeasurement(); 
@@ -1140,8 +1152,20 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     }
 
     _muon1.normChiSquare=trackref1->normalizedChi2();
-    _muon1.d0= trackref1->dxy( beamSpotHandle->position() );
-    _muon1.dz= trackref1->dz ( beamSpotHandle->position() );
+    _muon1.d0_BS= trackref1->dxy( beamSpotHandle->position() );
+    _muon1.dz_BS= trackref1->dz ( beamSpotHandle->position() );
+
+    for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
+         vtx!=vertices->end(); ++vtx){
+
+      if (!vtx->isValid()) continue;
+  
+      _muon1.d0_PV= trackref1->dxy( vtx->position() );
+      _muon1.dz_PV= trackref1->dz ( vtx->position() );
+    
+      //exit at the first available vertex
+      break;
+    }
 
     _muon1.numPixelLayers   = trackref1->hitPattern().pixelLayersWithMeasurement();   
     _muon1.numTrackerLayers = trackref1->hitPattern().trackerLayersWithMeasurement(); 
@@ -1197,9 +1221,21 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     _muon2.validFracTracker = trackref2->validFraction(); 
 
     _muon2.normChiSquare=trackref2->normalizedChi2();
-    _muon2.d0= trackref2->dxy( beamSpotHandle->position() );
-    _muon2.dz= trackref2->dz ( beamSpotHandle->position() );
+    _muon2.d0_BS= trackref2->dxy( beamSpotHandle->position() );
+    _muon2.dz_BS= trackref2->dz ( beamSpotHandle->position() );
    
+    for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
+         vtx!=vertices->end(); ++vtx){
+
+      if (!vtx->isValid()) continue;
+  
+      _muon2.d0_PV= trackref2->dxy( vtx->position() );
+      _muon2.dz_PV= trackref2->dz ( vtx->position() );
+    
+      //exit at the first available vertex
+      break;
+    }
+
     _muon2.numValidMuonHits    = trackref2->hitPattern().numberOfValidMuonHits();
     _muon2.numValidPixelHits   = trackref2->hitPattern().numberOfValidPixelHits();
     _muon2.numValidTrackerHits = trackref2->hitPattern().numberOfValidTrackerHits();
@@ -1536,7 +1572,9 @@ void UFDiMuonsAnalyzer::beginJob()
                    "isTracker/I:isStandAlone/I:isGlobal/I:"
                    "charge/I:pt/F:ptErr/F:eta/F:phi/F:"
                    "trkPt/F:trkPtErr/F:trkEta/F:trkPhi/F:"
-                   "normChiSquare/F:d0/F:dz/F:"
+                   "normChiSquare/F:"
+                   "d0_BS/F:dz_BS/F:"
+                   "d0_PV/F:dz_PV/F:"
                    "numPixelLayers/I:"
                    "numTrackerLayers/I:"
                    "numStripLayers/I:"
@@ -1575,7 +1613,9 @@ void UFDiMuonsAnalyzer::beginJob()
                    "isTracker/I:isStandAlone/I:isGlobal/I:"
                    "charge/I:pt/F:ptErr/F:eta/F:phi/F:"
                    "trkPt/F:trkPtErr/F:trkEta/F:trkPhi/F:"
-                   "normChiSquare/F:d0/F:dz/F:"
+                   "normChiSquare/F:"
+                   "d0_BS/F:dz_BS/F:"
+                   "d0_PV/F:dz_PV/F:"
                    "numPixelLayers/I:"
                    "numTrackerLayers/I:"
                    "numStripLayers/I:"
@@ -2252,9 +2292,12 @@ void UFDiMuonsAnalyzer::initMuon(_MuonInfo& muon) {
   muon.phi    = -999;
   
   muon.normChiSquare=-999;
-  muon.d0= -999;
-  muon.dz= -999;
+  muon.d0_BS= -999;
+  muon.dz_BS= -999;
   
+  muon.d0_PV= -999;
+  muon.dz_PV= -999;
+
   muon.numPixelLayers = -999; 
   muon.numTrackerLayers = -999;
   muon.numStripLayers = -999;  
