@@ -1,0 +1,10 @@
+# root -l -b -q scripts/htomm/skims/minimal.C++\(0\) >& scripts/htomm/skims/logfile_minimal_DYJetsToLL
+root -l -b -q scripts/htomm/skims/minimal.C++\(1\) >& scripts/htomm/skims/logfile_minimal_DYToMuMu
+root -l -b -q scripts/htomm/skims/minimal.C++\(2\) >& scripts/htomm/skims/logfile_minimal_TTJets
+root -l -b -q scripts/htomm/skims/minimal.C++\(3\) >& scripts/htomm/skims/logfile_minimal_DYToTauTau
+# root -l -b -q scripts/htomm/skims/minimal.C++\(4\) >& scripts/htomm/skims/logfile_minimal_WJetsToLNu
+# root -l -b -q scripts/htomm/skims/minimal.C++\(5\) >& scripts/htomm/skims/logfile_minimal_WW
+root -l -b -q scripts/htomm/skims/minimal.C++\(6\) >& scripts/htomm/skims/logfile_minimal_WZ
+root -l -b -q scripts/htomm/skims/minimal.C++\(7\) >& scripts/htomm/skims/logfile_minimal_ZZ
+# root -l -b -q scripts/htomm/skims/minimal.C++\(8\) >& scripts/htomm/skims/logfile_minimal_QCD_Pt-20_MuEnriched-Pt15
+
