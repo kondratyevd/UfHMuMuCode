@@ -21,14 +21,9 @@ process.load("Configuration.StandardSequences.GeometryExtended_cff")
 process.load('Configuration.EventContent.EventContent_cff')
 
 # global tag
-if thisIsData:
-    print 'Loading Global Tag For Data'
-    process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-    process.GlobalTag.globaltag = "FT_53_V6_AN1::All"
-else:
-    print 'Loading Global Tag For MC'
-    process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-    process.GlobalTag.globaltag = "START53_V7E::All"
+print 'Loading Global Tag GLOBALTAG'
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+process.GlobalTag.globaltag = "GLOBALTAG::All"
 
 
 # ------------ PoolSource -------------

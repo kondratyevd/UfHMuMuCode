@@ -25,8 +25,13 @@ parser.add_option('-n', '--ntuple',
                   action='store')
 
 parser.add_option('-f', '--caffolder',
-                  help='specify the dataset to run over (mandatory)',
+                  help='specify the caf folder to write to (mandatory)',
                   dest='cafFolder',
+                  action='store')
+
+parser.add_option('-g', '--globaltag',
+                  help='specify the globaltag (mandatory)',
+                  dest='globalTag',
                   action='store')
 
 parser.add_option('-j', '--json',
@@ -39,7 +44,7 @@ parser.add_option('-j', '--json',
 
 
 # Sanity check: Making sure all mandatory options appeared
-mandatories = ['CMSSW', 'dataset', 'ntupleName', 'cafFolder']
+mandatories = ['CMSSW', 'dataset', 'ntupleName', 'cafFolder','globalTag']
 for m in mandatories:
     if not opts.__dict__[m]:
         print "at least mandatory option is missing\n"
@@ -117,18 +122,32 @@ print ' b) UFDiMuonAnalyzer.py'
 if isData:
     os.system("cat crabTemplate/%s " \
               "| sed -e \'s/yourNtuple/%s/g\' " \
+              "| sed -e \'s/GLOBALTAG/%s/g\' " \
               "| sed -e \'s/thisIsData = False/thisIsData = True/g\' " \
               "> %s/UFDiMuonAnalyzer.py"
-              % (cmssw_py_file, opts.ntupleName, localFolder) )
+              % (cmssw_py_file,
+                 opts.ntupleName,
+                 opts.globalTag,
+                 localFolder)
+              )
 else:
-    os.system('cat crabTemplate/%s | sed -e \'s/yourNtuple/%s/g\' > %s/UFDiMuonAnalyzer.py'
-              % (cmssw_py_file, opts.ntupleName, localFolder) )
+    os.system("cat crabTemplate/%s " \
+              "| sed -e \'s/yourNtuple/%s/g\' " \
+              "| sed -e \'s/GLOBALTAG/%s/g\' " \
+              "> %s/UFDiMuonAnalyzer.py"
+              % (cmssw_py_file,
+                 opts.ntupleName,
+                 opts.globalTag,
+                 localFolder)
+              )
     
 
 print ' c) howToRunCrab'
 os.system("cat crabTemplate/howToRunCrab " \
-          "| sed -e 's/CMSSW/cms%s/g' > %s/howToRunCrab" % ( opts.CMSSW.replace("CMSSW_",""),
-                                                             localFolder)
+          "| sed -e 's/CMSSW/cms%s/g' " \
+          "> %s/howToRunCrab"
+          % ( opts.CMSSW.replace("CMSSW_",""),
+              localFolder)
           )
 
 print ' d) README'
