@@ -38,7 +38,17 @@ void minimal(int dataset = 0) {
   //    6: WZ
   //    7: ZZ
   //    8: QCD
+
+  // 9990: DYJetsToLL ptZ_50to70
+  // 9991: DYJetsToLL ptZ_70to100
+  // 9992: DYJetsToLL ptZ>100
           
+
+  //   20: 2012A-13Jul2012-v1
+  //   21: 2012B-13Jul2012-v4
+  //   22: 2012C-24Aug2012-v1
+  //   23: 2012C-PromptReco-v2
+
 
   TChain* tree = new TChain("tree");
 
@@ -69,6 +79,7 @@ void minimal(int dataset = 0) {
 
   else if ( dataset == 4 ) {
     std::cout << "WJetsToLNu DATASET\n";
+    //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesMCWJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v2/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesMCWJetsToLNu_TuneZ2Star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v2/"$1"\");"}' >> scripts/htomm/skims/chainWJetsToLNu
     #include "scripts/htomm/skims/chainWJetsToLNu"
   }
 
@@ -91,10 +102,56 @@ void minimal(int dataset = 0) {
   }
 
   else if ( dataset == 8 ) {
-    std::cout << "QCD DATASET: ";
-    #include "scripts/htomm/skims/chainQCD_Pt-20_MuEnriched-Pt15"
+    std::cout << "QCD DATASET\n";
+    //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesMCQCD_Pt_20_MuEnrichedPt_15_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesMCQCD_Pt_20_MuEnrichedPt_15_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3/"$1"\");"}' >> scripts/htomm/skims/chainQCD_Pt_20_MuEnrichedPt_15
+    #include "scripts/htomm/skims/chainQCD_Pt_20_MuEnrichedPt_15"
   }
 
+  // ======== Special Monte Carlo =========
+  else if ( dataset == 9990 ) {
+    std::cout << "DYJetsToLL_PtZ-50To70 DATASET\n";
+    //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesMCDYJetsToLL_PtZ-50To70_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v1/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesMCDYJetsToLL_PtZ-50To70_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v1/"$1"\");"}' >> scripts/htomm/skims/chainDYJetsToLL_PtZ-50To70
+    #include "scripts/htomm/skims/chainDYJetsToLL_PtZ-50To70"
+  }
+
+  else if ( dataset == 9991 ) {
+    std::cout << "DYJetsToLL_PtZ-70To100 DATASET\n";
+    //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesMCDYJetsToLL_PtZ-70To100_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v2/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesMCDYJetsToLL_PtZ-70To100_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v2/"$1"\");"}' >> scripts/htomm/skims/chainDYJetsToLL_PtZ-70To100
+    #include "scripts/htomm/skims/chainDYJetsToLL_PtZ-70To100"
+  }
+
+  else if ( dataset == 9992 ) {
+    std::cout << "DYJetsToLL_PtZ-100 DATASET\n";
+    //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesMCDYJetsToLL_PtZ-100_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v2/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesMCDYJetsToLL_PtZ-100_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v2/"$1"\");"}' >> scripts/htomm/skims/chainDYJetsToLL_PtZ-100
+    #include "scripts/htomm/skims/chainDYJetsToLL_PtZ-100"
+  }
+
+
+
+  // ======== Data ==========
+  else if ( dataset == 20 ) {
+    std::cout << "2012A-13Jul2012-v1 DATASET\n";
+    //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesDataDoubleMuRun2012A-13Jul2012-v1/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesDataDoubleMuRun2012A-13Jul2012-v1/"$1"\");"}' >> scripts/htomm/skims/chainDoubleMuRun2012A-13Jul2012-v1
+    #include "scripts/htomm/skims/chainDoubleMuRun2012A-13Jul2012-v1"
+  }
+
+  else if ( dataset == 21 ) {
+    std::cout << "2012B-13Jul2012-v4 DATASET\n";
+    //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesDataDoubleMuRun2012B-13Jul2012-v4/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesDataDoubleMuRun2012B-13Jul2012-v4/"$1"\");"}' >> scripts/htomm/skims/chainDoubleMuRun2012B-13Jul2012-v4
+    #include "scripts/htomm/skims/chainDoubleMuRun2012B-13Jul2012-v4"
+  }
+
+  else if ( dataset == 22 ) {
+    std::cout << "2012C-24Aug2012-v1 DATASET\n";
+    //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesDataDoubleMuRun2012C-24Aug2012-v1/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesDataDoubleMuRun2012C-24Aug2012-v1/"$1"\");"}' >> scripts/htomm/skims/chainDoubleMuRun2012C-24Aug2012-v1
+    #include "scripts/htomm/skims/chainDoubleMuRun2012C-24Aug2012-v1"
+  }
+
+  else if ( dataset == 23 ) {
+    std::cout << "2012C-PromptReco-v2 DATASET\n";
+    //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesDataDoubleMuRun2012C-PromptReco-v2/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-00-03/NtuplesDataDoubleMuRun2012C-PromptReco-v2/"$1"\");"}' >> scripts/htomm/skims/chainDoubleMuRun2012C-PromptReco-v2
+    #include "scripts/htomm/skims/chainDoubleMuRun2012C-PromptReco-v2"
+  }
 
   else {
     std::cout << "NO DATASET DEFINED!\n";
@@ -132,7 +189,32 @@ void minimal(int dataset = 0) {
     newfile = new TFile(path+"NtuplesMCZZ_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/ZZ_minimal.root","recreate");
 
   else if ( dataset == 8 ) 
-    newfile = new TFile(path+"/minimal/QCD_Pt-20_MuEnrichedPt-15_minimal.root","recreate");
+    newfile = new TFile(path+"NtuplesMCQCD_Pt_20_MuEnrichedPt_15_TuneZ2star_8TeV_pythia6_Summer12_DR53X-PU_S10_START53_V7A-v3/minimal/QCD_Pt_20_MuEnrichedPt_15_minimal.root","recreate");
+
+
+  else if ( dataset == 9990 ) 
+    newfile = new TFile(path+"NtuplesMCDYJetsToLL_PtZ-50To70_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYJetsToLL_PtZ-50To70_minimal.root","recreate");
+
+  else if ( dataset == 9990 ) 
+    newfile = new TFile(path+"NtuplesMCDYJetsToLL_PtZ-70To100_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v2/minimal/DYJetsToLL_PtZ-70To100_minimal.root","recreate");
+
+  else if ( dataset == 9992 ) 
+    newfile = new TFile(path+"NtuplesMCDYJetsToLL_PtZ-100_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v2/minimal/DYJetsToLL_PtZ-100_minimal.root","recreate");
+
+
+  else if ( dataset == 20 ) 
+    newfile = new TFile(path+"NtuplesDataDoubleMuRun2012A-13Jul2012-v1/minimal/DoubleMuRun2012A-13Jul2012-v1_minimal.root","recreate");
+
+  else if ( dataset == 21 ) 
+    newfile = new TFile(path+"NtuplesDataDoubleMuRun2012B-13Jul2012-v4/minimal/DoubleMuRun2012B-13Jul2012-v4_minimal.root","recreate");
+
+  else if ( dataset == 22 ) 
+    newfile = new TFile(path+"NtuplesDataDoubleMuRun2012C-24Aug2012-v1/minimal/DoubleMuRun2012C-24Aug2012-v1_minimal.root","recreate");
+
+  else if ( dataset == 23 ) 
+    newfile = new TFile(path+"NtuplesDataDoubleMuRun2012C-PromptReco-v2/minimal/DoubleMuRun2012C-PromptReco-v2_minimal.root","recreate");
+
+
 
   else {
     std::cout << "NO DATASET DEFINED!\n";
