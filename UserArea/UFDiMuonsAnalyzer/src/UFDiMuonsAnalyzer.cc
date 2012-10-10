@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.3 2012/08/30 11:35:06 jhugon Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.4 2012/09/19 15:05:19 digiovan Exp $
 //
 //
 
@@ -138,6 +138,9 @@ bool sortGenJetFunc(reco::GenJet i, reco::GenJet j){ return (i.pt()>j.pt()); }
 // Add the data formats
 #include "UserArea/UFDiMuonsAnalyzer/interface/DataFormats.h"
 
+// Add the mass error calculation from WW analysis
+#include "UserArea/UFDiMuonsAnalyzer/interface/CompositeCandMassResolution.h"
+
 // general 
 double const PDG_MASS_Z  = 91.1876;//GeV/c2
 double const PDG_WIDTH_Z = 2.4952; //GeV/c2
@@ -207,6 +210,8 @@ public:
 
   // combined muon-muon info
   float _recoCandMass;
+  float _recoCandMassRes;
+  float _recoCandMassResCov;
   float _recoCandPt;
   float _recoCandEta; // pseudo rapidity
   float _recoCandY;   // rapidity
@@ -214,6 +219,7 @@ public:
 
   // combined muon-muon info
   float _recoCandMassPF;
+  float _recoCandMassResPF;
   float _recoCandPtPF;
   float _recoCandEtaPF; 
   float _recoCandYPF;   
@@ -229,23 +235,20 @@ public:
   float _vertexY;
   float _vertexZ;
 
+
   _MuonInfo _muon1, _muon2;
 
+  // dimuon candidates from refit with vertex constraint
+  _TrackInfo _muon1vc,_muon2vc;
 
-  // cocktail info
-  float _recoCandMassCktl;
-  float _recoCandPtCktl;
-
-  float _angleDiMuonsCktl;
-  int   _vertexIsValidCktl;
-  float _vertexNormChiSquareCktl;
-  float _vertexChiSquareCktl;
-  float _vertexNDFCktl;
-  float _vertexXCktl;
-  float _vertexYCktl;
-  float _vertexZCktl;
-
-  _TrackInfo _cocktail1,_cocktail2;
+  // Vertex Constrained muon-muon info
+  float _recoCandMassVC;
+  float _recoCandMassResVC;
+  float _recoCandMassResCovVC;
+  float _recoCandPtVC;
+  float _recoCandEtaVC; 
+  float _recoCandYVC;   
+  float _recoCandPhiVC; 
 
 
   // generator level info post-FSR
@@ -290,7 +293,8 @@ private:
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void endJob() ;
 
-  void initMuon(_MuonInfo& muon);
+  void initMuon ( _MuonInfo& muon );
+  void initTrack(_TrackInfo& track);
 
   virtual void beginRun(edm::Run const &, edm::EventSetup const&);
 
@@ -320,6 +324,8 @@ private:
 
   void displaySelection();
 
+  // WW analysis mass resolution
+  CompositeCandMassResolution  CCMassResolution;
 
   // muons
   edm::InputTag _muonColl;
@@ -392,6 +398,12 @@ private:
 
   TLorentzVector const GetLorentzVector(UFDiMuonsAnalyzer::MuonPair  const* pair) ;//const; 
   TLorentzVector const GetLorentzVector(UFDiMuonsAnalyzer::TrackPair const* pair) ;//const; 
+
+  double const GetMassRes(UFDiMuonsAnalyzer::MuonPair  const* pair);
+  double const GetMassRes(UFDiMuonsAnalyzer::TrackPair const* pair);
+
+  double const GetMassResCov(UFDiMuonsAnalyzer::MuonPair  const* pair);
+  double const GetMassResCov(UFDiMuonsAnalyzer::TrackPair  const* pair);
 
   TransientVertex const GetVertexFromPair(UFDiMuonsAnalyzer::TrackPair const* muPair) const;
   TransientVertex const GetVertexFromTracks(reco::TrackRef trackref1, reco::TrackRef trackref2) const;
@@ -584,7 +596,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByLabel("offlinePrimaryVertices", vertices);
  
-  for (int i=0;i<20;i++) {
+  for (int i=0;i<80;i++) {
     vertexInfo.isValid[i]  = 0;
     vertexInfo.x[i]        = -999;     
     vertexInfo.y[i]        = -999;     
@@ -651,7 +663,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
   // G E O M E T R Y
   iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder",transientTrackBuilder);
-
+  // Comp Cand Mass Res
+  CCMassResolution.init(iSetup);
 
   //
   // get the sim mass if it exists
@@ -776,10 +789,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   reco::MuonCollection muonsSelected; 
   muonsSelected.clear(); 
 
-  // cocktail muons collection
-  reco::TrackCollection cktlSelected; 
-  cktlSelected.clear();  
-
 
   // pre-selection: just check the muons are at least tracker muons.
   for (reco::MuonCollection::const_iterator muon = muons->begin(), 
@@ -803,10 +812,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     // put this muons in the collection
     muonsSelected.push_back(*muon);
 
-    // and its cocktail
-    // directly from https://twiki.cern.ch/twiki/bin/view/CMS/WorkBookMuonAnalysis#High_pT_muons
-    reco::TrackRef pmcTrack = muon::tevOptimized(*muon, 200, 4, 6).first; 
-    cktlSelected.push_back(*pmcTrack);
   }
   // ===========================================================================
  
@@ -820,17 +825,32 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   initMuon(_muon1);
   initMuon(_muon2);
 
-  _recoCandMass = -999;
+  initTrack(_muon1vc);
+  initTrack(_muon2vc);
+
+  _recoCandMass = -999; 
+  _recoCandMassRes = -999;
+  _recoCandMassResCov = -999;
   _recoCandPt   = -999;
   _recoCandEta  = -999;
   _recoCandY    = -999;
   _recoCandPhi  = -999;
 
-  _recoCandMassPF = -999;
+  _recoCandMassPF = -999; 
+  _recoCandMassResPF = -999;
   _recoCandPtPF   = -999;
   _recoCandEtaPF  = -999;
   _recoCandYPF    = -999;
   _recoCandPhiPF  = -999;
+
+  _recoCandMassVC = -999; 
+  _recoCandMassResVC = -999;
+  _recoCandMassResCovVC = -999;
+  _recoCandPtVC   = -999;
+  _recoCandEtaVC  = -999;
+  _recoCandYVC    = -999;
+  _recoCandPhiVC  = -999;
+
 
   _angleDiMuons = -999;
   _vertexIsValid = -999;
@@ -840,32 +860,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   _vertexX = -999;
   _vertexY = -999;
   _vertexZ = -999;
-
-  // cocktail initialization
-  _recoCandMassCktl = -999;
-  _recoCandPtCktl   = -999;
-
-  _angleDiMuonsCktl    = -999;
-  _vertexIsValidCktl = -999;
-  _vertexNormChiSquareCktl = -999;
-  _vertexChiSquareCktl = -999;
-  _vertexNDFCktl = -999;
-  _vertexXCktl = -999;
-  _vertexYCktl = -999;
-  _vertexZCktl = -999;
-
-  _cocktail1.charge = -999; 
-  _cocktail1.pt     = -999; 
-  _cocktail1.ptErr  = -999;
-  _cocktail1.eta    = -999; 
-  _cocktail1.phi    = -999;
-  
-  _cocktail2.charge = -999; 
-  _cocktail2.pt     = -999; 
-  _cocktail2.ptErr  = -999;
-  _cocktail2.eta    = -999; 
-  _cocktail2.phi    = -999;
-    
 
 
   if (muonsSelected.size() == 0) {
@@ -969,16 +963,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       _muon1.sumPhotonEtR04          = mu.pfIsolationR04().sumPhotonEt         ;
       _muon1.sumPUPtR04              = mu.pfIsolationR04().sumPUPt             ;
     }
-
-    // cocktail
-    reco::Track cktl1 = cktlSelected.at(0);
-    // store all the info
-    // muon 1
-    _cocktail1.charge = cktl1.charge(); 
-    _cocktail1.pt     = cktl1.pt(); 
-    _cocktail1.ptErr  = cktl1.ptError(); 
-    _cocktail1.eta    = cktl1.eta(); 
-    _cocktail1.phi    = cktl1.phi();
 
 
     // save trigger informations
@@ -1256,7 +1240,9 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     // muons collection
     TLorentzVector mother=GetLorentzVector(&*pair); 
 
-    _recoCandMass = mother.M();
+    _recoCandMass = mother.M(); 
+    _recoCandMassRes    = GetMassRes(&*pair);
+    _recoCandMassResCov = GetMassResCov(&*pair);
     _recoCandPt   = mother.Pt();
     
     _recoCandEta  = mother.PseudoRapidity();
@@ -1289,80 +1275,87 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     
     }
 
-    
+    // calculate the vtx from the dimuon candidates
     TransientVertex vtx	= GetVertexFromTracks(mu1.innerTrack(),mu2.innerTrack());
+    reco::Track refitTrack1 = *mu1.innerTrack();
+    reco::Track refitTrack2 = *mu2.innerTrack();
+
     _vertexIsValid = vtx.isValid();
     if (vtx.isValid()) {
-
+      
       _vertexNormChiSquare = vtx.normalisedChiSquared();
       _vertexChiSquare = vtx.totalChiSquared();
       _vertexNDF = vtx.degreesOfFreedom();
       _vertexX = vtx.position().x();
       _vertexY = vtx.position().y();
       _vertexZ = vtx.position().z();
+
+      // refit the candidates (only if the vertex is valid ;-) )
+      refitTrack1 = vtx.refittedTracks().front().track();
+      refitTrack2 = vtx.refittedTracks().back().track();
     }
 
-    // ===========================================================================
-    //cocktail
-
-    // Step 0: do not to left initialized the cocktail muons
-    //reco::TrackRef global1 = mu1.globalTrack();
-    //reco::TrackRef global2 = mu2.globalTrack();
-
-    reco::Track const *cktl1 = &*trackref1;
-    reco::Track const *cktl2 = &*trackref2;
     
-    // Step 1: identify the cocktail muons corresponding to the muons pair
-    double _deltaR1 = 9999;
-    double _deltaR2 = 9999;
-    for (reco::TrackCollection::const_iterator track = cktlSelected.begin(); 
-         track != cktlSelected.end(); 
-         ++track){
-		
-      double deltaR1 = reco::deltaR(*track,mu1); 
-      if (deltaR1 < _deltaR1) {
-        _deltaR1 = deltaR1;
-        cktl1 = &*track; 
-      }
-
-      double deltaR2 = reco::deltaR(*track,mu2); 
-      if (deltaR2 < _deltaR2) {
-        _deltaR2 = deltaR2;
-        cktl2 = &*track; 
-      }
-    }
-
-    // Step 2: store all the cocktail info
-    // muon 1 -- muon 2
-    _cocktail1.charge = cktl1->charge();    _cocktail2.charge = cktl2->charge(); 
-    _cocktail1.pt     = cktl1->pt();        _cocktail2.pt     = cktl2->pt();     
-    _cocktail1.ptErr  = cktl1->ptError();   _cocktail2.ptErr  = cktl2->ptError();     
-    _cocktail1.eta    = cktl1->eta();       _cocktail2.eta    = cktl2->eta();    
-    _cocktail1.phi    = cktl1->phi();       _cocktail2.phi    = cktl2->phi();    
-
-    // build the track pair
-    TrackPair pairCocktail(*cktl1, *cktl2);
-    TLorentzVector motherCktl=GetLorentzVector(&pairCocktail); 
-    _recoCandMassCktl = motherCktl.M();
-    _recoCandPtCktl   = motherCktl.Pt();
-   
-
-    _angleDiMuonsCktl = acos(-cktl1->momentum().Dot(cktl2->momentum()/
-						    cktl1->p()/cktl2->p())); 
+    // combine the refit info into a dimuon candidate
+    TrackPair refitTrackPair(refitTrack1,refitTrack2);
     
-    TransientVertex vtxCktl = GetVertexFromPair(&pairCocktail);
-    _vertexIsValidCktl = vtxCktl.isValid();
-    if (vtxCktl.isValid()) {
+    TLorentzVector motherRefit=GetLorentzVector(&refitTrackPair); 
+    
+    _recoCandMassVC = motherRefit.M(); 
+    _recoCandMassResVC    = GetMassRes   (&refitTrackPair);
+    _recoCandMassResCovVC = GetMassResCov(&refitTrackPair);
+    _recoCandPtVC   = motherRefit.Pt();
+    
+    _recoCandEtaVC  = motherRefit.PseudoRapidity();
+    _recoCandYVC    = motherRefit.Rapidity();
+    _recoCandPhiVC  = motherRefit.Phi();
 
-      _vertexNormChiSquareCktl = vtxCktl.normalisedChiSquared();
-      _vertexChiSquareCktl     = vtxCktl.totalChiSquared();
-      _vertexNDFCktl           = vtxCktl.degreesOfFreedom();
-      _vertexXCktl = vtxCktl.position().x();
-      _vertexYCktl = vtxCktl.position().y();
-      _vertexZCktl = vtxCktl.position().z();
-    }
-    // ===========================================================================
- 
+    // muon 1 refit info
+    _muon1vc.charge = refitTrack1.charge(); 
+    _muon1vc.pt     = refitTrack1.pt(); 
+    _muon1vc.ptErr  = refitTrack1.ptError(); 
+    _muon1vc.eta    = refitTrack1.eta(); 
+    _muon1vc.phi    = refitTrack1.phi();
+
+    _muon2vc.charge = refitTrack2.charge(); 
+    _muon2vc.pt     = refitTrack2.pt(); 
+    _muon2vc.ptErr  = refitTrack2.ptError(); 
+    _muon2vc.eta    = refitTrack2.eta(); 
+    _muon2vc.phi    = refitTrack2.phi();
+
+
+//     if (_recoCandMass > 60 && _recoCandMass < 160) {
+
+//       std::cout << "\n\n ======= dimuon candidate ======= \n\n";
+//       std::cout <<    " Mass(mm): " << _recoCandMass   
+//                 << "+/-" << _recoCandMassRes
+//                 << " or +/-" << _recoCandMassResCov
+//                 << ", MassVC(mm): " << _recoCandMassVC 
+//                 << "+/-" << _recoCandMassResVC  
+//                 << " or +/-" << _recoCandMassResCovVC
+//                 << std::endl; 
+      
+//       std::cout <<    " pT(mm): " << _recoCandPt 
+//                 << ", pTVC(mm): " << _recoCandPtVC 
+//                 << std::endl; 
+
+//       std::cout << " * 1st MUON:\n";
+//       std::cout << "  charge: "<<_muon1.charge<< ", chargeVC: "<<_muon1vc.charge 
+//                 << "\n    pt: "<<_muon1.pt    << ",     ptVC: "<<_muon1vc.pt     
+//                 << "\n ptErr: "<<_muon1.ptErr << ",  ptErrVC: "<<_muon1vc.ptErr  
+//                 << "\n   eta: "<<_muon1.eta   << ",    etaVC: "<<_muon1vc.eta    
+//                 << "\n   phi: "<<_muon1.phi   << ",    phiVC: "<<_muon1vc.phi    
+//                 << std::endl;
+
+//       std::cout << " * 2nd MUON:\n";
+//       std::cout << "  charge: "<<_muon2.charge<< ", chargeVC: "<<_muon2vc.charge 
+//                 << "\n    pt: "<<_muon2.pt    << ",     ptVC: "<<_muon2vc.pt     
+//                 << "\n ptErr: "<<_muon2.ptErr << ",  ptErrVC: "<<_muon2vc.ptErr  
+//                 << "\n   eta: "<<_muon2.eta   << ",    etaVC: "<<_muon2vc.eta    
+//                 << "\n   phi: "<<_muon2.phi   << ",    phiVC: "<<_muon2vc.phi    
+//                 << std::endl;
+
+//     }
 
     // ===========================================================================
     // Jet Info
@@ -1564,9 +1557,9 @@ void UFDiMuonsAnalyzer::beginJob()
   std::cout << "triggerBaseNames_.size()= " << triggerBaseNames_.size() << std::endl;
 
 
-  _outTree->Branch("vertexInfo", &vertexInfo, "nVertices/I:isValid[20]/I:"
-		   "x[20]/F:y[20]/F:z[20]/F:xErr[20]/F:yErr[20]/F:zErr[20]/F:"
-		   "chi2[20]/F:ndf[20]/I:normChi2[20]/F");
+  _outTree->Branch("vertexInfo", &vertexInfo, "nVertices/I:isValid[80]/I:"
+		   "x[80]/F:y[80]/F:z[80]/F:xErr[80]/F:yErr[80]/F:zErr[80]/F:"
+		   "chi2[80]/F:ndf[80]/I:normChi2[80]/F");
 
   _outTree->Branch("reco1", &_muon1, 
                    "isTracker/I:isStandAlone/I:isGlobal/I:"
@@ -1657,17 +1650,31 @@ void UFDiMuonsAnalyzer::beginJob()
  
 
   // mass and pt for the fit
-  _outTree->Branch("recoCandMass", &_recoCandMass, "recoCandMass/F");
+  _outTree->Branch("recoCandMass",   &_recoCandMass,   "recoCandMass/F");
+  _outTree->Branch("recoCandMassRes",&_recoCandMassRes,"recoCandMassRes/F");
+  _outTree->Branch("recoCandMassResCov",&_recoCandMassResCov,"recoCandMassResCov/F");
   _outTree->Branch("recoCandPt"  , &_recoCandPt  , "recoCandPt/F");
   _outTree->Branch("recoCandEta" , &_recoCandEta , "recoCandEta/F");
   _outTree->Branch("recoCandY"   , &_recoCandY   , "recoCandY/F");
   _outTree->Branch("recoCandPhi" , &_recoCandPhi , "recoCandPhi/F");
 
-  _outTree->Branch("recoCandMassPF", &_recoCandMassPF, "recoCandMassPF/F");
+  _outTree->Branch("recoCandMassPF", &_recoCandMassPF,   "recoCandMassPF/F");
+  _outTree->Branch("recoCandMassResPF", &_recoCandMassResPF,"recoCandMassResPF/F");
   _outTree->Branch("recoCandPtPF"  , &_recoCandPtPF  , "recoCandPtPF/F");
   _outTree->Branch("recoCandEtaPF" , &_recoCandEtaPF , "recoCandEtaPF/F");
   _outTree->Branch("recoCandYPF"   , &_recoCandYPF   , "recoCandYPF/F");
   _outTree->Branch("recoCandPhiPF" , &_recoCandPhiPF , "recoCandPhiPF/F");
+
+  _outTree->Branch("reco1vc", &_muon1vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
+  _outTree->Branch("reco2vc", &_muon2vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+  _outTree->Branch("recoCandMassVC",      &_recoCandMassVC,      "recoCandMassVC/F");
+  _outTree->Branch("recoCandMassResVC",   &_recoCandMassResVC,   "recoCandMassResVC/F");
+  _outTree->Branch("recoCandMassResCovVC",&_recoCandMassResCovVC,"recoCandMassResCovVC/F");
+  _outTree->Branch("recoCandPtVC"  , &_recoCandPtVC  , "recoCandPtVC/F");
+  _outTree->Branch("recoCandEtaVC" , &_recoCandEtaVC , "recoCandEtaVC/F");
+  _outTree->Branch("recoCandYVC"   , &_recoCandYVC   , "recoCandYVC/F");
+  _outTree->Branch("recoCandPhiVC" , &_recoCandPhiVC , "recoCandPhiVC/F");
 
   _outTree->Branch("angleDiMuons",        &_angleDiMuons       ,"angleDiMuons/F");
   _outTree->Branch("vertexIsValid",       &_vertexIsValid      ,"vertexIsValid/I");          
@@ -1743,21 +1750,122 @@ TLorentzVector const UFDiMuonsAnalyzer::GetLorentzVector(UFDiMuonsAnalyzer::Muon
 
 }
 
-
 TLorentzVector const UFDiMuonsAnalyzer::GetLorentzVector(UFDiMuonsAnalyzer::TrackPair const* pair) {
-  
+
   TLorentzVector muon1, muon2, sum;
   double const MASS_MUON = 0.105658367;    //GeV/c2
-  
+
   reco::Track const muon1Track = pair->first;
   reco::Track const muon2Track = pair->second;
 
   muon1.SetPtEtaPhiM(muon1Track.pt(), muon1Track.eta(), muon1Track.phi(), MASS_MUON);
   muon2.SetPtEtaPhiM(muon2Track.pt(), muon2Track.eta(), muon2Track.phi(), MASS_MUON);
-
+  
   sum = muon1+muon2;
   return sum;
   
+}
+
+
+double const UFDiMuonsAnalyzer::GetMassRes(UFDiMuonsAnalyzer::MuonPair const* pair) {
+
+  double const MASS_MUON = 0.105658367;    //GeV/c2
+  
+  // get the dimuon candidate
+  TLorentzVector dimuon = GetLorentzVector(pair);
+
+  // get the dimuon mass
+  double dimuonMass = dimuon.M();
+
+  // get the reference to the 2 single muons
+  reco::TrackRef const track1 = pair->first .innerTrack();
+  reco::TrackRef const track2 = pair->second.innerTrack();
+
+
+  TLorentzVector muon1withError, muon2, dimuon_var1; 
+  muon1withError.SetPtEtaPhiM(track1->pt()+track1->ptError(), 
+                              track1->eta(), track1->phi(), MASS_MUON);
+  muon2.SetPtEtaPhiM(track2->pt(), track2->eta(), track2->phi(), MASS_MUON);
+  dimuon_var1 = muon1withError+muon2;
+  double deltaM1 = fabs(dimuon_var1.M() - dimuonMass );
+  
+  TLorentzVector muon1, muon2withError, dimuon_var2; 
+  muon1.SetPtEtaPhiM(track1->pt(), track1->eta(), track1->phi(), MASS_MUON);
+  muon2withError.SetPtEtaPhiM(track2->pt()+track2->ptError(), 
+                              track2->eta(), track2->phi(), MASS_MUON);
+  dimuon_var2 = muon1+muon2withError;
+  double deltaM2 = fabs(dimuon_var2.M() - dimuonMass );
+
+  return std::sqrt( (deltaM1*deltaM1) + (deltaM2*deltaM2) );
+
+}
+
+
+
+double const UFDiMuonsAnalyzer::GetMassResCov(UFDiMuonsAnalyzer::MuonPair const* pair) {
+
+  std::vector<reco::Track> leaves;
+  
+  reco::Track mu1  = *pair->first .innerTrack();
+  reco::Track mu2  = *pair->second.innerTrack();
+
+  leaves.push_back(mu1);
+  leaves.push_back(mu2);
+
+  TLorentzVector mother=GetLorentzVector(pair);
+  
+  double massRes = CCMassResolution.getMassResolution(leaves,mother);
+  return massRes;
+}
+
+double const UFDiMuonsAnalyzer::GetMassResCov(UFDiMuonsAnalyzer::TrackPair const* pair) {
+
+  std::vector<reco::Track> leaves;
+  
+  reco::Track mu1  = pair->first;
+  reco::Track mu2  = pair->second;
+
+  leaves.push_back(mu1);
+  leaves.push_back(mu2);
+
+  TLorentzVector mother=GetLorentzVector(pair);
+  
+  double massRes = CCMassResolution.getMassResolution(leaves,mother);
+  return massRes;
+}
+
+
+double const UFDiMuonsAnalyzer::GetMassRes(UFDiMuonsAnalyzer::TrackPair const* pair) {
+
+  double const MASS_MUON = 0.105658367;    //GeV/c2
+  
+  // get the dimuon candidate
+  TLorentzVector dimuon = GetLorentzVector(pair);
+
+  // get the dimuon mass
+  double dimuonMass = dimuon.M();
+
+  // get the reference to the 2 single muons
+  reco::Track const track1 = pair->first ;
+  reco::Track const track2 = pair->second;
+
+
+  TLorentzVector muon1withError, muon2, dimuon_var1; 
+  muon1withError.SetPtEtaPhiM(track1.pt()+track1.ptError(), 
+                              track1.eta(), track1.phi(), MASS_MUON);
+  muon2.SetPtEtaPhiM(track2.pt(), track2.eta(), track2.phi(), MASS_MUON);
+  dimuon_var1 = muon1withError+muon2;
+  double deltaM1 = fabs(dimuon_var1.M() - dimuonMass );
+  
+  TLorentzVector muon1, muon2withError, dimuon_var2; 
+  muon1.SetPtEtaPhiM(track1.pt(), track1.eta(), track1.phi(), MASS_MUON);
+  muon2withError.SetPtEtaPhiM(track2.pt()+track2.ptError(), 
+                              track2.eta(), track2.phi(), MASS_MUON);
+  dimuon_var2 = muon1+muon2withError;
+  double deltaM2 = fabs(dimuon_var2.M() - dimuonMass );
+
+  return sqrt( (deltaM1*deltaM1) + (deltaM2*deltaM2) );
+
 }
 
 // 
@@ -2124,7 +2232,6 @@ bool UFDiMuonsAnalyzer::isPreselected(const reco::Muon& muon,
   if (!muon.isTrackerMuon() && _isTracker) return pass; // trk muon
 
   // do not accept muons which are standalone only
-  // cannot get the cocktail fit which needs at least tracker...
   if(!muon.isGlobalMuon() && !muon.isTrackerMuon()) return pass;
   
   // if all the cuts are passed
@@ -2278,6 +2385,16 @@ UFDiMuonsAnalyzer::MuonPairs const UFDiMuonsAnalyzer::GetMuonPairs(reco::MuonCol
   std::sort(muonpairs.begin(),muonpairs.end(),sortMuonObject);
 
   return muonpairs;
+}
+
+void UFDiMuonsAnalyzer::initTrack(_TrackInfo& track) {
+
+  track.charge = -999; 
+  track.pt     = -999; 
+  track.ptErr  = -999;
+  track.eta    = -999; 
+  track.phi    = -999;
+
 }
 
 void UFDiMuonsAnalyzer::initMuon(_MuonInfo& muon) {

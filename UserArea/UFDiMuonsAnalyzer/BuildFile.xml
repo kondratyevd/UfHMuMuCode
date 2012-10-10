@@ -27,4 +27,5 @@
 <use   name="JetMETCorrections/Objects"/>
 <use   name="DataFormats/PatCandidates"/>
 <use   name="PhysicsTools/Utilities"/>
+<use   name="RecoParticleFlow/PFClusterTools"/>
 <flags   EDM_PLUGIN="1"/>
