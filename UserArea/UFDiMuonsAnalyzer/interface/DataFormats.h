@@ -195,3 +195,13 @@ typedef struct {
   float mass[10];
   int   charge[10];
 } _GenJetInfo;
+
+
+// generator level composite Candidate
+typedef struct {
+  float mass;
+  float pt;
+  float eta;  // pseudo rapidity
+  float y;    // rapidity
+  float phi;  // phi
+} _genPartInfo;
