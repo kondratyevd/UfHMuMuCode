@@ -749,25 +749,25 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
           _genWpreFSR.phi  = gen->phi();  
         }
        
-        if (abs(id) == 25/*or 24 or 25*/) {
-          //std::cout << "Z candidate (status=" << gen->status() 
-           //std::cout << "W candidate (status=" << gen->status() 
-          std::cout << "H candidate (status=" << gen->status() 
-                    << ", mass=" << gen->mass() 
-                    << ", pt="   << gen->pt()  
-                    << ", id="   << gen->pdgId()  
-                    << ", motherId="<< gen->mother()->pdgId()
-                    << ", nDau=" << gen->numberOfDaughters() 
-                    << ")\n\n";
-        }
+        //if (abs(id) == 25/*or 24 or 25*/) {
+        //  //std::cout << "Z candidate (status=" << gen->status() 
+        //   //std::cout << "W candidate (status=" << gen->status() 
+        //  std::cout << "H candidate (status=" << gen->status() 
+        //            << ", mass=" << gen->mass() 
+        //            << ", pt="   << gen->pt()  
+        //            << ", id="   << gen->pdgId()  
+        //            << ", motherId="<< gen->mother()->pdgId()
+        //            << ", nDau=" << gen->numberOfDaughters() 
+        //            << ")\n\n";
+        //}
         
         if (abs(id) == 13)  {
-          std::cout << "muon candidate (status=" << gen->status() 
-                    << ", mass=" << gen->mass() 
-                    << ", pt="   << gen->pt() 
-                    << ", id="   << gen->pdgId()  
-                    << ", motherId="<< gen->mother()->pdgId()
-                    << ")\n";
+          //std::cout << "muon candidate (status=" << gen->status() 
+          //          << ", mass=" << gen->mass() 
+          //          << ", pt="   << gen->pt() 
+          //          << ", id="   << gen->pdgId()  
+          //          << ", motherId="<< gen->mother()->pdgId()
+          //          << ")\n";
 
           int parentId = gen->mother()->pdgId();
           
