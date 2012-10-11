@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.4 2012/09/19 15:05:19 digiovan Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.5 2012/10/10 09:10:50 digiovan Exp $
 //
 //
 
@@ -251,23 +251,44 @@ public:
   float _recoCandPhiVC; 
 
 
-  // generator level info post-FSR
-  float _trueMass;
-  float _truePt;
-  float _trueEta; // pseudo rapidity
-  float _trueY;   // rapidity
-  float _truePhi; // phi
+  // generator level info Z pre-FSR
+  _genPartInfo _genZpreFSR;
+  _TrackInfo   _genM1ZpreFSR,_genM2ZpreFSR;
 
-  _TrackInfo _true1,_true2;
+  // generator level info Z post-FSR
+  _genPartInfo _genZpostFSR;
+  _TrackInfo   _genM1ZpostFSR,_genM2ZpostFSR;
 
-  // generator level info pre-FSR
-  float _trueMassPreFSR;
-  float _truePtPreFSR;
-  float _trueEtaPreFSR; // pseudo rapidity
-  float _trueYPreFSR;   // rapidity
-  float _truePhiPreFSR; // phi
 
-  _TrackInfo _true1PreFSR,_true2PreFSR;
+  // generator level info W pre-FSR
+  _genPartInfo _genWpreFSR;
+  _TrackInfo   _genMWpreFSR;
+
+  // generator level info W post-FSR
+  _TrackInfo   _genMWpostFSR;
+
+
+  // generator level info H pre-FSR
+  _genPartInfo _genHpreFSR;
+  _TrackInfo   _genM1HpreFSR,_genM2HpreFSR;
+
+  // generator level info H post-FSR
+  _genPartInfo _genHpostFSR;
+  _TrackInfo   _genM1HpostFSR,_genM2HpostFSR;
+
+
+
+  // FSR photons in the event
+  std::vector< float > gammaEta;
+  std::vector< float > gammaPhi;
+  std::vector< float > gammaPt;
+  std::vector< float > gammaMomCharge;
+  std::vector< float > gammaMomEta;
+  std::vector< float > gammaMomPhi;
+  std::vector< float > gammaMomPt;
+  std::vector< int >   gammaMomFromZ;
+  std::vector< int >   gammaMomFromH;
+  std::vector< int >   gammaMomFromW;
 
   // Jets and MET
   _MetInfo     _metInfo;
@@ -293,8 +314,14 @@ private:
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void endJob() ;
 
-  void initMuon ( _MuonInfo& muon );
-  void initTrack(_TrackInfo& track);
+  void initMuon   ( _MuonInfo&  muon );
+  void initTrack  (_TrackInfo&  track);
+  void initGenPart(_genPartInfo& part);
+  bool checkMother(const reco::Candidate &part, int momPdgId);
+  void fillDiMuonGenPart(const reco::GenParticleCollection &genColl,
+                         _genPartInfo& part,
+                         _TrackInfo&  muon1,
+                         _TrackInfo&  muon2); 
 
   virtual void beginRun(edm::Run const &, edm::EventSetup const&);
 
@@ -673,107 +700,154 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
     edm::Handle<reco::GenParticleCollection> allGenParticles;
     iEvent.getByLabel("genParticles", allGenParticles);
-    ////const reco::GenParticleCollection* genParticles  = allGenParticles.failedToGet () ? 0 : &*allGenParticles;
     
-    
-    reco::GenParticleCollection theGens;
-    reco::GenParticleCollection theGensPreFSR;
+    // initialize Z to default values
+    initGenPart(_genZpreFSR); initTrack(_genM1ZpreFSR); initTrack(_genM2ZpreFSR);
+    initGenPart(_genZpostFSR);initTrack(_genM1ZpostFSR);initTrack(_genM2ZpostFSR);
 
-    //std::cout << "event" << std::endl;
+    // initialize H to default values
+    initGenPart(_genHpreFSR); initTrack(_genM1HpreFSR); initTrack(_genM2HpreFSR);
+    initGenPart(_genHpostFSR);initTrack(_genM1HpostFSR);initTrack(_genM2HpostFSR);
+
+    // initialize W to default values
+    initGenPart(_genWpreFSR); initTrack(_genMWpreFSR); initTrack(_genMWpostFSR);
+
+    reco::GenParticleCollection ZPreFSR;
+    reco::GenParticleCollection ZPostFSR;
+    reco::GenParticleCollection HPreFSR;
+    reco::GenParticleCollection HPostFSR;
+    reco::GenParticleCollection WPreFSR;
+    reco::GenParticleCollection WPostFSR;
+
+    // FSR
+    gammaEta      . clear();
+    gammaPhi      . clear();
+    gammaPt       . clear();
+    gammaMomCharge. clear();
+    gammaMomEta   . clear();
+    gammaMomPhi   . clear();
+    gammaMomPt    . clear();
+    gammaMomFromZ . clear();
+    gammaMomFromH . clear();
+    gammaMomFromW . clear();
+
+
+    //std::cout << "\n====================================\n"; 
     for (reco::GenParticleCollection::const_iterator gen = allGenParticles->begin(), genEnd = allGenParticles->end(); 
          gen != genEnd; ++gen) 
       {
-        ////for (size_t i=0; i<genParticles->size(); ++i){
-        ////  
-        ////  const reco::Candidate &gen = (*genParticles)[i];
-        ////  int id       = gen.pdgId();
-        ////  int parentId = -999;
-        ////  if (fabs(id) != 13 && fabs(id) != 22) continue;
-        ////  
-        ////  std::cout << id << ", " << gen.status() << ", " << gen.pt();
-        ////  if (gen.numberOfMothers())
-        ////    std::cout << "has a mother?" << gen.mother()->pdgId() << std::endl;
-        ////  else
-        ////    std::cout << std::endl;
         
-        int id       = gen->pdgId();
-        int parentId = -999;
+        int id = gen->pdgId();
         
-        if (abs(id) == 13) parentId = gen->mother()->pdgId();
+        // if it is a W we do not have the two muon to reconstruct 
+        // the particle, hence just go directly to use the gen iterator
+        if (abs(id) == 24) {
+          _genWpreFSR.mass = gen->mass(); 
+          _genWpreFSR.pt   = gen->pt();   
+          _genWpreFSR.eta  = gen->eta();  
+          _genWpreFSR.y    = gen->rapidity();    
+          _genWpreFSR.phi  = gen->phi();  
+        }
+       
+        if (abs(id) == 25/*or 24 or 25*/) {
+          //std::cout << "Z candidate (status=" << gen->status() 
+           //std::cout << "W candidate (status=" << gen->status() 
+          std::cout << "H candidate (status=" << gen->status() 
+                    << ", mass=" << gen->mass() 
+                    << ", pt="   << gen->pt()  
+                    << ", id="   << gen->pdgId()  
+                    << ", motherId="<< gen->mother()->pdgId()
+                    << ", nDau=" << gen->numberOfDaughters() 
+                    << ")\n\n";
+        }
         
-        //if (abs(id) == 13)  {
-        //  std::cout << "muon, " << gen->status() << ", " << gen->pt() << std::endl;
-        //  std::cout << "has a mother?" << gen->mother()->pdgId() << std::endl;
-        //}
-        //if (abs(id) == 23)  std::cout << "Z " << gen->status() << ", " << gen->mass() << ", " << gen->pt() << std::endl;
+        if (abs(id) == 13)  {
+          std::cout << "muon candidate (status=" << gen->status() 
+                    << ", mass=" << gen->mass() 
+                    << ", pt="   << gen->pt() 
+                    << ", id="   << gen->pdgId()  
+                    << ", motherId="<< gen->mother()->pdgId()
+                    << ")\n";
+
+          int parentId = gen->mother()->pdgId();
+          
+          const reco::Candidate &genC = *gen;
+          bool isMuonFromZ = false;
+          bool isMuonFromH = false;
+          bool isMuonFromW = false;
+           
+          // check where the muon is coming from
+          isMuonFromZ = checkMother(genC,23);
+          isMuonFromW = checkMother(genC,24);
+          isMuonFromH = checkMother(genC,25);
+          
+          if (gen->status() == 3 && abs(id) == 13 && abs(parentId) == 23) ZPreFSR .push_back(*gen);
+          if (gen->status() == 1 && abs(id) == 13 && isMuonFromZ        ) ZPostFSR.push_back(*gen);
+          
+          if (gen->status() == 3 && abs(id) == 13 && abs(parentId) == 24) WPreFSR .push_back(*gen);
+          if (gen->status() == 1 && abs(id) == 13 && isMuonFromW        ) WPostFSR.push_back(*gen);
+          
+          if (gen->status() == 3 && abs(id) == 13 && abs(parentId) == 25) HPreFSR .push_back(*gen);
+          if (gen->status() == 1 && abs(id) == 13 && isMuonFromH        ) HPostFSR.push_back(*gen);
+          
+        } // muon 
         
-        if (gen->status() == 3 && abs(id) == 13 && abs(parentId) == 23) theGensPreFSR.push_back(*gen);
-        if (gen->status() == 1 && abs(id) == 13 && abs(parentId) == 13) theGens.push_back(*gen);
-      
-      }
+        // fsr muon (check the mother is a muon
+        if (gen->status() == 1 && abs(id) == 22 && abs(gen->mother()->pdgId()) == 13) {
+          gammaEta  . push_back( gen->eta() );
+          gammaPhi  . push_back( gen->phi() );
+          gammaPt   . push_back( gen->pt()  );
+          
+          (gen->mother()->pdgId()>0) ? gammaMomCharge.push_back(1) : gammaMomCharge.push_back(-1);
+          gammaMomEta . push_back( gen->mother()->eta());
+          gammaMomPhi . push_back( gen->mother()->phi());
+          gammaMomPt  . push_back( gen->mother()->pt() );
+          
+          bool isFsrMuonFromZ = false;
+          bool isFsrMuonFromH = false;
+          bool isFsrMuonFromW = false;
+          
+          // check where the FSR muon is coming from
+          const reco::Candidate &genMom = *(gen->mother());
+          
+          isFsrMuonFromZ = checkMother(genMom,23);
+          isFsrMuonFromW = checkMother(genMom,24);
+          isFsrMuonFromH = checkMother(genMom,25);
+          
+          (isFsrMuonFromZ) ? gammaMomFromZ.push_back(isFsrMuonFromZ) : gammaMomFromZ.push_back(-999);
+          (isFsrMuonFromW) ? gammaMomFromW.push_back(isFsrMuonFromW) : gammaMomFromW.push_back(-999);
+          (isFsrMuonFromH) ? gammaMomFromH.push_back(isFsrMuonFromH) : gammaMomFromH.push_back(-999);
+                   
+        } // fsr muon
+      } // loop over gen level
     
-    _trueMassPreFSR = -999;
-    _truePtPreFSR   = -999;
     
-    _trueEtaPreFSR = -999;
-    _trueYPreFSR   = -999;
-    _truePhiPreFSR = -999;
+    // fill
+    // Z block
+    fillDiMuonGenPart (ZPreFSR, _genZpreFSR, _genM1ZpreFSR, _genM2ZpreFSR );
+    fillDiMuonGenPart (ZPostFSR,_genZpostFSR,_genM1ZpostFSR,_genM2ZpostFSR);
+                       
+    // W block
+    if (WPreFSR.size() == 1) {
+      _genMWpreFSR.charge = WPreFSR[0].charge(); 
+      _genMWpreFSR.pt     = WPreFSR[0].pt(); 
+      _genMWpreFSR.eta    = WPreFSR[0].eta(); 
+      _genMWpreFSR.phi    = WPreFSR[0].phi();	
+    }
     
-    _true1PreFSR.charge = -999; _true1PreFSR.pt = -999; _true1PreFSR.ptErr = -999;_true1PreFSR.eta = -999; _true1PreFSR.phi = -999;
-    _true2PreFSR.charge = -999; _true2PreFSR.pt = -999; _true2PreFSR.ptErr = -999;_true2PreFSR.eta = -999; _true2PreFSR.phi = -999;
-
-    if (theGensPreFSR.size() == 2) { 
-      TLorentzVector vtrue1, vtrue2, vtrueMother;
-      
-      vtrue1.SetPtEtaPhiM(theGensPreFSR[0].pt(), theGensPreFSR[0].eta(), theGensPreFSR[0].phi(), theGensPreFSR[0].mass());
-      vtrue2.SetPtEtaPhiM(theGensPreFSR[1].pt(), theGensPreFSR[1].eta(), theGensPreFSR[1].phi(), theGensPreFSR[1].mass());
-
-      _true1PreFSR.charge = theGensPreFSR[0].charge(); _true1PreFSR.pt = theGensPreFSR[0].pt(); 
-      _true2PreFSR.charge = theGensPreFSR[1].charge(); _true2PreFSR.pt = theGensPreFSR[1].pt(); 
-      _true1PreFSR.eta = theGensPreFSR[0].eta(); _true1PreFSR.phi=theGensPreFSR[0].phi();	
-      _true2PreFSR.eta = theGensPreFSR[1].eta(); _true2PreFSR.phi=theGensPreFSR[1].phi();
-      
-      vtrueMother = vtrue1+vtrue2;	
-
-      _trueMassPreFSR = vtrueMother.M();
-      _truePtPreFSR   = vtrueMother.Pt();
-
-      _trueEtaPreFSR = vtrueMother.PseudoRapidity();
-      _trueYPreFSR   = vtrueMother.Rapidity();
-      _truePhiPreFSR = vtrueMother.Phi();
-
+    if (WPostFSR.size() == 1) {
+      _genMWpostFSR.charge = WPostFSR[0].charge(); 
+      _genMWpostFSR.pt     = WPostFSR[0].pt(); 
+      _genMWpostFSR.eta    = WPostFSR[0].eta(); 
+      _genMWpostFSR.phi    = WPostFSR[0].phi();	
     }
 
+    // H block         
+    fillDiMuonGenPart (HPreFSR, _genHpreFSR, _genM1HpreFSR, _genM2HpreFSR );
+    fillDiMuonGenPart (HPostFSR,_genHpostFSR,_genM1HpostFSR,_genM2HpostFSR);
+    
+  }// end _isMonteCarlo
 
-    _trueMass = -999;
-    _truePt   = -999;
-
-    _trueEta = -999;
-    _trueY   = -999;
-    _truePhi = -999;
-
-    _true1.charge = -999; _true1.pt = -999; _true1.ptErr = -999;_true1.eta = -999; _true1.phi = -999;
-    _true2.charge = -999; _true2.pt = -999; _true2.ptErr = -999;_true2.eta = -999; _true2.phi = -999;
-
-    if (theGens.size() == 2) { 
-      TLorentzVector vtrue1, vtrue2, vtrueMother;
-      vtrue1.SetPtEtaPhiM(theGens[0].pt(), theGens[0].eta(), theGens[0].phi(), theGens[0].mass());
-      vtrue2.SetPtEtaPhiM(theGens[1].pt(), theGens[1].eta(), theGens[1].phi(), theGens[1].mass());
-      _true1.charge = theGens[0].charge(); _true1.pt = theGens[0].pt(); _true1.eta = theGens[0].eta(); _true1.phi=theGens[0].phi();
-      _true2.charge = theGens[1].charge(); _true2.pt = theGens[1].pt(); _true2.eta = theGens[1].eta(); _true2.phi=theGens[1].phi();
-	
-      vtrueMother = vtrue1+vtrue2;	
-
-      _trueMass = vtrueMother.M();
-      _truePt   = vtrueMother.Pt();
-
-      _trueEta = vtrueMother.PseudoRapidity();
-      _trueY   = vtrueMother.Rapidity();
-      _truePhi = vtrueMother.Phi();
-
-    }
-
-  }
 
   // ===========================================================================
   // M U O N S
@@ -1088,7 +1162,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     if ( passKinCuts(mu1, beamSpotHandle) && 
          passKinCuts(mu2, beamSpotHandle)  ) passSelection=true; 
 
-    // chek the trigger
+    // check the trigger
     if (_checkTrigger && passSelection) {
         
       // set the event as not passed  
@@ -1697,21 +1771,45 @@ void UFDiMuonsAnalyzer::beginJob()
 
   // MC information
   if (_isMonteCarlo) {
-    _outTree->Branch("trueMass"	, &_trueMass	, "trueMass/F");
-    _outTree->Branch("truePt"	, &_truePt	, "truePt/F");
-    _outTree->Branch("trueEta"  , &_trueEta     , "trueEta/F");
-    _outTree->Branch("trueY"    , &_trueY       , "trueY/F");
-    _outTree->Branch("truePhi"  , &_truePhi     , "truePhi/F");
-    _outTree->Branch("true1"	, &_true1	, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
-    _outTree->Branch("true2"	, &_true2	, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
 
-    _outTree->Branch("trueMassPreFSR", &_trueMassPreFSR	, "trueMassPreFSR/F");
-    _outTree->Branch("truePtPreFSR"  , &_truePtPreFSR	, "truePtPreFSR/F");
-    _outTree->Branch("trueEtaPreFSR" , &_trueEtaPreFSR  , "trueEtaPreFSR/F");
-    _outTree->Branch("trueYPreFSR"   , &_trueYPreFSR    , "trueYPreFSR/F");
-    _outTree->Branch("truePhiPreFSR" , &_truePhiPreFSR  , "truePhiPreFSR/F");
-    _outTree->Branch("true1PreFSR"   , &_true1PreFSR	, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
-    _outTree->Branch("true2PreFSR"   , &_true2PreFSR	, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    // Z block
+    _outTree->Branch("genZpreFSR",  &_genZpreFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genM1ZpreFSR",&_genM1ZpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genM2ZpreFSR",&_genM2ZpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+    _outTree->Branch("genZpostFSR",  &_genZpostFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genM1ZpostFSR",&_genM1ZpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genM2ZpostFSR",&_genM2ZpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+    // W block
+    _outTree->Branch("genWpreFSR",  &_genWpreFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genMWpreFSR", &_genMWpreFSR ,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genMWpostFSR",&_genMWpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+    // H block
+    _outTree->Branch("genHpreFSR",  &_genHpreFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genM1HpreFSR",&_genM1HpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genM2HpreFSR",&_genM2HpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+    _outTree->Branch("genHpostFSR",  &_genHpostFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genM1HpostFSR",&_genM1HpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genM2HpostFSR",&_genM2HpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+
+    // FSR
+    _outTree->Branch("gammaEta",   &gammaEta);  
+    _outTree->Branch("gammaPhi",   &gammaPhi);  
+    _outTree->Branch("gammaPt",    &gammaPt);   
+
+    _outTree->Branch("gammaMomCharge", &gammaMomCharge);
+    _outTree->Branch("gammaMomEta",    &gammaMomEta);   
+    _outTree->Branch("gammaMomPhi",    &gammaMomPhi);   
+    _outTree->Branch("gammaMomPt",     &gammaMomPt);    
+
+    _outTree->Branch("gammaMomFromZ", &gammaMomFromZ);
+    _outTree->Branch("gammaMomFromH", &gammaMomFromH);
+    _outTree->Branch("gammaMomFromW", &gammaMomFromW);
+
 
     _outTree->Branch("genJets", &_genJetInfo, "nJets/I:px[10]/F:py[10]/F:pz[10]/F:pt[10]/F:eta[10]/F:phi[10]/F:mass[10]/F:charge[10]/I");
 
@@ -2385,6 +2483,91 @@ UFDiMuonsAnalyzer::MuonPairs const UFDiMuonsAnalyzer::GetMuonPairs(reco::MuonCol
   std::sort(muonpairs.begin(),muonpairs.end(),sortMuonObject);
 
   return muonpairs;
+}
+
+void UFDiMuonsAnalyzer::fillDiMuonGenPart(const reco::GenParticleCollection &genColl,
+                                          _genPartInfo& part,
+                                          _TrackInfo&  muon1,
+                                          _TrackInfo&  muon2) {
+
+  
+  if (genColl.size() != 2) return;
+  
+   muon1.charge = genColl[0].charge(); 
+   muon1.pt     = genColl[0].pt(); 
+   muon1.eta    = genColl[0].eta(); 
+   muon1.phi    = genColl[0].phi();	
+
+   muon2.charge = genColl[1].charge(); 
+   muon2.pt     = genColl[1].pt(); 
+   muon2.eta    = genColl[1].eta(); 
+   muon2.phi    = genColl[1].phi();	
+
+   TLorentzVector vtrue1, vtrue2, vtrueMother;
+
+   vtrue1.SetPtEtaPhiM(genColl[0].pt(), 
+                       genColl[0].eta(), 
+                       genColl[0].phi(), 
+                       genColl[0].mass());
+
+   vtrue2.SetPtEtaPhiM(genColl[1].pt(), 
+                       genColl[1].eta(), 
+                       genColl[1].phi(), 
+                       genColl[1].mass());
+
+   vtrueMother = vtrue1+vtrue2;	
+
+   part.mass = vtrueMother.M();
+   part.pt   = vtrueMother.Pt();
+   part.eta  = vtrueMother.PseudoRapidity();
+   part.y    = vtrueMother.Rapidity();
+   part.phi  = vtrueMother.Phi();
+   
+   return;
+}
+
+
+
+bool UFDiMuonsAnalyzer::checkMother(const reco::Candidate &part,
+                                    int momPdgId){
+  
+  bool matchFound = false;
+
+  // loop over all the mothers
+  int nMothers = part.numberOfMothers();
+  bool hasMother = nMothers ? true : false;
+  const reco::Candidate * mom = NULL;
+  if (hasMother) mom= part.mother();          
+
+  while (hasMother && mom) {
+    // exit if
+    // 1. match is found
+    //std::cout << "   --- momPdgId = " << mom->pdgId() << std::endl;
+    if (abs(mom->pdgId()) == abs(momPdgId)) {
+      matchFound = true;
+      hasMother=false;
+    }
+
+    // 2. we are at the parton level
+    if (abs(mom->pdgId()) < 10) hasMother=false;
+ 
+    // 3. there is no other mom
+    if (mom->numberOfMothers() == 0) mom=NULL;
+    else                             mom=mom->mother();
+    
+  }
+  
+  return matchFound;
+  
+}
+
+
+void UFDiMuonsAnalyzer::initGenPart(_genPartInfo& part){
+  part.mass = -999;
+  part.pt   = -999;
+  part.eta  = -999;
+  part.y    = -999;
+  part.phi  = -999;
 }
 
 void UFDiMuonsAnalyzer::initTrack(_TrackInfo& track) {
