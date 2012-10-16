@@ -195,7 +195,6 @@ typedef struct {
   float mass[10];
   int   charge[10];
 } _GenJetInfo;
-<<<<<<< DataFormats.h
 
 // generator level composite Candidate
 typedef struct {
@@ -206,15 +205,3 @@ typedef struct {
   float phi;  // phi
 } _genPartInfo;
 
-=======
-
-
-// generator level composite Candidate
-typedef struct {
-  float mass;
-  float pt;
-  float eta;  // pseudo rapidity
-  float y;    // rapidity
-  float phi;  // phi
-} _genPartInfo;
->>>>>>> 1.6
