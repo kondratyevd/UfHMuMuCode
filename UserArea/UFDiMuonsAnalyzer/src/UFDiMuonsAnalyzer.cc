@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.5 2012/10/10 09:10:50 digiovan Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.7 2012/10/11 15:43:36 digiovan Exp $
 //
 //
 
@@ -225,6 +225,15 @@ public:
   float _recoCandYPF;   
   float _recoCandPhiPF; 
 
+  // Vertex Constrained muon-muon info
+  float _recoCandMassVC;
+  float _recoCandMassResVC;
+  float _recoCandMassResCovVC;
+  float _recoCandPtVC;
+  float _recoCandEtaVC; 
+  float _recoCandYVC;   
+  float _recoCandPhiVC; 
+
 
   float _angleDiMuons;
   int   _vertexIsValid;
@@ -237,7 +246,36 @@ public:
 
 
   _MuonInfo _muon1, _muon2;
+  // dimuon candidates from refit with Vertex Constraint
+  _TrackInfo _muon1vc,_muon2vc;
 
+
+  // generator level info Z pre-FSR
+  _genPartInfo _genZpreFSR;
+  _TrackInfo   _genM1ZpreFSR,_genM2ZpreFSR;
+
+  // generator level info Z post-FSR
+  _genPartInfo _genZpostFSR;
+  _TrackInfo   _genM1ZpostFSR,_genM2ZpostFSR;
+
+
+  // generator level info W pre-FSR
+  _genPartInfo _genWpreFSR;
+  _TrackInfo   _genMWpreFSR;
+
+  // generator level info W post-FSR
+  _TrackInfo   _genMWpostFSR;
+
+
+  // generator level info H pre-FSR
+  _genPartInfo _genHpreFSR;
+  _TrackInfo   _genM1HpreFSR,_genM2HpreFSR;
+
+<<<<<<< UFDiMuonsAnalyzer.cc
+  // generator level info H post-FSR
+  _genPartInfo _genHpostFSR;
+  _TrackInfo   _genM1HpostFSR,_genM2HpostFSR;
+=======
   // dimuon candidates from refit with vertex constraint
   _TrackInfo _muon1vc,_muon2vc;
 
@@ -267,11 +305,30 @@ public:
   // generator level info W post-FSR
   _TrackInfo   _genMWpostFSR;
 
+>>>>>>> 1.7
 
+<<<<<<< UFDiMuonsAnalyzer.cc
+=======
   // generator level info H pre-FSR
   _genPartInfo _genHpreFSR;
   _TrackInfo   _genM1HpreFSR,_genM2HpreFSR;
+>>>>>>> 1.7
 
+<<<<<<< UFDiMuonsAnalyzer.cc
+
+  // FSR photons in the event
+  std::vector< float > gammaEta;
+  std::vector< float > gammaPhi;
+  std::vector< float > gammaPt;
+  std::vector< float > gammaMomCharge;
+  std::vector< float > gammaMomEta;
+  std::vector< float > gammaMomPhi;
+  std::vector< float > gammaMomPt;
+  std::vector< int >   gammaMomFromZ;
+  std::vector< int >   gammaMomFromH;
+  std::vector< int >   gammaMomFromW;
+
+=======
   // generator level info H post-FSR
   _genPartInfo _genHpostFSR;
   _TrackInfo   _genM1HpostFSR,_genM2HpostFSR;
@@ -289,6 +346,7 @@ public:
   std::vector< int >   gammaMomFromZ;
   std::vector< int >   gammaMomFromH;
   std::vector< int >   gammaMomFromW;
+>>>>>>> 1.7
 
   // Jets and MET
   _MetInfo     _metInfo;
@@ -314,6 +372,16 @@ private:
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void endJob() ;
 
+<<<<<<< UFDiMuonsAnalyzer.cc
+  void initMuon (_MuonInfo&  muon);
+  void initTrack(_TrackInfo& track);
+  void initGenPart(_genPartInfo& part);
+  bool checkMother(const reco::Candidate &part, int momPdgId);
+  void fillDiMuonGenPart(const reco::GenParticleCollection &genColl,
+                         _genPartInfo& part,
+                         _TrackInfo&  muon1,
+                         _TrackInfo&  muon2); 
+=======
   void initMuon   ( _MuonInfo&  muon );
   void initTrack  (_TrackInfo&  track);
   void initGenPart(_genPartInfo& part);
@@ -322,6 +390,7 @@ private:
                          _genPartInfo& part,
                          _TrackInfo&  muon1,
                          _TrackInfo&  muon2); 
+>>>>>>> 1.7
 
   virtual void beginRun(edm::Run const &, edm::EventSetup const&);
 
@@ -426,12 +495,24 @@ private:
   TLorentzVector const GetLorentzVector(UFDiMuonsAnalyzer::MuonPair  const* pair) ;//const; 
   TLorentzVector const GetLorentzVector(UFDiMuonsAnalyzer::TrackPair const* pair) ;//const; 
 
+<<<<<<< UFDiMuonsAnalyzer.cc
+  double const GetMassRes(UFDiMuonsAnalyzer::MuonPair  const* pair);
+  double const GetMassRes(UFDiMuonsAnalyzer::TrackPair const* pair);
+
+  // WW analysis mass resolution
+  CompositeCandMassResolution  CCMassResolution;
+
+  double const GetMassResCov(UFDiMuonsAnalyzer::MuonPair  const* pair);
+  double const GetMassResCov(UFDiMuonsAnalyzer::TrackPair  const* pair);
+
+=======
   double const GetMassRes(UFDiMuonsAnalyzer::MuonPair  const* pair);
   double const GetMassRes(UFDiMuonsAnalyzer::TrackPair const* pair);
 
   double const GetMassResCov(UFDiMuonsAnalyzer::MuonPair  const* pair);
   double const GetMassResCov(UFDiMuonsAnalyzer::TrackPair  const* pair);
 
+>>>>>>> 1.7
   TransientVertex const GetVertexFromPair(UFDiMuonsAnalyzer::TrackPair const* muPair) const;
   TransientVertex const GetVertexFromTracks(reco::TrackRef trackref1, reco::TrackRef trackref2) const;
 
@@ -690,8 +771,13 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
   // G E O M E T R Y
   iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder",transientTrackBuilder);
+<<<<<<< UFDiMuonsAnalyzer.cc
+  CCMassResolution.init(iSetup);
+
+=======
   // Comp Cand Mass Res
   CCMassResolution.init(iSetup);
+>>>>>>> 1.7
 
   //
   // get the sim mass if it exists
@@ -761,6 +847,38 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
         //            << ")\n\n";
         //}
         
+<<<<<<< UFDiMuonsAnalyzer.cc
+        if (abs(id) == 13)  {
+          //std::cout << "muon candidate (status=" << gen->status() 
+          //          << ", mass=" << gen->mass() 
+          //          << ", pt="   << gen->pt() 
+          //          << ", id="   << gen->pdgId()  
+          //          << ", motherId="<< gen->mother()->pdgId()
+          //          << ")\n";
+
+          int parentId = gen->mother()->pdgId();
+          
+          //const reco::Candidate &genC = *gen;
+          bool isMuonFromZ = false;
+          bool isMuonFromH = false;
+          bool isMuonFromW = false;
+           
+          // check where the muon is coming from
+          isMuonFromZ = checkMother(*gen/*genC*/,23);
+          isMuonFromW = checkMother(*gen/*genC*/,24);
+          isMuonFromH = checkMother(*gen/*genC*/,25);
+          
+          if (gen->status() == 3 && abs(id) == 13 && abs(parentId) == 23) ZPreFSR .push_back(*gen);
+          if (gen->status() == 1 && abs(id) == 13 && isMuonFromZ        ) ZPostFSR.push_back(*gen);
+          
+          if (gen->status() == 3 && abs(id) == 13 && abs(parentId) == 24) WPreFSR .push_back(*gen);
+          if (gen->status() == 1 && abs(id) == 13 && isMuonFromW        ) WPostFSR.push_back(*gen);
+          
+          if (gen->status() == 3 && abs(id) == 13 && abs(parentId) == 25) HPreFSR .push_back(*gen);
+          if (gen->status() == 1 && abs(id) == 13 && isMuonFromH        ) HPostFSR.push_back(*gen);
+          
+        } // muon 
+=======
         if (abs(id) == 13)  {
           //std::cout << "muon candidate (status=" << gen->status() 
           //          << ", mass=" << gen->mass() 
@@ -791,7 +909,66 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
           if (gen->status() == 1 && abs(id) == 13 && isMuonFromH        ) HPostFSR.push_back(*gen);
           
         } // muon 
+>>>>>>> 1.7
         
+<<<<<<< UFDiMuonsAnalyzer.cc
+        // fsr muon (check the mother is a muon
+        if (gen->status() == 1 && abs(id) == 22 && abs(gen->mother()->pdgId()) == 13) {
+          gammaEta  . push_back( gen->eta() );
+          gammaPhi  . push_back( gen->phi() );
+          gammaPt   . push_back( gen->pt()  );
+          
+          (gen->mother()->pdgId()>0) ? gammaMomCharge.push_back(1) : gammaMomCharge.push_back(-1);
+          gammaMomEta . push_back( gen->mother()->eta());
+          gammaMomPhi . push_back( gen->mother()->phi());
+          gammaMomPt  . push_back( gen->mother()->pt() );
+          
+          bool isFsrMuonFromZ = false;
+          bool isFsrMuonFromH = false;
+          bool isFsrMuonFromW = false;
+          
+          // check where the FSR muon is coming from
+          //const reco::Candidate &genMom = *(gen->mother());
+          
+          isFsrMuonFromZ = checkMother(*(gen->mother())/*genMom*/,23);
+          isFsrMuonFromW = checkMother(*(gen->mother())/*genMom*/,24);
+          isFsrMuonFromH = checkMother(*(gen->mother())/*genMom*/,25);
+          
+          (isFsrMuonFromZ) ? gammaMomFromZ.push_back(isFsrMuonFromZ) : gammaMomFromZ.push_back(-999);
+          (isFsrMuonFromW) ? gammaMomFromW.push_back(isFsrMuonFromW) : gammaMomFromW.push_back(-999);
+          (isFsrMuonFromH) ? gammaMomFromH.push_back(isFsrMuonFromH) : gammaMomFromH.push_back(-999);
+                   
+        } // fsr muon
+      } // loop over gen level
+    
+    
+    // fill
+    // Z block
+    fillDiMuonGenPart (ZPreFSR, _genZpreFSR, _genM1ZpreFSR, _genM2ZpreFSR );
+    fillDiMuonGenPart (ZPostFSR,_genZpostFSR,_genM1ZpostFSR,_genM2ZpostFSR);
+                       
+    // W block
+    if (WPreFSR.size() == 1) {
+      _genMWpreFSR.charge = WPreFSR[0].charge(); 
+      _genMWpreFSR.pt     = WPreFSR[0].pt(); 
+      _genMWpreFSR.eta    = WPreFSR[0].eta(); 
+      _genMWpreFSR.phi    = WPreFSR[0].phi();	
+    }
+    
+    if (WPostFSR.size() == 1) {
+      _genMWpostFSR.charge = WPostFSR[0].charge(); 
+      _genMWpostFSR.pt     = WPostFSR[0].pt(); 
+      _genMWpostFSR.eta    = WPostFSR[0].eta(); 
+      _genMWpostFSR.phi    = WPostFSR[0].phi();	
+    }
+
+    // H block         
+    fillDiMuonGenPart (HPreFSR, _genHpreFSR, _genM1HpreFSR, _genM2HpreFSR );
+    fillDiMuonGenPart (HPostFSR,_genHpostFSR,_genM1HpostFSR,_genM2HpostFSR);
+    
+  }// end _isMonteCarlo
+
+=======
         // fsr muon (check the mother is a muon
         if (gen->status() == 1 && abs(id) == 22 && abs(gen->mother()->pdgId()) == 13) {
           gammaEta  . push_back( gen->eta() );
@@ -848,6 +1025,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     
   }// end _isMonteCarlo
 
+>>>>>>> 1.7
 
   // ===========================================================================
   // M U O N S
@@ -899,12 +1077,21 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   initMuon(_muon1);
   initMuon(_muon2);
 
+<<<<<<< UFDiMuonsAnalyzer.cc
+  initTrack(_muon1vc);
+  initTrack(_muon2vc);
+
+  _recoCandMass = -999;
+  _recoCandMassRes    = -999;
+  _recoCandMassResCov = -999;
+=======
   initTrack(_muon1vc);
   initTrack(_muon2vc);
 
   _recoCandMass = -999; 
   _recoCandMassRes = -999;
   _recoCandMassResCov = -999;
+>>>>>>> 1.7
   _recoCandPt   = -999;
   _recoCandEta  = -999;
   _recoCandY    = -999;
@@ -917,6 +1104,16 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   _recoCandYPF    = -999;
   _recoCandPhiPF  = -999;
 
+<<<<<<< UFDiMuonsAnalyzer.cc
+  _recoCandMassVC = -999; 
+  _recoCandMassResVC    = -999;
+  _recoCandMassResCovVC = -999;
+  _recoCandPtVC   = -999;
+  _recoCandEtaVC  = -999;
+  _recoCandYVC    = -999;
+  _recoCandPhiVC  = -999;
+
+=======
   _recoCandMassVC = -999; 
   _recoCandMassResVC = -999;
   _recoCandMassResCovVC = -999;
@@ -926,6 +1123,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   _recoCandPhiVC  = -999;
 
 
+>>>>>>> 1.7
   _angleDiMuons = -999;
   _vertexIsValid = -999;
   _vertexNormChiSquare = -999;
@@ -1318,7 +1516,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     _recoCandMassRes    = GetMassRes(&*pair);
     _recoCandMassResCov = GetMassResCov(&*pair);
     _recoCandPt   = mother.Pt();
-    
+    _recoCandMassRes    = GetMassRes(&*pair);
+    _recoCandMassResCov = GetMassResCov(&*pair);
     _recoCandEta  = mother.PseudoRapidity();
     _recoCandY    = mother.Rapidity();
     _recoCandPhi  = mother.Phi();
@@ -1363,12 +1562,59 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       _vertexX = vtx.position().x();
       _vertexY = vtx.position().y();
       _vertexZ = vtx.position().z();
+<<<<<<< UFDiMuonsAnalyzer.cc
+    
+      // refit the candidates (only if the vertex is valid ;-) )
+      refitTrack1 = vtx.refittedTracks().front().track();
+      refitTrack2 = vtx.refittedTracks().back().track();
+
+=======
 
       // refit the candidates (only if the vertex is valid ;-) )
       refitTrack1 = vtx.refittedTracks().front().track();
       refitTrack2 = vtx.refittedTracks().back().track();
+>>>>>>> 1.7
     }
 
+<<<<<<< UFDiMuonsAnalyzer.cc
+    // combine the refit info into a dimuon candidate
+    TrackPair refitTrackPair(refitTrack1,refitTrack2);
+    
+    TLorentzVector motherRefit=GetLorentzVector(&refitTrackPair); 
+    
+    _recoCandMassVC = motherRefit.M(); 
+    _recoCandMassResVC    = GetMassRes   (&refitTrackPair);
+    _recoCandMassResCovVC = GetMassResCov(&refitTrackPair);
+    _recoCandPtVC   = motherRefit.Pt();
+    _recoCandEtaVC  = motherRefit.PseudoRapidity();
+    _recoCandYVC    = motherRefit.Rapidity();
+    _recoCandPhiVC  = motherRefit.Phi();
+
+    // muon 1 refit info
+    _muon1vc.charge = refitTrack1.charge(); 
+    _muon1vc.pt     = refitTrack1.pt(); 
+    _muon1vc.ptErr  = refitTrack1.ptError(); 
+    _muon1vc.eta    = refitTrack1.eta(); 
+    _muon1vc.phi    = refitTrack1.phi();
+    
+    _muon2vc.charge = refitTrack2.charge(); 
+    _muon2vc.pt     = refitTrack2.pt(); 
+    _muon2vc.ptErr  = refitTrack2.ptError(); 
+    _muon2vc.eta    = refitTrack2.eta(); 
+    _muon2vc.phi    = refitTrack2.phi();
+    
+//     if (_recoCandMass > 60 && _recoCandMass < 160) {
+
+//        std::cout << "\n\n ======= dimuon candidate ======= \n\n";
+//        std::cout <<    " Mass(mm): " << _recoCandMass   
+//                  << ", MassVC(mm): " << _recoCandMassVC 
+//                  << std::endl; 
+    
+//        std::cout <<    " pT(mm): " << _recoCandPt 
+//                  << ", pTVC(mm): " << _recoCandPtVC 
+//                  << std::endl; 
+//     }
+=======
     
     // combine the refit info into a dimuon candidate
     TrackPair refitTrackPair(refitTrack1,refitTrack2);
@@ -1430,6 +1676,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 //                 << std::endl;
 
 //     }
+>>>>>>> 1.7
 
     // ===========================================================================
     // Jet Info
@@ -1717,6 +1964,10 @@ void UFDiMuonsAnalyzer::beginJob()
                    "hltEta[3]/F:"
                    "hltPhi[3]/F");
 
+  _outTree->Branch("reco1vc", &_muon1vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
+  _outTree->Branch("reco2vc", &_muon2vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+
   _outTree->Branch("hltPaths",    &triggerNames_);
   _outTree->Branch("filterNames", &filterNames_ );
   _outTree->Branch("l1Prescale",  &l1Prescale_  );
@@ -1724,9 +1975,15 @@ void UFDiMuonsAnalyzer::beginJob()
  
 
   // mass and pt for the fit
+<<<<<<< UFDiMuonsAnalyzer.cc
+  _outTree->Branch("recoCandMass", &_recoCandMass, "recoCandMass/F");
+  _outTree->Branch("recoCandMassRes",   &_recoCandMassRes,   "recoCandMassRes/F");
+  _outTree->Branch("recoCandMassResCov",&_recoCandMassResCov,"recoCandMassResCov/F");
+=======
   _outTree->Branch("recoCandMass",   &_recoCandMass,   "recoCandMass/F");
   _outTree->Branch("recoCandMassRes",&_recoCandMassRes,"recoCandMassRes/F");
   _outTree->Branch("recoCandMassResCov",&_recoCandMassResCov,"recoCandMassResCov/F");
+>>>>>>> 1.7
   _outTree->Branch("recoCandPt"  , &_recoCandPt  , "recoCandPt/F");
   _outTree->Branch("recoCandEta" , &_recoCandEta , "recoCandEta/F");
   _outTree->Branch("recoCandY"   , &_recoCandY   , "recoCandY/F");
@@ -1739,6 +1996,16 @@ void UFDiMuonsAnalyzer::beginJob()
   _outTree->Branch("recoCandYPF"   , &_recoCandYPF   , "recoCandYPF/F");
   _outTree->Branch("recoCandPhiPF" , &_recoCandPhiPF , "recoCandPhiPF/F");
 
+<<<<<<< UFDiMuonsAnalyzer.cc
+  _outTree->Branch("recoCandMassVC", &_recoCandMassVC, "recoCandMassVC/F");
+  _outTree->Branch("recoCandMassResVC",   &_recoCandMassResVC,   "recoCandMassResVC/F");
+  _outTree->Branch("recoCandMassResCovVC",&_recoCandMassResCovVC,"recoCandMassResCovVC/F");
+  _outTree->Branch("recoCandPtVC"  , &_recoCandPtVC  , "recoCandPtVC/F");
+  _outTree->Branch("recoCandEtaVC" , &_recoCandEtaVC , "recoCandEtaVC/F");
+  _outTree->Branch("recoCandYVC"   , &_recoCandYVC   , "recoCandYVC/F");
+  _outTree->Branch("recoCandPhiVC" , &_recoCandPhiVC , "recoCandPhiVC/F");
+
+=======
   _outTree->Branch("reco1vc", &_muon1vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
   _outTree->Branch("reco2vc", &_muon2vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
 
@@ -1750,6 +2017,7 @@ void UFDiMuonsAnalyzer::beginJob()
   _outTree->Branch("recoCandYVC"   , &_recoCandYVC   , "recoCandYVC/F");
   _outTree->Branch("recoCandPhiVC" , &_recoCandPhiVC , "recoCandPhiVC/F");
 
+>>>>>>> 1.7
   _outTree->Branch("angleDiMuons",        &_angleDiMuons       ,"angleDiMuons/F");
   _outTree->Branch("vertexIsValid",       &_vertexIsValid      ,"vertexIsValid/I");          
   _outTree->Branch("vertexNormChiSquare", &_vertexNormChiSquare,"vertexNormChiSquare/F");  
@@ -1771,6 +2039,46 @@ void UFDiMuonsAnalyzer::beginJob()
 
   // MC information
   if (_isMonteCarlo) {
+<<<<<<< UFDiMuonsAnalyzer.cc
+
+    _outTree->Branch("genZpreFSR",  &_genZpreFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genM1ZpreFSR",&_genM1ZpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genM2ZpreFSR",&_genM2ZpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+    _outTree->Branch("genZpostFSR",  &_genZpostFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genM1ZpostFSR",&_genM1ZpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genM2ZpostFSR",&_genM2ZpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+    // W block
+    _outTree->Branch("genWpreFSR",  &_genWpreFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genMWpreFSR", &_genMWpreFSR ,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genMWpostFSR",&_genMWpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+    // H block
+    _outTree->Branch("genHpreFSR",  &_genHpreFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genM1HpreFSR",&_genM1HpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genM2HpreFSR",&_genM2HpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+    _outTree->Branch("genHpostFSR",  &_genHpostFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genM1HpostFSR",&_genM1HpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genM2HpostFSR",&_genM2HpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+
+    // FSR
+    _outTree->Branch("gammaEta",   &gammaEta);  
+    _outTree->Branch("gammaPhi",   &gammaPhi);  
+    _outTree->Branch("gammaPt",    &gammaPt);   
+
+    _outTree->Branch("gammaMomCharge", &gammaMomCharge);
+    _outTree->Branch("gammaMomEta",    &gammaMomEta);   
+    _outTree->Branch("gammaMomPhi",    &gammaMomPhi);   
+    _outTree->Branch("gammaMomPt",     &gammaMomPt);    
+
+    _outTree->Branch("gammaMomFromZ", &gammaMomFromZ);
+    _outTree->Branch("gammaMomFromH", &gammaMomFromH);
+    _outTree->Branch("gammaMomFromW", &gammaMomFromW);
+
+=======
 
     // Z block
     _outTree->Branch("genZpreFSR",  &_genZpreFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
@@ -1810,6 +2118,7 @@ void UFDiMuonsAnalyzer::beginJob()
     _outTree->Branch("gammaMomFromH", &gammaMomFromH);
     _outTree->Branch("gammaMomFromW", &gammaMomFromW);
 
+>>>>>>> 1.7
 
     _outTree->Branch("genJets", &_genJetInfo, "nJets/I:px[10]/F:py[10]/F:pz[10]/F:pt[10]/F:eta[10]/F:phi[10]/F:mass[10]/F:charge[10]/I");
 
@@ -1864,6 +2173,112 @@ TLorentzVector const UFDiMuonsAnalyzer::GetLorentzVector(UFDiMuonsAnalyzer::Trac
   
 }
 
+<<<<<<< UFDiMuonsAnalyzer.cc
+
+
+double const UFDiMuonsAnalyzer::GetMassRes(UFDiMuonsAnalyzer::MuonPair const* pair) {
+
+  double const MASS_MUON = 0.105658367;    //GeV/c2
+  
+  // get the dimuon candidate
+  TLorentzVector dimuon = GetLorentzVector(pair);
+
+  // get the dimuon mass
+  double dimuonMass = dimuon.M();
+
+  // get the reference to the 2 single muons
+  reco::Track const track1 = *(pair->first .innerTrack());
+  reco::Track const track2 = *(pair->second.innerTrack());
+
+
+  TLorentzVector muon1withError, muon2, dimuon_var1; 
+  muon1withError.SetPtEtaPhiM(track1.pt()+track1.ptError(), 
+                              track1.eta(), track1.phi(), MASS_MUON);
+  muon2.SetPtEtaPhiM(track2.pt(), track2.eta(), track2.phi(), MASS_MUON);
+  dimuon_var1 = muon1withError+muon2;
+  double deltaM1 = fabs(dimuon_var1.M() - dimuonMass );
+  
+  TLorentzVector muon1, muon2withError, dimuon_var2; 
+  muon1.SetPtEtaPhiM(track1.pt(), track1.eta(), track1.phi(), MASS_MUON);
+  muon2withError.SetPtEtaPhiM(track2.pt()+track2.ptError(), 
+                              track2.eta(), track2.phi(), MASS_MUON);
+  dimuon_var2 = muon1+muon2withError;
+  double deltaM2 = fabs(dimuon_var2.M() - dimuonMass );
+
+  return std::sqrt( (deltaM1*deltaM1) + (deltaM2*deltaM2) );
+
+}
+
+double const UFDiMuonsAnalyzer::GetMassRes(UFDiMuonsAnalyzer::TrackPair const* pair) {
+
+  double const MASS_MUON = 0.105658367;    //GeV/c2
+  
+  // get the dimuon candidate
+  TLorentzVector dimuon = GetLorentzVector(pair);
+
+  // get the dimuon mass
+  double dimuonMass = dimuon.M();
+
+  // get the reference to the 2 single muons
+  reco::Track const track1 = pair->first ;
+  reco::Track const track2 = pair->second;
+
+
+  TLorentzVector muon1withError, muon2, dimuon_var1; 
+  muon1withError.SetPtEtaPhiM(track1.pt()+track1.ptError(), 
+                              track1.eta(), track1.phi(), MASS_MUON);
+  muon2.SetPtEtaPhiM(track2.pt(), track2.eta(), track2.phi(), MASS_MUON);
+  dimuon_var1 = muon1withError+muon2;
+  double deltaM1 = fabs(dimuon_var1.M() - dimuonMass );
+  
+  TLorentzVector muon1, muon2withError, dimuon_var2; 
+  muon1.SetPtEtaPhiM(track1.pt(), track1.eta(), track1.phi(), MASS_MUON);
+  muon2withError.SetPtEtaPhiM(track2.pt()+track2.ptError(), 
+                              track2.eta(), track2.phi(), MASS_MUON);
+  dimuon_var2 = muon1+muon2withError;
+  double deltaM2 = fabs(dimuon_var2.M() - dimuonMass );
+
+  return sqrt( (deltaM1*deltaM1) + (deltaM2*deltaM2) );
+
+}
+
+
+
+double const UFDiMuonsAnalyzer::GetMassResCov(UFDiMuonsAnalyzer::MuonPair const* pair) {
+
+  std::vector<reco::Track> leaves;
+  
+  reco::Track mu1  = *(pair->first .innerTrack());
+  reco::Track mu2  = *(pair->second.innerTrack());
+
+  leaves.push_back(mu1);
+  leaves.push_back(mu2);
+
+  TLorentzVector mother=GetLorentzVector(pair);
+  
+  double massRes = CCMassResolution.getMassResolution(leaves,mother);
+  return massRes;
+}
+
+double const UFDiMuonsAnalyzer::GetMassResCov(UFDiMuonsAnalyzer::TrackPair const* pair) {
+
+  std::vector<reco::Track> leaves;
+  
+  reco::Track mu1  = pair->first;
+  reco::Track mu2  = pair->second;
+
+  leaves.push_back(mu1);
+  leaves.push_back(mu2);
+
+  TLorentzVector mother=GetLorentzVector(pair);
+  
+  double massRes = CCMassResolution.getMassResolution(leaves,mother);
+  return massRes;
+}
+
+
+
+=======
 
 double const UFDiMuonsAnalyzer::GetMassRes(UFDiMuonsAnalyzer::MuonPair const* pair) {
 
@@ -1966,6 +2381,7 @@ double const UFDiMuonsAnalyzer::GetMassRes(UFDiMuonsAnalyzer::TrackPair const* p
 
 }
 
+>>>>>>> 1.7
 // 
 // get vertex fit from two muons
 // 
@@ -2642,6 +3058,101 @@ void UFDiMuonsAnalyzer::initMuon(_MuonInfo& muon) {
     muon.hltPhi[iTrigger] = -999;
   }
 
+}
+
+void UFDiMuonsAnalyzer::initTrack(_TrackInfo& track) {
+
+  track.charge = -999; 
+  track.pt     = -999; 
+  track.ptErr  = -999;
+  track.eta    = -999; 
+  track.phi    = -999;
+
+}
+
+void UFDiMuonsAnalyzer::initGenPart(_genPartInfo& part){
+  part.mass = -999;
+  part.pt   = -999;
+  part.eta  = -999;
+  part.y    = -999;
+  part.phi  = -999;
+}
+
+bool UFDiMuonsAnalyzer::checkMother(const reco::Candidate &part,
+                                    int momPdgId){
+  
+  bool matchFound = false;
+
+  // loop over all the mothers
+  int nMothers = part.numberOfMothers();
+  bool hasMother = nMothers ? true : false;
+  const reco::Candidate *mom = NULL;
+  if (hasMother) mom=part.mother();          
+
+  while (hasMother && mom) {
+    // exit if
+    // 1. match is found
+    //std::cout << "   --- momPdgId = " << mom->pdgId() << std::endl;
+    if (abs(mom->pdgId()) == abs(momPdgId)) {
+      matchFound = true;
+      hasMother=false;
+    }
+
+    // 2. we are at the parton level
+    if (abs(mom->pdgId()) < 10) hasMother=false;
+ 
+    // 3. there is no other mom
+    if (mom->numberOfMothers() == 0) mom=NULL;
+    else                             mom=mom->mother();
+    
+  }
+  
+  mom = NULL;
+  delete mom;
+
+  return matchFound;
+  
+}
+
+void UFDiMuonsAnalyzer::fillDiMuonGenPart(const reco::GenParticleCollection &genColl,
+                                          _genPartInfo& part,
+                                          _TrackInfo&  muon1,
+                                          _TrackInfo&  muon2) {
+
+  
+  if (genColl.size() != 2) return;
+  
+   muon1.charge = genColl[0].charge(); 
+   muon1.pt     = genColl[0].pt(); 
+   muon1.eta    = genColl[0].eta(); 
+   muon1.phi    = genColl[0].phi();	
+
+   muon2.charge = genColl[1].charge(); 
+   muon2.pt     = genColl[1].pt(); 
+   muon2.eta    = genColl[1].eta(); 
+   muon2.phi    = genColl[1].phi();	
+
+   TLorentzVector vtrue1, vtrue2, vtrueMother;
+
+   vtrue1.SetPtEtaPhiM(genColl[0].pt(), 
+                       genColl[0].eta(), 
+                       genColl[0].phi(), 
+                       genColl[0].mass());
+
+   vtrue2.SetPtEtaPhiM(genColl[1].pt(), 
+                       genColl[1].eta(), 
+                       genColl[1].phi(), 
+                       genColl[1].mass());
+
+   vtrueMother = vtrue1+vtrue2;	
+
+   part.mass = vtrueMother.M();
+   part.pt   = vtrueMother.Pt();
+   part.eta  = vtrueMother.PseudoRapidity();
+   part.y    = vtrueMother.Rapidity();
+   part.phi  = vtrueMother.Phi();
+   
+   return;
 }
 
 
