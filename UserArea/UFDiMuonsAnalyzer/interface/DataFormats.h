@@ -11,16 +11,16 @@ typedef struct {
 // vertex info
 typedef struct{
   int nVertices;
-  int isValid[80];
-  float x[80];	
-  float y[80];	
-  float z[80];	
-  float xErr[80];	
-  float yErr[80];	
-  float zErr[80];	
-  float chi2[80];
-  int ndf[80];
-  float normChi2[80];
+  int isValid[20];
+  float x[20];	
+  float y[20];	
+  float z[20];	
+  float xErr[20];	
+  float yErr[20];	
+  float zErr[20];	
+  float chi2[20];
+  int ndf[20];
+  float normChi2[20];
 } _VertexInfo;
 
 
@@ -204,4 +204,3 @@ typedef struct {
   float y;    // rapidity
   float phi;  // phi
 } _genPartInfo;
-
