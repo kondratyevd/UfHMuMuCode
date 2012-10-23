@@ -163,6 +163,8 @@ typedef struct {
   float jecFactor[10];
   // Jet Energy Correction Uncertainty
   float jecUnc[10];
+  // b-Tag
+  float csv[10];
   // Gen Jet Values
   bool genMatched[10];
   float genPx[10];

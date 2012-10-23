@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.4 2012/09/19 15:05:19 digiovan Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.10 2012/10/22 12:10:49 digiovan Exp $
 //
 //
 
@@ -1554,6 +1554,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
           jecUncCalculator->setJetPt(jet.pt()); // here you must use the CORRECTED jet pt
           _pfJetInfo.jecUnc[i] = jecUncCalculator->getUncertainty(true);
           _pfJetInfo.jecFactor[i]  = jet.jecFactor("Uncorrected");
+      // b-Tag
+          _pfJetInfo.csv[i]  = jet.bDiscriminator("combinedSecondaryVertexBJetTags");
 	  //PAT matched Generator Jet
 	  const reco::GenJet* genJet = jet.genJet();
 	  if (genJet != NULL)
@@ -1835,7 +1837,7 @@ void UFDiMuonsAnalyzer::beginJob()
   _outTree->Branch("vertexZ",             &_vertexZ            ,"vertexZ/F");              
 
   _outTree->Branch("met",    &_metInfo,   "px/F:py/F:pt/F:phi/F:sumEt/F");
-  _outTree->Branch("pfJets", &_pfJetInfo, "nJets/I:px[10]/F:py[10]/F:pz[10]/F:pt[10]/F:eta[10]/F:phi[10]/F:mass[10]/F:charge[10]/I:partonFlavour[10]:chf[10]/F:nhf[10]/F:cef[10]/F:nef[10]/F:muf[10]/F:hfhf[10]/F:hfef[10]/F:cm[10]/I:chm[10]/I:nhm[10]/I:cem[10]/I:nem[10]/I:mum[10]/I:hfhm[10]/I:hfem[10]/I:jecFactor[10]/F:jecUnc[10]/F:genPx[10]/F:genPy[10]/F:genPz[10]/F:genPt[10]/F:genEta[10]/F:genPhi[10]/F:genMass[10]/F:genEMF[10]/F:genHadF[10]/F:genInvF[10]/F:genAux[10]/F");
+  _outTree->Branch("pfJets", &_pfJetInfo, "nJets/I:px[10]/F:py[10]/F:pz[10]/F:pt[10]/F:eta[10]/F:phi[10]/F:mass[10]/F:charge[10]/I:partonFlavour[10]:chf[10]/F:nhf[10]/F:cef[10]/F:nef[10]/F:muf[10]/F:hfhf[10]/F:hfef[10]/F:cm[10]/I:chm[10]/I:nhm[10]/I:cem[10]/I:nem[10]/I:mum[10]/I:hfhm[10]/I:hfem[10]/I:jecFactor[10]/F:jecUnc[10]/F:csv[10]/F:genPx[10]/F:genPy[10]/F:genPz[10]/F:genPt[10]/F:genEta[10]/F:genPhi[10]/F:genMass[10]/F:genEMF[10]/F:genHadF[10]/F:genInvF[10]/F:genAux[10]/F");
 
   _outTree->Branch("puJetFullDisc", 	&_puJetFullDisc 	 ,"puJetFullDisc[10]/F");              
   _outTree->Branch("puJetFullId", 	&_puJetFullId   	,"puJetFullId[10]/F");              
