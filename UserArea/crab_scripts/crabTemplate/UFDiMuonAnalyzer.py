@@ -48,7 +48,7 @@ else:
 
 process.dimuons.checkTrigger   = cms.bool(False)
 process.dimuons.processName    = cms.string("HLT")
-process.dimuons.triggerNames   = cms.vstring("HLT_Mu40_eta2p1","HLT_Mu17_TkMu8","HLT_Mu17_Mu8")
+process.dimuons.triggerNames   = cms.vstring("TRIGGERLIST")
 process.dimuons.triggerResults = cms.InputTag("TriggerResults","","HLT")
 process.dimuons.triggerEvent   = cms.InputTag("hltTriggerSummaryAOD","","HLT")
 

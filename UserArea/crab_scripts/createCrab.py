@@ -34,6 +34,11 @@ parser.add_option('-g', '--globaltag',
                   dest='globalTag',
                   action='store')
 
+parser.add_option('--hlt', 
+                  help='specify the list of triggers (mandatory)',
+                  dest='triggerstring',
+                  action='store')
+
 parser.add_option('-j', '--json',
                   help='specify the json file: isData flag will be set to true',
                   dest='jsonFile',
@@ -44,7 +49,7 @@ parser.add_option('-j', '--json',
 
 
 # Sanity check: Making sure all mandatory options appeared
-mandatories = ['CMSSW', 'dataset', 'ntupleName', 'cafFolder','globalTag']
+mandatories = ['CMSSW', 'dataset', 'ntupleName', 'cafFolder','globalTag', 'triggerstring']
 for m in mandatories:
     if not opts.__dict__[m]:
         print "at least mandatory option is missing\n"
@@ -76,7 +81,6 @@ localFolder += opts.cafFolder.split("/")[-3]
 localFolder += opts.cafFolder.split("/")[-2]
 localFolder += opts.cafFolder.split("/")[-1]
 #localFolder.join(seq)
-
 
 print '1) creating caf Folder %s\n' % opts.cafFolder
 os.system('cmsMkdir %s/%s' % (cafPath,opts.cafFolder) )
@@ -124,20 +128,24 @@ if isData:
               "| sed -e \'s/yourNtuple/%s/g\' " \
               "| sed -e \'s/GLOBALTAG/%s/g\' " \
               "| sed -e \'s/thisIsData = False/thisIsData = True/g\' " \
+              "| sed -e \'s/TRIGGERLIST/%s/g\' " \
               "> %s/UFDiMuonAnalyzer.py"
               % (cmssw_py_file,
                  opts.ntupleName,
                  opts.globalTag,
+                 opts.triggerstring.replace(",","\",\""),
                  localFolder)
               )
 else:
     os.system("cat crabTemplate/%s " \
               "| sed -e \'s/yourNtuple/%s/g\' " \
               "| sed -e \'s/GLOBALTAG/%s/g\' " \
+              "| sed -e \'s/TRIGGERLIST/%s/g\' " \
               "> %s/UFDiMuonAnalyzer.py"
               % (cmssw_py_file,
                  opts.ntupleName,
                  opts.globalTag,
+                 opts.triggerstring.replace(",","\",\""),
                  localFolder)
               )
     

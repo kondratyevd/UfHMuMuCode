@@ -1,0 +1,6 @@
+
+cmsMkdir /store/user/digiovan/higgs/CMSSW_5_3_3_patch3/V00-01-00/
+cmsMkdir /store/user/digiovan/higgs/CMSSW_5_3_3_patch3/V00-01-00/Ntuples/
+cmsMkdir /store/user/digiovan/higgs/CMSSW_5_3_3_patch3/V00-01-00/Ntuples/MC/
+cmsMkdir /store/user/digiovan/higgs/CMSSW_5_3_3_patch3/V00-01-00/Ntuples/Data/
+
