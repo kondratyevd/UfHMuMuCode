@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.10 2012/10/22 12:10:49 digiovan Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.11 2012/10/23 11:01:51 jhugon Exp $
 //
 //
 
@@ -158,7 +158,9 @@ public:
   ~UFDiMuonsAnalyzer();
   
   int _numEvents;
-  edm::ESHandle<TransientTrackBuilder> transientTrackBuilder;
+  //edm::ESHandle<TransientTrackBuilder> transientTrackBuilder;
+  // Refit
+  const TransientTrackBuilder * transientTrackBuilder;
 
   edm::ESHandle<GlobalTrackingGeometry> globalTrackingGeometry;
   //  MuonServiceProxy* theService;
@@ -718,7 +720,13 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
 
   // G E O M E T R Y
-  iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder",transientTrackBuilder);
+  //iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder",transientTrackBuilder);
+
+  // Get transient track builder
+  //edm::ESHandle<TransientTrackBuilder> builder;
+  //es.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
+  //theTTBuilder = builder.product();
+
   CCMassResolution.init(iSetup);
 
   //
@@ -1438,11 +1446,9 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       // check the vertex is valid
       if (!vtx->isValid()) continue;
     
-      reco::TransientTrack ttk1;
-      reco::TransientTrack ttk2;
+      reco::TransientTrack ttk1 = trackWithVtxConstr(*mu1.innerTrack(),*vtx,beamSpotHandle);
+      reco::TransientTrack ttk2 = trackWithVtxConstr(*mu2.innerTrack(),*vtx,beamSpotHandle);
       // refit the candidates (only if the vertex is valid ;-) )
-      ttk1 = trackWithVtxConstr(*mu1.innerTrack(),*vtx,beamSpotHandle);
-      ttk2 = trackWithVtxConstr(*mu2.innerTrack(),*vtx,beamSpotHandle); 
 
       reco::Track refitTrack1_pvc = ttk1.track();
       reco::Track refitTrack2_pvc = ttk2.track();
@@ -1950,13 +1956,9 @@ TLorentzVector const UFDiMuonsAnalyzer::GetLorentzVector(UFDiMuonsAnalyzer::Trac
 // get vertex fit from two muons
 // 
 TransientVertex const UFDiMuonsAnalyzer::GetVertexFromPair(UFDiMuonsAnalyzer::TrackPair const* muPair) const {
-  //  reco::TransientTrack ttrk1 = (*transientTrackBuilder).build(*muPair.first.globalTrack());
-  //  reco::TransientTrack ttrk2 = (*transientTrackBuilder).build(*muPair.second.globalTrack());
-  //  reco::TransientTrack ttrk1 = (*transientTrackBuilder).build(*muPair.first.innerTrack());
-  //  reco::TransientTrack ttrk2 = (*transientTrackBuilder).build(*muPair.second.innerTrack());
   reco::TransientTrack ttrk1 = (*transientTrackBuilder).build(muPair->first);
   reco::TransientTrack ttrk2 = (*transientTrackBuilder).build(muPair->second);
-		
+	
   std::vector<reco::TransientTrack> t_trks; t_trks.clear();
   t_trks.push_back(ttrk1);
   t_trks.push_back(ttrk2);
@@ -2089,9 +2091,8 @@ reco::TransientTrack UFDiMuonsAnalyzer::trackWithVtxConstr(const reco::Track & r
                                                            const reco::Vertex & vertex,
                                                            edm::Handle<reco::BeamSpot> beamSpotHandle) {
 
-  reco::TransientTrack theTransientTrack = 
-    (*transientTrackBuilder).build(recTrack);
-  
+  reco::TransientTrack theTransientTrack = (*transientTrackBuilder).build(recTrack);
+
   // Get vertex position and error matrix
   GlobalPoint vertexPosition(vertex.position().x(),
                              vertex.position().y(),
@@ -2102,14 +2103,26 @@ reco::TransientTrack UFDiMuonsAnalyzer::trackWithVtxConstr(const reco::Track & r
   GlobalError vertexError(beamSize*beamSize, 0,
                           beamSize*beamSize, 0,
                           0,vertex.covariance(2,2));
-  
-  // Refit track with vertex constraint
-  SingleTrackVertexConstraint stvc;
-  SingleTrackVertexConstraint::BTFtuple result =
-    stvc.constrain(theTransientTrack, vertexPosition, vertexError);
 
-  return result.get<1>();
+  // Temporary hack here. A fix in the SingleTrackVertexConstraint code
+  // is needed. Once available try&catch will be removed 
+  try{
+    // Refit track with vertex constraint
+    SingleTrackVertexConstraint stvc;
+    SingleTrackVertexConstraint::BTFtuple result =
+      stvc.constrain(theTransientTrack, vertexPosition, vertexError);
+
+    if ( result.get<1>().isValid() && result.get<2>() < 1000000 ) return result.get<1>();  
+    else return theTransientTrack;
+  }
+  catch(cms::Exception& e) {
+    edm::LogWarning("UFDiMuonsAnalyzer") << "cms::Exception caught in UFDiMuonsAnalyzer::trackWithVtxConstr\n"
+                                         << "Exception from SingleTrackVertexConstraint\n"
+                                         << e.explainSelf();
+    return theTransientTrack;
+  }
 }
+
 
 // check the HLT configuration for each run. It may change you know ;-)
 void UFDiMuonsAnalyzer::beginRun(edm::Run const& iRun, 
@@ -2172,6 +2185,11 @@ void UFDiMuonsAnalyzer::beginRun(edm::Run const& iRun,
                                              <<"in the python file... ";
     
   }
+
+  // Get transient track builder
+  edm::ESHandle<TransientTrackBuilder> builder;
+  iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
+  transientTrackBuilder = builder.product();
 
 
 }

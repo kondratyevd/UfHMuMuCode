@@ -33,7 +33,6 @@ typedef struct {
   float phi;
 } _TrackInfo;
 
-
 // muon info
 typedef struct {
 
