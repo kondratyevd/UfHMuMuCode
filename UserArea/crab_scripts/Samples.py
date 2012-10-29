@@ -178,7 +178,7 @@ HLT_Single = 'HLT_IsoMu24,HLT_Mu40_eta2p1'
 HLT_Double = 'HLT_Mu17_Mu8,HLT_Mu17_TkMu8'
 #  mc
 HLT_MC     = 'HLT_IsoMu24,HLT_Mu17_Mu8,HLT_Mu17_TkMu8' #For 2012 Samples
-#HLT_MC     = 'HLT_IsoMu24,HLT_Mu17_Mu8,HLT_Mu17_TkMu8' #For 2011 Samples
+#HLT_MC     = 'HLT_IsoMu24,HLT_Mu17_Mu8' #For 2011 Samples
 
 # cmssw version
 cmssw = 'CMSSW_5_3_3_patch3' #2012
