@@ -102,6 +102,16 @@ DATASamples = [
                'GR_P_V41_AN2',
                '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-203002_8TeV_PromptReco_Collisions12_JSON.txt'),
 
+    # single mu 2011 datasets
+    datasample('SingleMuRun2011A',
+               '/SingleMu/Run2011A-08Nov2011-v1/AOD', 'SingleMuRun2011A-08Nov2011-v1', 'SingleMuRun2011A-08Nov2011-v1',
+               'FT44_V9_AN1',
+               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Reprocessing/Cert_160404-180252_7TeV_ReRecoNov08_Collisions11_JSON_v2.txt'),
+    datasample('SingleMuRun2011B',
+               '/SingleMu/Run2011B-19Nov2011-v1/AOD', 'SingleMuRun2011B-19Nov2011-v1', 'SingleMuRun2011B-19Nov2011-v1',
+               ' FT44_V11_AN1',
+               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions11/7TeV/Reprocessing/Cert_160404-180252_7TeV_ReRecoNov08_Collisions11_JSON_v2.txt'),
+
     #double mu datasets
     datasample('DoubleMuRun2012A',
                '/DoubleMu/Run2012A-13Jul2012-v1/AOD', 'DoubleMuRun2012A-13Jul2012-v1', 'DoubleMuRun2012A-13Jul2012-v1',
@@ -123,6 +133,8 @@ DATASamples = [
 
 # these are the triggers' strings
 #  data
+HLT_Single2011A = 'HLT_IsoMu24,HLT_Mu40'
+HLT_Single2011B = 'HLT_IsoMu24_eta2p1,HLT_Mu40_eta2p1'
 HLT_Single2012A = 'HLT_IsoMu24_eta2p1,HLT_Mu40_eta2p1'
 HLT_Single = 'HLT_IsoMu24,HLT_Mu40_eta2p1'
 HLT_Double = 'HLT_Mu17_Mu8,HLT_Mu17_TkMu8'
@@ -130,7 +142,8 @@ HLT_Double = 'HLT_Mu17_Mu8,HLT_Mu17_TkMu8'
 HLT_MC     = 'HLT_IsoMu24,HLT_Mu17_Mu8,HLT_Mu17_TkMu8'
 
 # cmssw version
-cmssw = 'CMSSW_5_3_3_patch3'
+cmssw = 'CMSSW_5_3_3_patch3' #2012
+#cmssw = 'CMSSW_4_4_5' # 2011
 tag   = 'V00-01-01'
 
 # these are the general location paths

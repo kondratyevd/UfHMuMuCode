@@ -58,12 +58,15 @@ else:
                           Samples.caf_pathData+s.caf_folder_extd,
                           s.json_file) 
 
-
 if (isMC):
     command += '--hlt %s' % Samples.HLT_MC
 else:
     if ('DoubleMu' in command):
         command += '--hlt %s' % Samples.HLT_Double
+    elif ('SingleMu' and '2011A' in command):
+        command += '--hlt %s' % Samples.HLT_Single2011A
+    elif ('SingleMu' and '2011B' in command):
+        command += '--hlt %s' % Samples.HLT_Single2011B
     elif ('SingleMu' and '2012A' in command):
         command += '--hlt %s' % Samples.HLT_Single2012A
     else:
