@@ -71,6 +71,19 @@ MCSamples = [
            'DYJetsToLL_PtZ-70to100', 'DYJetsToLL_PtZ-70To100_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v2',
            'START53_V7E', 2662137, 34.1),
 
+    mcsample('dy2jetstoll',
+           '/DY2JetsToLL_M-50_TuneZ2Star_8TeV-madgraph/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',
+           'DY2JetsToLL', 'DY2JetsToLL_M-50_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1',
+           'START53_V7E', 2352304, 181.0),
+    mcsample('dy3jetstoll',
+           '/DY3JetsToLL_M-50_TuneZ2Star_8TeV-madgraph/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',
+           'DY3JetsToLL', 'DY3JetsToLL_M-50_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1',
+           'START53_V7E', 11015445, 51.1),
+    mcsample('dy4jetstoll',
+           '/DY4JetsToLL_M-50_TuneZ2Star_8TeV-madgraph/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',
+           'DY4JetsToLL', 'DY4JetsToLL_M-50_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1',
+           'START53_V7E', 6402827, 23.04),
+
      # 2011 Samples
     mcsample('dyjetstoll2011',
            '/DYJetsToLL_TuneZ2_M-50_7TeV-madgraph-tauola/Fall11-PU_S6_START44_V9B-v1/AODSIM',
