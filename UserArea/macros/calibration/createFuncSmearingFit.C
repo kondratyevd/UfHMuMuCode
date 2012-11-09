@@ -43,7 +43,9 @@ using namespace std;
                   // 1 - Rochester correction
                   // 2 - MuscleFit correcton in data
   TString RunYear = "2012"; // 2011A, 2011B, 2012ABCsmall, 2012
-   TString ExtraInfo = "Zmumu";
+  //TString ExtraInfo = "Zmumu";
+  TString ExtraInfo = "ZmumuTESTSF1";
+
   const float PTbin[] = {25., 30., 35., 40., 45., 50., 70., 100., 150., 300.}; //default
   const float ETAbin[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);
@@ -76,6 +78,7 @@ using namespace std;
 // ---- CP error ----
 
 TH1F* hmuonRes[Nhist];
+TH1F* hmuonResNonCorr[Nhist];
 
 // unfolding matrix
 
@@ -116,6 +119,7 @@ void createFuncSmearingFit(){
   for(int iETA = 0; iETA < NETAhist; iETA++){
       int iK = iPT + iETA*NPThist;
       hmuonRes[iK] = (TH1F*)theFile -> Get(Form("hmuonRes%d",iK));
+      hmuonResNonCorr[iK] = (TH1F*)theFile -> Get(Form("hmuonResNonCorr%d",iK));
     }}
 
 
@@ -205,40 +209,40 @@ void createFuncSmearingFit(){
           //////////////////////////////////////////
           myfile << "   const float SmearingTool::mean[" << Nhist << "]={";
 
-          for(int iPT = 0; iPT < NPThist; iPT++){
           for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
               int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
+              if(iPT == 0) myfile << "\n                   ";
               if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << mean[iK] << ", ";
               else myfile << mean[iK]; 
           }}
           myfile << "};\n";
           myfile << "   const float SmearingTool::sig1[" << Nhist << "]={";
 
-          for(int iPT = 0; iPT < NPThist; iPT++){
           for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
               int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
+              if(iPT == 0) myfile << "\n                   ";
               if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << sig1[iK] << ", ";
               else myfile << sig1[iK];
           }}
           myfile << "};\n";
           myfile << "   const float SmearingTool::sig2[" << Nhist << "]={";
 
-          for(int iPT = 0; iPT < NPThist; iPT++){
           for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
               int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
+              if(iPT == 0) myfile << "\n                   ";
               if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << sig2[iK] << ", ";
               else myfile << sig2[iK];
           }}
           myfile << "};\n";
           myfile << "   const float SmearingTool::Asig2[" << Nhist << "]={";
 
-          for(int iPT = 0; iPT < NPThist; iPT++){
           for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
               int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
+              if(iPT == 0) myfile << "\n                   ";
               if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << Asig2[iK] << ", ";
               else myfile << Asig2[iK];
           }}
@@ -246,40 +250,40 @@ void createFuncSmearingFit(){
           //////////////////////////////////////////
           myfile << "   const float SmearingTool::ERRmean[" << Nhist << "]={";
 
-          for(int iPT = 0; iPT < NPThist; iPT++){
           for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
               int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
+              if(iPT == 0) myfile << "\n                   ";
               if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRmean[iK] << ", ";
               else myfile << ERRmean[iK];
           }}
           myfile << "};\n";
           myfile << "   const float SmearingTool::ERRsig1[" << Nhist << "]={";
 
-          for(int iPT = 0; iPT < NPThist; iPT++){
           for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
               int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
+              if(iPT == 0) myfile << "\n                   ";
               if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRsig1[iK] << ", ";
               else myfile << ERRsig1[iK];
           }}
           myfile << "};\n";
           myfile << "   const float SmearingTool::ERRsig2[" << Nhist << "]={";
 
-          for(int iPT = 0; iPT < NPThist; iPT++){
           for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
               int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
+              if(iPT == 0) myfile << "\n                   ";
               if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRsig2[iK] << ", ";
               else myfile << ERRsig2[iK];
           }}
           myfile << "};\n";
           myfile << "   const float SmearingTool::ERRAsig2[" << Nhist << "]={";
 
-          for(int iPT = 0; iPT < NPThist; iPT++){
           for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
               int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
+              if(iPT == 0) myfile << "\n                   ";
               if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRAsig2[iK] << ", ";
               else myfile << ERRAsig2[iK];
           }}
@@ -287,20 +291,20 @@ void createFuncSmearingFit(){
           //////////////////////////////////////////
           myfile << "   const float SmearingTool::ResRMS[" << Nhist << "]={";
 
-          for(int iPT = 0; iPT < NPThist; iPT++){
           for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
               int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
+              if(iPT == 0) myfile << "\n                   ";
               if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ResRMS[iK] << ", ";
               else myfile << ResRMS[iK];
           }}
           myfile << "};\n";
           myfile << "   const float SmearingTool::ErrResRMS[" << Nhist << "]={";
 
-          for(int iPT = 0; iPT < NPThist; iPT++){
           for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
               int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
+              if(iPT == 0) myfile << "\n                   ";
               if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ErrResRMS[iK] << ", ";
               else myfile << ErrResRMS[iK];
           }}
@@ -317,7 +321,7 @@ void createFuncSmearingFit(){
           myfile << "   const int NETAhist = (sizeof(ETAbin)/sizeof(float)-1);\n";
           myfile << "   //const int Nhist = NPThist*NETAhist;\n";
           myfile << "   ////// Make smearing for single muon from Gen level PostFSR:\n";  
-          myfile << "   Float_t PTmuonSmear = -10.;\n";
+          myfile << "   float PTmuonSmear = -10.;\n";
           myfile << "   float meanVar = 0;\n";
           myfile << "   float sigVar = 0;//for sig1 and sig2\n";
           myfile << "   float Asig2Var = 0;\n";
@@ -472,22 +476,25 @@ void printhistos(){
        ERRsig2[iK] = fitDoubleGauss2->GetParError(3);
        ERRAsig2[iK] = fitDoubleGauss2->GetParError(2);
 
-        TLegend* histinfo = SetLegend(.6,.57,1.,.73);
-        histinfo->AddEntry(hmuonRes[iK], "MC reco + Fit","lep");
-        histinfo->AddEntry(fitDoubleGauss2, Form("Fit, RMS = %4.3f#pm%4.3f", ResRMS[iK], ErrResRMS[iK]),"l");
-
-
        hmuonRes[iK] ->  GetXaxis() ->SetNdivisions(505);// n = n1 + 100*n2 + 10000*n3
        hmuonRes[iK] -> GetXaxis()->SetTitle("p_{T}^{reco}(#mu)/p_{T}^{gen}(#mu)-1");
        hmuonRes[iK] -> GetYaxis()->SetTitle("Entries");
 
        hmuonRes[iK] -> Draw("e");
+       hmuonResNonCorr[iK] -> SetLineColor(kBlue);
+       hmuonResNonCorr[iK] -> Draw("histsame");
+
+        TLegend* histinfo = SetLegend(.6,.57,1.,.73);
+        histinfo->AddEntry(hmuonRes[iK], "MC reco + Fit","lep");
+        histinfo->AddEntry(fitDoubleGauss2, Form("Fit, RMS = %4.3f#pm%4.3f", ResRMS[iK], ErrResRMS[iK]),"l");
+        histinfo->AddEntry(hmuonResNonCorr[iK], "MC no Corr.","lep");
+
        histinfo -> Draw("same");
        //c21 -> cd(iETA+1);
        //hDimuonRes[iK] -> Draw("e");
      }
-     //c20 ->Print(gifname[iPT]+".png");
-     //c20 ->Print(gifname[iPT]+".root");
+     c20 ->Print(gifname[iPT]+".png");
+     c20 ->Print(gifname[iPT]+".root");
    }
   /// end: print muon resolution data, MC and MC sim
 

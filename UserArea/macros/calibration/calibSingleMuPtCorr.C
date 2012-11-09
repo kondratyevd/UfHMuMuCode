@@ -232,7 +232,7 @@ void calibSingleMuPtCorr::main(){
   	TChain* treeMC = new TChain("tree");
         // min cuts: vertex, cosmics, mass
         if(HiggsNtuple == 1){
-           if(RunYear == 2012 || RunYear == "2012ABCsmall") treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
+           if(RunYear == "2012" || RunYear == "2012ABCsmall") treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
            if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011")treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia_Fall11-PU_S6_START44_V9B-v1/minimal/DYToMuMu_minimal.root");
         }
         if(HiggsNtuple == 0)

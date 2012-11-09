@@ -36,10 +36,24 @@
 #include <iostream>
 #include <fstream>
 
+//include Rochechester correction
+#include<rochcor.h>
+#include "MuScleFitCorrector.h"
+// include smearing tool
+#include <SmearingTool.h>
+
 #include "./DataFormat.h"
 using namespace std;
 
-  int RunYear = 2012; // 2011 or 2012
+  int MuCorr = 0; // 0 - no muon correction, 
+                  // 1 - Rochester Correction,
+                  // 2 - MuscleFit correcton 
+  int Ismear = 1; // 0 - take pt reco from MC
+                  // 1 - smear pt with own tools using pt gen post FSR  
+  
+  TString RunYear = "2012"; // 2012; 2011A; 2011B;  
+
+  //int RunYear = 2012; // 2011 or 2012
   const float PTbin[] = {25., 30., 35., 40., 45., 50., 70., 100., 150., 300.}; //default
   const float ETAbin[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);
@@ -72,6 +86,7 @@ using namespace std;
 // ---- CP error ----
 
 TH1F* hmuonRes[Nhist];
+TH1F* hmuonResNonCorr[Nhist];
 
 // unfolding matrix
 
@@ -101,7 +116,15 @@ void axis1F(TH1F  *histo,
 
 
 
-void createFuncSmearing(){
+class createFuncSmearing
+{
+public :
+   //constructor
+   createFuncSmearing(){}
+   void main();
+};
+
+void createFuncSmearing::main(){
 
 
 	gROOT->Clear();
@@ -112,11 +135,10 @@ void createFuncSmearing(){
 	//modifiedStyle();
   	// ---- open the MC files ----
   	TChain* treeMC = new TChain("tree");
-        treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
-        TFile *theFile    =new TFile(Form("NtupleCreateFuncSmearing.root", ScaleFactor), "RECREATE");
+           if(RunYear == "2012" || RunYear == "2012ABCsmall") treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
+           if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011")treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia_Fall11-PU_S6_START44_V9B-v1/minimal/DYToMuMu_minimal.root");
 
-        //create txt file with fit output
-        ofstream myfile ("FuncSmearing.txt");
+        TFile *theFile    =new TFile(Form("NtupleCreateFuncSmearing.root", ScaleFactor), "RECREATE");
 
         bookhistos();// histo init 
         
@@ -134,11 +156,37 @@ void createFuncSmearing(){
         treeMC->SetBranchAddress("genZpostFSR",&genZpostFSR);
         treeMC->SetBranchAddress("genM1ZpostFSR",&true1mu);
         treeMC->SetBranchAddress("genM2ZpostFSR",&true2mu);
+
+        //////////////////////////////////////////////////////////// 
+        //Rochester correction 
+        //To get the central value of the momentum correction 
+        rochcor *rmcor = new rochcor(); // make the pointer of rochcor class
+        //REMARK : Need to call "rochcor(seed)" to assign the systematic error 
+        //rochcor *rmcor = new rochcor(seed); //where "seed" is the random seed number
+
+        ///
+/*
+        TString fitParFileMC, fitParFileData;
+        if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011"){
+           fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2011_MC_42X.txt";// no MC_44 :(
+           fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2011_DATA_44X.txt"; 
+        } 
+        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012B" || RunYear == "2012C" || RunYear == "2012A" ){
+           fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2012_MC_52X.txt";// no MC_53 :(
+           fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2012_DATA_53X.txt"; 
+        }
+        MuScleFitCorrector* correctorMC_ = new MuScleFitCorrector(fitParFileMC); 
+        MuScleFitCorrector* correctorData_ = new MuScleFitCorrector(fitParFileData); 
+*/
+        // pointer to Smearing Tool:
+        SmearingTool *smearPT = new SmearingTool();
+        //////////////////////////////////////////////////////////// 
+
         cout << "Nevent to process = " << treeMC->GetEntries() << endl;
         int nbad_tpt = 0;
         int nbad_tMass = 0;
-        //for( int k=0; k<100000; k++)
-        for( int k=0; k<treeMC->GetEntries(); k++)
+        for( int k=0; k<100000; k++)
+        //for( int k=0; k<treeMC->GetEntries(); k++)
         {
                 //process progress
                 if(k!=0 && (k%10000)==0)
@@ -146,13 +194,8 @@ void createFuncSmearing(){
 
                 treeMC->GetEntry(k);
                 //cout << "any selection event = " << k << " reco1.charge = " << reco1.charge << " rMass = " << rMass << endl;
-                if (reco1.charge == reco2.charge) continue;
-                if (rMass <  60) continue;
-                if (rMass > 120) continue;
-                //cout << "Loose selection event = " << k << " reco1.pt = " << reco1.pt << " reco1.eta = " << reco1.eta << endl;
-                //     << " reco1.numValidTrackerHits = " reco1.numValidTrackerHits << " reco1.trackIsoSumPt = " << reco1.trackIsoSumPt 
-                //     << "reco1.d0 = " << reco1.d0 << endl;
 
+                ////////////////////////
                 //check that generator part is filled 
                 if(nbad_tpt < 10 && (true1mu.pt < -900. || true2mu.pt < -900)){//rejection for MATGRAPH
                    cout << "CHECK ntuple, possible problem with fill gen level while RECO level is fine: true1mu.pt = " << true1mu.pt << endl; 
@@ -165,311 +208,143 @@ void createFuncSmearing(){
                 }
                 if(genZpostFSR.mass < -900.) continue;//rejection for MATGRAPH
 
+                ////////////////////////
+                if (reco1.charge == reco2.charge) continue;
+ 
                 TLorentzVector MuReco1, MuReco2, MuTrue1, MuTrue2;
+                float MuTrue1charge = true1mu.charge;
+                float MuTrue2charge = true2mu.charge;
                 MuReco1.SetPtEtaPhiM(reco1.pt, reco1.eta, reco1.phi, MASS_MUON);
                 MuReco2.SetPtEtaPhiM(reco2.pt, reco2.eta, reco2.phi, MASS_MUON);
                 MuTrue1.SetPtEtaPhiM(true1mu.pt, true1mu.eta, true1mu.phi, MASS_MUON);
                 MuTrue2.SetPtEtaPhiM(true2mu.pt, true2mu.eta, true2mu.phi, MASS_MUON);
 
+                ////////////////////////
+                Float_t muonRes_t1r1 = -10.;
+                Float_t muonRes_t1r2 = -10.;
+                Float_t muonRes_t2r1 = -10.;
+                Float_t muonRes_t2r2 = -10.;
+                if(true1mu.pt > 0.) muonRes_t1r1 = (MuReco1.Pt()-true1mu.pt)/true1mu.pt;
+                if(true2mu.pt > 0.) muonRes_t2r2 = (MuReco2.Pt()-true2mu.pt)/true2mu.pt;
+                if(true1mu.pt > 0.) muonRes_t1r2 = (MuReco2.Pt()-true1mu.pt)/true1mu.pt;
+                if(true2mu.pt > 0.) muonRes_t2r1 = (MuReco1.Pt()-true2mu.pt)/true2mu.pt;
+                float deltaR_t1r1 = ROOT::Math::VectorUtil::DeltaR(MuTrue1, MuReco1);
+                float deltaR_t1r2 = ROOT::Math::VectorUtil::DeltaR(MuTrue1, MuReco2);
+                float deltaR_t2r1 = ROOT::Math::VectorUtil::DeltaR(MuTrue2, MuReco1);
+                float deltaR_t2r2 = ROOT::Math::VectorUtil::DeltaR(MuTrue2, MuReco2);
+                //make matching between MuTrue1,2 and MuReco1,2:
+                if(deltaR_t1r1 > deltaR_t1r2){
+                     MuTrue1.SetPtEtaPhiM(true2mu.pt, true2mu.eta, true2mu.phi, MASS_MUON);
+                     MuTrue1charge = true2mu.charge;
+                     muonRes_t1r1 = muonRes_t2r1;
+                }
+                if(deltaR_t2r2 > deltaR_t2r1){
+                     MuTrue2.SetPtEtaPhiM(true1mu.pt, true1mu.eta, true1mu.phi, MASS_MUON);
+                     MuTrue2charge = true1mu.charge;
+                     muonRes_t2r2 = muonRes_t1r2;
+                }
+                ////////////////////////
+                // Muon Correction
+                //If you run MC, apply the muon momentum correction,"momcor_mc()" function (only for MC) 
+                // This is for MC,
+                //                 TLorentzVector, mu, corresponds to mu- for charge = -1 or mu+ for charge = +1 
+                //                 sysdev == 0 returns the central value of muon momentum correction 
+                //                 sysdev == 1 returns the muon momentum correction smeared 1 standard deviation
+                //                             in <1/pt> correction 
+                //                             (global factor is also changed by 1 sigma total error ( stat 0X syst)
+                //                 If you want to assign the systematic error using x standard (statistical) deviation, 
+                //                 you can assign sysdev == x.
+                //                 runopt == 0 for 2011A correction 
+                //                 runopt == 1 for 2011B correction
+                //              TLor.  float   float   int             
+                //rmcor->momcor_mc(mu, charge, sysdev, runopt); 
+
+                if (MuCorr == 1){
+                  if(RunYear == "2011B"){
+                     rmcor->momcor_mc(MuReco1, float(reco1.charge), 0, 1);
+                     rmcor->momcor_mc(MuReco2, float(reco2.charge), 0, 1);
+                  }
+                  if(RunYear == "2011A"){
+                     rmcor->momcor_mc(MuReco1, float(reco1.charge), 0, 0);
+                     rmcor->momcor_mc(MuReco2, float(reco2.charge), 0, 0);
+                  }
+                }
+/*                if (MuCorr == 2){
+                   TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
+                   TLorentzVector* MuReco2Pointer = &MuReco2;
+                   if(reco1.charge < 0){
+                        correctorMC_->applyPtCorrection(*MuReco1Pointer,-1);
+                        //correctorMC_->applyPtSmearing(*MuReco1Pointer,-1);
+                   } 
+                   else{
+                        correctorMC_->applyPtCorrection(*MuReco1Pointer,1);
+                        //correctorMC_->applyPtSmearing(*MuReco1Pointer,1);
+                   }
+                   if(reco2.charge < 0){
+                        correctorMC_->applyPtCorrection(*MuReco2Pointer,-1);
+                        //correctorMC_->applyPtSmearing(*MuReco2Pointer,-1);
+                   } 
+                   else{
+                        correctorMC_->applyPtCorrection(*MuReco2Pointer,1);
+                        //correctorMC_->applyPtSmearing(*MuReco2Pointer,1);
+                   }
+                }
+*/
+                ////////////////////////
+                /// smear PT after Correction if it took place (correction doesn't work any more, use correction function for smering):
+                /// float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, TString ParVar = "null",float ParSig = 0);
+                if (Ismear == 1){
+                   float pt1Smear = smearPT -> PTsmear(MuTrue1.Pt(), MuTrue1.Eta(), MuTrue1charge);
+                   float pt2Smear = smearPT -> PTsmear(MuTrue2.Pt(), MuTrue2.Eta(), MuTrue2charge);
+                   // fill Smear values:
+                   MuReco1.SetPtEtaPhiM(pt1Smear, reco1.eta, reco1.phi, MASS_MUON);
+                   MuReco2.SetPtEtaPhiM(pt2Smear, reco2.eta, reco2.phi, MASS_MUON);
+                   //TEST 
+                   //cout << "ptgen1 = " << MuTrue1.Pt() << " ptSmear1 = " << pt1Smear << " ptreco1 = " << reco1.pt << endl; 
+                   //cout << "ptgen2 = " << MuTrue2.Pt() << " ptSmear2 = " << pt2Smear << " ptreco2 = " << reco2.pt << endl; 
+                   //cout << "=====================" << endl; 
+                }
+                ////////////////////////
+                Float_t muonResCorr_t1r1 = -10.;
+                Float_t muonResCorr_t2r2 = -10.;
+                if(MuTrue1.Pt() > 0.) muonResCorr_t1r1 = (MuReco1.Pt()-MuTrue1.Pt())/MuTrue1.Pt();
+                if(MuTrue2.Pt() > 0.) muonResCorr_t2r2 = (MuReco2.Pt()-MuTrue2.Pt())/MuTrue2.Pt();
+                TLorentzVector MuRecoCand = MuReco1 + MuReco2;
+                float rMassCorr = MuRecoCand.M();
+
+                if (rMassCorr <  60) continue;
+                if (rMassCorr > 120) continue;
+                //cout << "Loose selection event = " << k << " reco1.pt = " << reco1.pt << " reco1.eta = " << reco1.eta << endl;
+                //     << " reco1.numValidTrackerHits = " reco1.numValidTrackerHits << " reco1.trackIsoSumPt = " << reco1.trackIsoSumPt 
+                //     << "reco1.d0 = " << reco1.d0 << endl;
+
+
+
                 float pTcorr1 = MuReco1.Pt();
                 float pTcorr2 = MuReco2.Pt();
-                if( RunYear == 2012 && (!isKinTight_2012(reco1, pTcorr1) || !isKinTight_2012(reco2, pTcorr2)) ) continue;
-                if( RunYear == 2011 && (!isKinTight_2011(reco1, pTcorr1) || !isKinTight_2011(reco2, pTcorr2)) ) continue;
-                if (reco1.pt < 20 )      continue; // pt cut
-                if (reco2.pt < 20 )      continue; // pt cut
-                if ((reco1.trackIsoSumPt)/reco1.pt >=0.1) continue; // isolation
-                if ((reco2.trackIsoSumPt)/reco2.pt >=0.1) continue; // isolation
-
-
-                Float_t muonRes_t1r1 = -10.; 
-                Float_t muonRes_t1r2 = -10.;
-                Float_t muonRes_t2r1 = -10.; 
-                Float_t muonRes_t2r2 = -10.;
-                if(true1mu.pt > 0.) muonRes_t1r1 = (reco1.pt-true1mu.pt)/true1mu.pt;  
-                if(true1mu.pt > 0.) muonRes_t1r2 = (reco2.pt-true1mu.pt)/true1mu.pt;  
-                if(true2mu.pt > 0.) muonRes_t2r2 = (reco2.pt-true2mu.pt)/true2mu.pt;
-                if(true2mu.pt > 0.) muonRes_t2r1 = (reco1.pt-true2mu.pt)/true2mu.pt;
-                float deltaR_t1r1 = ROOT::Math::VectorUtil::DeltaR(MuTrue1, MuReco1);  
-                float deltaR_t1r2 = ROOT::Math::VectorUtil::DeltaR(MuTrue1, MuReco2);  
-                float deltaR_t2r1 = ROOT::Math::VectorUtil::DeltaR(MuTrue2, MuReco1);  
-                float deltaR_t2r2 = ROOT::Math::VectorUtil::DeltaR(MuTrue2, MuReco2);  
-                Float_t muonResCorr_t1r1 = muonRes_t1r1;
-                Float_t muonResCorr_t2r2 = muonRes_t2r2;
-                if(deltaR_t1r1 > deltaR_t1r2) muonResCorr_t1r1 = muonRes_t1r2;
-                if(deltaR_t2r2 > deltaR_t2r1) muonResCorr_t2r2 = muonRes_t2r1;
+                if( RunYear == "2012" && (!isKinTight_2012(reco1, pTcorr1) || !isKinTight_2012(reco2, pTcorr2)) ) continue;
+                if( (RunYear == "2011A" || RunYear == "2011B")&& (!isKinTight_2011(reco1, pTcorr1) || !isKinTight_2011(reco2, pTcorr2)) ) continue;
 
                 for(int iPT = 0; iPT < NPThist; iPT++){
                 for(int iETA = 0; iETA < NETAhist; iETA++){
                    int iK = iPT + iETA*NPThist;
-                   if(true1mu.pt >= PTbin[iPT] && true1mu.pt < PTbin[iPT+1] 
-                      //&& fabs(true1mu.eta) >= ETAbin[iETA] && fabs(true1mu.eta) < ETAbin[iETA+1]) hmuonRes[iK] -> Fill(muonResCorr_t1r1);  
-                      && true1mu.eta >= ETAbin[iETA] && true1mu.eta < ETAbin[iETA+1]) hmuonRes[iK] -> Fill(muonResCorr_t1r1);  
-                   if(true2mu.pt >= PTbin[iPT] && true2mu.pt < PTbin[iPT+1] 
-                      //&& fabs(true2mu.eta) >= ETAbin[iETA] && fabs(true2mu.eta) < ETAbin[iETA+1]) hmuonRes[iK] -> Fill(muonResCorr_t2r2);  
-                      && true2mu.eta >= ETAbin[iETA] && true2mu.eta < ETAbin[iETA+1]) hmuonRes[iK] -> Fill(muonResCorr_t2r2);  
+                   if(MuTrue1.Pt() >= PTbin[iPT] && MuTrue1.Pt() < PTbin[iPT+1] 
+                      && MuTrue1.Eta() >= ETAbin[iETA] && MuTrue1.Eta() < ETAbin[iETA+1]) {
+                           hmuonRes[iK] -> Fill(muonResCorr_t1r1);
+                           hmuonResNonCorr[iK] -> Fill(muonRes_t1r1);
+                   }  
+                   if(MuTrue2.Pt() >= PTbin[iPT] && MuTrue2.Pt() < PTbin[iPT+1] 
+                      && MuTrue2.Eta() >= ETAbin[iETA] && MuTrue2.Eta() < ETAbin[iETA+1]){
+                           hmuonRes[iK] -> Fill(muonResCorr_t2r2);  
+                           hmuonResNonCorr[iK] -> Fill(muonRes_t2r2);
+                   }
                 }} 
 
 
 
         }
 
-
-  TF1* fitDoubleGauss = new TF1("fitDoubleGauss", DoubleGauss, -0.1, 0.1, 5);
-  TF1* fitDoubleGauss2 = new TF1("fitDoubleGauss2", DoubleGauss, -0.1, 0.1, 5);
-  for(int iPT = 0; iPT < NPThist; iPT++){
-  for(int iETA = 0; iETA < NETAhist; iETA++){
-      int iK = iPT + iETA*NPThist;
-       // 
-       
-       fitDoubleGauss->SetParameters(0., 0.85*hmuonRes[iK] -> GetRMS(), 0.07,0.85*hmuonRes[iK] -> GetRMS()+0.015, 1000.);
-       //fitDoubleGauss->SetParameters(0., hmuonRes[iK] -> GetRMS(), 0.07,hmuonRes[iK] -> GetRMS()+0.015, 1000.);
-       //if(ETAbin[iETA] > 0.75 || ETAbin[iETA] < -0.85) fitDoubleGauss->SetParameters(0., hmuonRes[iK] -> GetRMS(), 0.035, 0.03, 1000.); 
-       //if(PTbin[iPT] > 90.) fitDoubleGauss->SetParameters(0., 0.024, 0.08, 0.054, 160.); 
-       //if( (PTbin[iPT] > 65. && ( ETAbin[iETA] > 0.75 || ETAbin[iETA] < -0.85) ) 
-       if( (PTbin[iPT] > 65. && ( ETAbin[iETA] > 1.15 || ETAbin[iETA] < -1.25) ) 
-           || (PTbin[iPT] > 145) ){ 
-          fitDoubleGauss->SetParameters(0., hmuonRes[iK] -> GetRMS(), 0.0, 0.03, 100.); 
-          fitDoubleGauss->FixParameter(2,0.);//fix Asig2 to 0
-          fitDoubleGauss->FixParameter(3,3.); // fix sig2 to any big value (sig1 < sig2)
-          fitDoubleGauss->SetParLimits(1, 0.005, 0.1);//restrict sigma1
-       }
-       else{
-          fitDoubleGauss->SetParLimits(2, 0.01, 0.4);//restrict Asig2
-          fitDoubleGauss->SetParLimits(3,0.005, 0.1); //restrict sig2
-          fitDoubleGauss->SetParLimits(1, 0.005, hmuonRes[iK] -> GetRMS());//restrict sigma1
-       } 
-       //fitDoubleGauss->FixParameter(0,0.); // fix mean of resolution
-       fitDoubleGauss->SetParName(0,"mean");
-       fitDoubleGauss->SetParName(1,"sig1");
-       fitDoubleGauss->SetParName(2,"Asig2");
-       fitDoubleGauss->SetParName(3,"sig2");
-       fitDoubleGauss->SetParName(4,"Norm");
-        
-       hmuonRes[iK] -> Fit(fitDoubleGauss,"RLE");
-
-       fitDoubleGauss2->SetParameters(fitDoubleGauss->GetParameter(0),fitDoubleGauss->GetParameter(1),fitDoubleGauss->GetParameter(2),fitDoubleGauss->GetParameter(3),fitDoubleGauss->GetParameter(4));
-       //if( (PTbin[iPT] > 65. && ( ETAbin[iETA] > 0.75 || ETAbin[iETA] < -0.85) ) 
-       if( (PTbin[iPT] > 65. && ( ETAbin[iETA] > 1.15 || ETAbin[iETA] < -1.25) ) 
-           || (PTbin[iPT] > 145.) ){ 
-          fitDoubleGauss2->FixParameter(2,0.);//fix Asig2 to 0
-          fitDoubleGauss2->FixParameter(3,3.); // fix sig2 to any big value (sig1 < sig2)
-          fitDoubleGauss2->SetParLimits(1, 0.005, 0.1);//restrict sigma1
-       }
-       else{
-          fitDoubleGauss2->SetParLimits(2, 0.01, 0.4);//restrict Asig2
-          fitDoubleGauss2->SetParLimits(3,0.005, 0.1); //restrict sig2
-          fitDoubleGauss2->SetParLimits(1, 0.005, hmuonRes[iK] -> GetRMS());//restrict sigma1
-       } 
-       //fitDoubleGauss2->FixParameter(0,0.); // fix mean of resolution
-       fitDoubleGauss2->SetParName(0,"mean");
-       fitDoubleGauss2->SetParName(1,"sig1");
-       fitDoubleGauss2->SetParName(2,"Asig2");
-       fitDoubleGauss2->SetParName(3,"sig2");
-       fitDoubleGauss2->SetParName(4,"Norm");
-
-
-       hmuonRes[iK] -> Fit(fitDoubleGauss2,"RLE");
-       ResRMS[iK] = hmuonRes[iK] -> GetRMS();
-       ErrResRMS[iK] = hmuonRes[iK] -> GetRMSError();
-       mean[iK] = fitDoubleGauss2->GetParameter(0);  
-       sig1[iK] = fitDoubleGauss2->GetParameter(1);  
-       sig2[iK] = fitDoubleGauss2->GetParameter(3);  
-       Asig2[iK] = fitDoubleGauss2->GetParameter(2);  
-       ERRmean[iK] = fitDoubleGauss2->GetParError(0);  
-       ERRsig1[iK] = fitDoubleGauss2->GetParError(1);  
-       ERRsig2[iK] = fitDoubleGauss2->GetParError(3);  
-       ERRAsig2[iK] = fitDoubleGauss2->GetParError(2);  
-       //if(Asig2[iK] < 0.) Asig2[iK] = 0.;  
-       //
-  }}        
-
-        if (myfile.is_open())
-        {
-          myfile << "   Float_t PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen);\n"; 
-          myfile << "   Double_t DoubleGauss(Double_t*, Double_t* );\n";
-
-          myfile << "   float PTbin[]={";
-
-          for(int iPT = 0; iPT < NPThist; iPT++){
-              if (iPT != (NPThist - 1) ) myfile << PTbin[iPT] << ", ";
-              else myfile << PTbin[iPT]; 
-          }
-          myfile << "};\n";
-
-          myfile << "   float ETATbin[]={";
-
-          for(int iETA = 0; iETA < NETAhist; iETA++){
-              if (iETA != (NETAhist - 1) ) myfile << ETAbin[iETA] << ", ";
-              else myfile << ETAbin[iETA]; 
-          }
-          myfile << "};\n\n";
-          myfile << "   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);\n";
-          myfile << "   const int NETAhist = (sizeof(ETAbin)/sizeof(float)-1);\n";
-          myfile << "   const int Nhist = NPThist*NETAhist;\n";
-
-          myfile << "   ////// Smearing parametrization for single muon:\n";  
-          //////////////////////////////////////////
-          myfile << "   float mean[]={";
-
-          for(int iPT = 0; iPT < NPThist; iPT++){
-          for(int iETA = 0; iETA < NETAhist; iETA++){
-              int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
-              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << mean[iK] << ", ";
-              else myfile << mean[iK]; 
-          }}
-          myfile << "};\n";
-          myfile << "   float sig1[]={";
-
-          for(int iPT = 0; iPT < NPThist; iPT++){
-          for(int iETA = 0; iETA < NETAhist; iETA++){
-              int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
-              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << sig1[iK] << ", ";
-              else myfile << sig1[iK];
-          }}
-          myfile << "};\n";
-          myfile << "   float sig2[]={";
-
-          for(int iPT = 0; iPT < NPThist; iPT++){
-          for(int iETA = 0; iETA < NETAhist; iETA++){
-              int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
-              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << sig2[iK] << ", ";
-              else myfile << sig2[iK];
-          }}
-          myfile << "};\n";
-          myfile << "   float Asig2[]={";
-
-          for(int iPT = 0; iPT < NPThist; iPT++){
-          for(int iETA = 0; iETA < NETAhist; iETA++){
-              int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
-              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << Asig2[iK] << ", ";
-              else myfile << Asig2[iK];
-          }}
-          myfile << "};\n\n";
-          //////////////////////////////////////////
-          myfile << "   float ERRmean[]={";
-
-          for(int iPT = 0; iPT < NPThist; iPT++){
-          for(int iETA = 0; iETA < NETAhist; iETA++){
-              int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
-              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRmean[iK] << ", ";
-              else myfile << ERRmean[iK];
-          }}
-          myfile << "};\n";
-          myfile << "   float ERRsig1[]={";
-
-          for(int iPT = 0; iPT < NPThist; iPT++){
-          for(int iETA = 0; iETA < NETAhist; iETA++){
-              int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
-              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRsig1[iK] << ", ";
-              else myfile << ERRsig1[iK];
-          }}
-          myfile << "};\n";
-          myfile << "   float ERRsig2[]={";
-
-          for(int iPT = 0; iPT < NPThist; iPT++){
-          for(int iETA = 0; iETA < NETAhist; iETA++){
-              int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
-              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRsig2[iK] << ", ";
-              else myfile << ERRsig2[iK];
-          }}
-          myfile << "};\n";
-          myfile << "   float ERRAsig2[]={";
-
-          for(int iPT = 0; iPT < NPThist; iPT++){
-          for(int iETA = 0; iETA < NETAhist; iETA++){
-              int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
-              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRAsig2[iK] << ", ";
-              else myfile << ERRAsig2[iK];
-          }}
-          myfile << "};\n\n";
-          //////////////////////////////////////////
-          myfile << "   float ResRMS[]={";
-
-          for(int iPT = 0; iPT < NPThist; iPT++){
-          for(int iETA = 0; iETA < NETAhist; iETA++){
-              int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
-              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ResRMS[iK] << ", ";
-              else myfile << ResRMS[iK];
-          }}
-          myfile << "};\n";
-          myfile << "   float ErrResRMS[]={";
-
-          for(int iPT = 0; iPT < NPThist; iPT++){
-          for(int iETA = 0; iETA < NETAhist; iETA++){
-              int iK = iPT + iETA*NPThist;
-              if(iETA == 0) myfile << "\n                   ";
-              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ErrResRMS[iK] << ", ";
-              else myfile << ErrResRMS[iK];
-          }}
-          myfile << "};\n\n";
-          //////////////////////////////////////////
-          myfile << "   ////// End smearing parametrization for single muon:\n\n";  
-
-          myfile << "Float_t PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen){\n";
-          myfile << "   ////// Make smearing for single muon from Gen level PostFSR:\n";  
-          myfile << "   Float_t PTmuonSmear = -10.;\n";
-          myfile << "   int iK_cand = -1;\n";
-          myfile << "   for(int iPT = 0; iPT < NPThist; iPT++){\n";
-          myfile << "   for(int iETA = 0; iETA < NETAhist; iETA++){\n";
-          myfile << "      int iK = iPT + iETA*NPThist;\n";
-          myfile << "      // smear muons which out of range PT and ETA\n";
-          myfile << "      float PTcutDown = PTbin[iPT];\n";
-          myfile << "      float PTcutUp = PTbin[iPT+1];\n";
-          myfile << "      if(iPT == 0 && PTmuonGen < PTbin[0])PTcutDown = PTmuonGen-0.001;\n"; 
-          myfile << "      if(iPT == (NPThist-1) && PTmuonGen > PTbin[NPThist])PTcutUp = PTmuonGen+0.001;\n"; 
-          myfile << "      float ETAcutDown = ETAbin[iETA];\n";
-          myfile << "      float ETAcutUp = ETAbin[iETA+1];\n";
-          myfile << "      if(iETA == 0 && ETAmuonGen < ETAbin[0])ETAcutDown = ETAmuonGen-0.001;\n"; 
-          myfile << "      if(iETA == (NETAhist-1) && ETAmuonGen >= ETAbin[NETAhist])ETAcutUp = ETAmuonGen+0.001;\n"; 
-          myfile << "      if(PTmuonGen >= PTcutDown && PTmuonGen < PTcutUp\n";
-          myfile << "      && ETAmuonGen >= ETAcutDown && ETAmuonGen < ETAcutUp) iK_cand = iK;\n";
-          myfile << "   }}\n\n";
-
-          myfile << "   ///// Set Scale Factor\n";
-          myfile << "   float ScaleFactor = 1.;\n";
-          myfile << "   if (fabs(ETAmuonGen) < 0.8) ScaleFactor = 1.2;\n";
-          myfile << "   if (fabs(ETAmuonGen) >= 0.8 && fabs(ETAmuonGen) < 1.2) ScaleFactor = 1.15;\n";
-          myfile << "   if (fabs(ETAmuonGen) >= 1.2) ScaleFactor = 1.12;\n";
-
-          myfile << "   fitDoubleGauss->SetParameter(4,1.);\n";
-          myfile << "   if(iK_cand > -1){\n";
-          myfile << "      fitDoubleGauss->SetParameter(0,mean[iK_cand]);\n";
-          myfile << "      fitDoubleGauss->SetParameter(1,ScaleFactor*sig1[iK_cand]);\n";
-          myfile << "      fitDoubleGauss->SetParameter(2,Asig2[iK_cand]);\n";
-          myfile << "      fitDoubleGauss->SetParameter(3,ScaleFactor*sig2[iK_cand]);\n";
-          myfile << "      Double_t resSim = fitDoubleGauss->GetRandom();\n";
-          myfile << "      PTmuonSmear = PTmuonGen*(1+resSim);\n";
-          myfile << "   }\n";
-          myfile << "   ////// End Smearing parametrization for single muon:\n\n";  
-          myfile << "   return PTmuonSmear;\n";
-          myfile << " }//end PTsmear function\n\n";
-
-          myfile << "   Double_t DoubleGauss(Double_t *x, Double_t *par)\n";
-          myfile << "   {\n";
-          myfile << "       Double_t dgauss = 0.;\n";
-          myfile << "        if(par[1] < par[3]){//not normalized gauss both gauss are  = 1 at x[0]=par[0]\n";  
-          myfile << "                  dgauss =  exp(-0.5*(x[0]-par[0])*(x[0]-par[0])/par[1]/par[1]);\n";
-          myfile << "                  dgauss = dgauss + par[2]*exp(-0.5*(x[0]-par[0])*(x[0]-par[0])/par[3]/par[3]);\n";
-          myfile << "                  dgauss = par[4]*dgauss;\n";
-          myfile << "        }\n";
-          myfile << "       return dgauss;\n";
-          myfile << "   }\n";
-
-
-          myfile.close();
-        }
-        else cout << "Unable to open file";
-
-   printhistos();
+   //printhistos();
    theFile->cd();
    theFile->Write();
    theFile->Close();
@@ -483,6 +358,7 @@ void bookhistos(){
    for(int iETA = 0; iETA < NETAhist; iETA++){
       int iK = iPT + iETA*NPThist;
       hmuonRes[iK] = new TH1F(Form("hmuonRes%d",iK), Form("MC Drell-Yan, PT: %4.1f-%4.1f GeV, ETA: %4.1f#divide%4.1f", PTbin[iPT], PTbin[iPT+1], ETAbin[iETA], ETAbin[iETA+1]), 80, -0.1, 0.1);
+      hmuonResNonCorr[iK] = new TH1F(Form("hmuonResNonCorr%d",iK), Form("MC Drell-Yan, PT: %4.1f-%4.1f GeV, ETA: %4.1f#divide%4.1f", PTbin[iPT], PTbin[iPT+1], ETAbin[iETA], ETAbin[iETA+1]), 80, -0.1, 0.1);
    }}
 
 }
