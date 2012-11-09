@@ -49,6 +49,35 @@ MuReco1.SetPtEtaPhiM(pt1Smear, reco1.eta, reco1.phi, MASS_MUON);// for example
 
 ..........................
 
+///ALSO you have to add DoubleGaussian Function:
+///unfotunatly my class doesn't see it if it is not in the YourCode.C
+/// it should be defined GLOBALLY:   
+
+/// in the beginning:
+Double_t DoubleGauss(Double_t*, Double_t* );
+
+...................
+
+// fuction 
+Double_t DoubleGauss(Double_t *x, Double_t *par)
+{
+
+    //return BWnonrel(x,par) + Gauss(x,&par[3]);
+    Double_t dgauss = 0.;
+    //dgauss = Gauss(x,par) + Gauss(x,&par[3]);
+
+     if(par[1] < par[3]){//not normalized gauss both gauss are  = 1 at
+x[0]=par[0]  
+               dgauss =  exp(-0.5*(x[0]-par[0])*(x[0]-par[0])/par[1]/par[1]);
+               dgauss = dgauss +
+par[2]*exp(-0.5*(x[0]-par[0])*(x[0]-par[0])/par[3]/par[3]);
+               dgauss = par[4]*dgauss;
+     }
+     //if (par[2]> 0.) dgauss = dgauss/(1+par[2]);  
+
+    return dgauss;
+}
+
 
 ***************************************************
 ************ END: HOW TO use Smearing Fuction *****
