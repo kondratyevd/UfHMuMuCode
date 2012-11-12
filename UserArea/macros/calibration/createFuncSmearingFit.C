@@ -44,7 +44,7 @@ using namespace std;
                   // 2 - MuscleFit correcton in data
   TString RunYear = "2012"; // 2011A, 2011B, 2012ABCsmall, 2012
   //TString ExtraInfo = "Zmumu";
-  TString ExtraInfo = "ZmumuTESTSF1";
+  TString ExtraInfo = "ZmumuTEST";
 
   const float PTbin[] = {25., 30., 35., 40., 45., 50., 70., 100., 150., 300.}; //default
   const float ETAbin[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};

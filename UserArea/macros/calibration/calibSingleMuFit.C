@@ -989,9 +989,9 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
      cScale2 ->Print(gifname_Res[iETA_tag]+".root");
 ///////////////////
      //delete histo
-     //h2 -> Delete();
-     //h2Mass -> Delete();
-     //h2Res -> Delete();
+     delete h2;
+     delete h2Mass;
+     delete h2Res;
 
   } // end iETA_tag 
 }

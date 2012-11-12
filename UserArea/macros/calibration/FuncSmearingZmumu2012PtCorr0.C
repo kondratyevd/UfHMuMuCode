@@ -135,9 +135,9 @@ float SmearingTool::PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonG
 
    ///// Set Scale Factor
    float ScaleFactor = 1.;
-   if (fabs(ETAmuonGen) < 0.8) ScaleFactor = sqrt(1.2);
-   if (fabs(ETAmuonGen) >= 0.8 && fabs(ETAmuonGen) < 1.2) ScaleFactor = sqrt(1.15);
-   if (fabs(ETAmuonGen) >= 1.2) ScaleFactor = sqrt(1.12);
+   if (fabs(ETAmuonGen) < 0.8) ScaleFactor = 1.2;
+   if (fabs(ETAmuonGen) >= 0.8 && fabs(ETAmuonGen) < 1.2) ScaleFactor = 1.15;
+   if (fabs(ETAmuonGen) >= 1.2) ScaleFactor = 1.12;
    TF1* fitDoubleGauss = new TF1("fitDoubleGauss", DoubleGauss, -0.1, 0.1, 5);
    fitDoubleGauss->SetParameter(4,1.);
    if(iK_cand > -1){
