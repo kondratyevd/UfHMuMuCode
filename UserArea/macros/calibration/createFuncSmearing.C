@@ -38,6 +38,7 @@
 
 //include Rochechester correction
 #include<rochcor.h>
+#include<rochcor2012.h>
 #include "MuScleFitCorrector.h"
 // include smearing tool
 #include <SmearingTool.h>
@@ -45,10 +46,10 @@
 #include "./DataFormat.h"
 using namespace std;
 
-  int MuCorr = 0; // 0 - no muon correction, 
+  int MuCorr = 1; // 0 - no muon correction, 
                   // 1 - Rochester Correction,
                   // 2 - MuscleFit correcton 
-  int Ismear = 1; // 0 - take pt reco from MC
+  int Ismear = 0; // 0 - take pt reco from MC
                   // 1 - smear pt with own tools using pt gen post FSR  
   
   TString RunYear = "2012"; // 2012; 2011A; 2011B;  
@@ -161,6 +162,7 @@ void createFuncSmearing::main(){
         //Rochester correction 
         //To get the central value of the momentum correction 
         rochcor *rmcor = new rochcor(); // make the pointer of rochcor class
+        rochcor2012 *rmcor2012 = new rochcor2012(); // make the pointer of rochcor class
         //REMARK : Need to call "rochcor(seed)" to assign the systematic error 
         //rochcor *rmcor = new rochcor(seed); //where "seed" is the random seed number
 
@@ -185,8 +187,8 @@ void createFuncSmearing::main(){
         cout << "Nevent to process = " << treeMC->GetEntries() << endl;
         int nbad_tpt = 0;
         int nbad_tMass = 0;
-        for( int k=0; k<100000; k++)
-        //for( int k=0; k<treeMC->GetEntries(); k++)
+        //for( int k=0; k<100000; k++)
+        for( int k=0; k<treeMC->GetEntries(); k++)
         {
                 //process progress
                 if(k!=0 && (k%10000)==0)
@@ -257,18 +259,24 @@ void createFuncSmearing::main(){
                 //                 runopt == 0 for 2011A correction 
                 //                 runopt == 1 for 2011B correction
                 //              TLor.  float   float   int             
-                //rmcor->momcor_mc(mu, charge, sysdev, runopt); 
+                // for 2012 v4.1: rochcor2012::momcor_mc( TLorentzVector& mu, float charge, float sysdev, int runopt, float& qter)
 
                 if (MuCorr == 1){
+                  float err_corr = 1.;
                   if(RunYear == "2011B"){
-                     rmcor->momcor_mc(MuReco1, float(reco1.charge), 0, 1);
-                     rmcor->momcor_mc(MuReco2, float(reco2.charge), 0, 1);
+                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0), 1, err_corr);
+                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0), 1, err_corr);
                   }
                   if(RunYear == "2011A"){
-                     rmcor->momcor_mc(MuReco1, float(reco1.charge), 0, 0);
-                     rmcor->momcor_mc(MuReco2, float(reco2.charge), 0, 0);
+                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0), 0, err_corr);
+                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0), 0, err_corr);
+                  }
+                  if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
+                     rmcor2012->momcor_mc(MuReco1, float(reco1.charge), float(0), 0, err_corr);
+                     rmcor2012->momcor_mc(MuReco2, float(reco2.charge), float(0), 0, err_corr);
                   }
                 }
+
 /*                if (MuCorr == 2){
                    TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
                    TLorentzVector* MuReco2Pointer = &MuReco2;

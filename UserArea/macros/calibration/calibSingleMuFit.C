@@ -58,10 +58,10 @@ using namespace std;
 */
 
   int FitReq = 1; // 0: fit from 60 to 120 GeV; 1: fit from 80to 100 GeV:
-  int MuCorr = 0; // 0 - no mu correction
+  int MuCorr = 1; // 0 - no mu correction
                   // 1 - Rochester correction
                   // 2 - MuscleFit correcton in data
-  int Ismear = 1; // 1 - make smear by own 
+  int Ismear = 0; // 1 - make smear by own 
   //TString ExtaInfo = ""; 
   //TString ExtaInfo = "2011AV00_01_01"; 
   //TString ExtaInfo = "2011BV00_01_01"; 
@@ -132,6 +132,7 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
 void printhistos();
 Double_t BWnonrel(Double_t*, Double_t* );
 Double_t Gauss(Double_t*, Double_t* );
+Double_t FuncScale(Double_t*, Double_t* );
 Double_t FuncVoigtian(Double_t*, Double_t* );
 Double_t FuncVoigtianBG(Double_t*, Double_t* );
 Double_t DoubleGauss(Double_t*, Double_t* );
@@ -256,6 +257,21 @@ Double_t Gauss(Double_t* x, Double_t* par){
    Double_t gauss = par[0]*(TMath::Gaus(x[0], par[1], par[2])); 
    return gauss;
 }
+
+Double_t FuncScale(Double_t* x, Double_t* par){
+
+
+   //Double_t eff = par[0]*(TMath::Erf(par[1]*x[0]-par[2]) - 1.) + par[3];
+   //Non rel. Breit-Wigner                               mass     width 
+   //Double_t bw_nonrel = par[0]*(TMath::BreitWigner(x[0], par[1], par[2])); 
+   Double_t Scale = 0;
+   if(x[0] < par[3] || x[0] >= par[6] ) Scale = par[2]; // Endcap Minus and Plus
+   if(x[0] >= par[4] && x[0] < par[5] ) Scale = par[0]; // Barrel Minus and Plus
+   if((x[0] >= par[3] && x[0] < par[4]) || (x[0] >= par[5] && x[0] < par[6]) ) Scale = par[1]; // Overlap Minus and Plus
+
+   return Scale;
+}
+
 Double_t FuncVoigtian(Double_t* x, Double_t* par){
 
  //--------------------------------------------------------------------//
@@ -778,12 +794,15 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
        res_MC[iK] = par3;
        res_MC_err[iK] = par3err;
      }
+     // print plot:s
+/*
      c21_gen ->Print(gifname_invGEN[iPT][iETA_tag]+".png");
      c21_gen ->Print(gifname_invGEN[iPT][iETA_tag]+".root");
      c21 ->Print(gifname_inv[iPT][iETA_tag]+".png");
      c21 ->Print(gifname_inv[iPT][iETA_tag]+".root");
      c21_data ->Print(gifname_invDATA[iPT][iETA_tag]+".png");
      c21_data ->Print(gifname_invDATA[iPT][iETA_tag]+".root");
+*/
    }
    } //end iETA_tag and iPT
    ////////////////////
@@ -838,10 +857,17 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
 
      h2->LabelsOption("d", "X");
      h2->Draw();
+     float Xmin = h2->GetBinLowEdge(1);
+     float Xmax = h2->GetBinLowEdge(1+NFunc*NETAhist_inv);
+     float XEndPl, XEndM, XBarPl, XBarM; 
      for(int iPT = 0; iPT < NFunc; iPT++){
      for(int iETA = 0; iETA < NETAhist_inv; iETA++){
         int iK = iPT + iETA*NFunc+1;
         if (iPT == 0){
+           if(ETAbin_inv[iETA] < -1.15 && ETAbin_inv[iETA] > - 1.25) XEndM = h2 -> GetBinLowEdge(iK+1);
+           if(ETAbin_inv[iETA] > 1.15 && ETAbin_inv[iETA] <  1.25) XEndPl = h2 -> GetBinLowEdge(iK+1);
+           if(ETAbin_inv[iETA] < -0.75 && ETAbin_inv[iETA] > - 0.85) XBarM = h2 -> GetBinLowEdge(iK+1);
+           if(ETAbin_inv[iETA] > 0.75 && ETAbin_inv[iETA] < 0.85) XBarPl = h2 -> GetBinLowEdge(iK+1);
            float Xm = h2 -> GetBinLowEdge(iK+1);
            TLine *lineGrid = new TLine(Xm,0.,Xm,2.0);
            lineGrid -> SetLineStyle(kDotted);
@@ -849,9 +875,22 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
         }
      }}
 
+     TF1* fitScale = new TF1("fitScale", FuncScale, Xmin, Xmax, 7);
+     fitScale ->SetParName(0, "Barrel");
+     fitScale ->SetParName(1, "Overlap");
+     fitScale ->SetParName(2, "Endcap");
+     fitScale->SetParameter(0, 1.);
+     fitScale->SetParameter(1, 1.);
+     fitScale->SetParameter(2, 1.);
+     fitScale->FixParameter(3, XEndM);
+     fitScale->FixParameter(4, XBarM);
+     fitScale->FixParameter(5, XBarPl);
+     fitScale->FixParameter(6, XEndPl);
+
      //grScale->Draw("ALP");
      grScale->Draw("LP");
-     grScale->Fit("fScale", "R");
+     fitScale->SetLineColor(2); // red
+     grScale->Fit("fitScale", "LR");
      cScale ->Print(gifname_ScaleFaclor[iETA_tag]+".png");
      cScale ->Print(gifname_ScaleFaclor[iETA_tag]+".root");
   /// end: print Mass reco in data, MC and MC sim     

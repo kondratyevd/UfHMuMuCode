@@ -17,8 +17,8 @@ class rochcor {
   rochcor(int seed);
   ~rochcor();
   
-  void momcor_mc(TLorentzVector&, float, float, int);
-  void momcor_data(TLorentzVector&, float, float, int);
+  void momcor_mc(TLorentzVector&, float, float, int, float&);
+  void momcor_data(TLorentzVector&, float, float, int, float&);
   
   void musclefit_data(TLorentzVector& , TLorentzVector&);
   
@@ -124,5 +124,7 @@ class rochcor {
   float mptsys_da_dm[8][8];
   float mptsys_da_da[8][8];
 
+  float gscler_mc_dev;
+  float gscler_da_dev;
 };
   

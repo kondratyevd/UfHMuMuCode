@@ -33,7 +33,8 @@
 #include<modifiedStyle.C>
 #include<userStyle.C>
 //include Rochechester correction
-#include<rochcor.h>
+#include<rochcor.h>//v4
+#include<rochcor2012.h>// v4.1
 #include "MuScleFitCorrector.h"
 // include smearing tool
 #include <SmearingTool.h>
@@ -66,13 +67,13 @@ using namespace std;
   int HiggsNtuple = 1; // 1 - Higgs to MuMu ntuple is used wiht DataFormat.h <- check it and isKinTight_2012 (d0 and Z) 
                        // 0 - Boosted Z ntuoles are used with DataFormatBoostedZ.h <- check it and isKinTight_2012 (d0 and Z) 
 
-  int MuCorr = 0; // 0 - no muon correction, 
+  int MuCorr = 1; // 0 - no muon correction, 
                   // 1 - Rochester Correction,
                   // 2 - MuscleFit correcton 
-  int Ismear = 1; // 0 - take pt reco from MC
+  int Ismear = 0; // 0 - take pt reco from MC
                   // 1 - smear pt with own tools using pt gen post FSR  
 
-  TString RunYear = "2012ABCsmall"; // 2012; 2011A; 2011B; 2012ABCsmall 
+  TString RunYear = "2011B"; // 2012; 2011A; 2011B; 2012ABCsmall; 2012ABC 
   //const float PTbin[] = {20., 30., 40., 50., 60., 70., 100., 150., 300.};
   //const float PTbin[] = {20., 30., 40., 45., 50., 60., 70., 100.};
   const float PTbin[] = {20., 30., 35., 40., 45., 50., 60., 70., 100.}; //default
@@ -232,7 +233,7 @@ void calibSingleMuPtCorr::main(){
   	TChain* treeMC = new TChain("tree");
         // min cuts: vertex, cosmics, mass
         if(HiggsNtuple == 1){
-           if(RunYear == "2012" || RunYear == "2012ABCsmall") treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
+           if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC") treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
            if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011")treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia_Fall11-PU_S6_START44_V9B-v1/minimal/DYToMuMu_minimal.root");
         }
         if(HiggsNtuple == 0)
@@ -261,17 +262,19 @@ void calibSingleMuPtCorr::main(){
         //Rochester correction 
         //To get the central value of the momentum correction 
         rochcor *rmcor = new rochcor(); // make the pointer of rochcor class
+        rochcor2012 *rmcor2012 = new rochcor2012(); // make the pointer of rochcor class
         //REMARK : Need to call "rochcor(seed)" to assign the systematic error 
         //rochcor *rmcor = new rochcor(seed); //where "seed" is the random seed number
 
         ///
+
 /*
         TString fitParFileMC, fitParFileData;
         if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011"){
            fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2011_MC_42X.txt";// no MC_44 :(
            fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2011_DATA_44X.txt"; 
         } 
-        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012B" || RunYear == "2012C" || RunYear == "2012A" ){
+        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"|| RunYear == "2012B" || RunYear == "2012C" || RunYear == "2012A" ){
            fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2012_MC_52X.txt";// no MC_53 :(
            fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2012_DATA_53X.txt"; 
         }
@@ -354,19 +357,25 @@ void calibSingleMuPtCorr::main(){
                 //                 runopt == 0 for 2011A correction 
                 //                 runopt == 1 for 2011B correction
                 //              TLor.  float   float   int             
-                //rmcor->momcor_mc(mu, charge, sysdev, runopt); 
+                // for 2012 v4.1: rochcor2012::momcor_mc( TLorentzVector& mu, float charge, float sysdev, int runopt, float& qter)
   
                 if (MuCorr == 1){
+                  float err_corr = 1.; 
                   if(RunYear == "2011B"){
-                     rmcor->momcor_mc(MuReco1, float(reco1.charge), 0, 1); 
-                     rmcor->momcor_mc(MuReco2, float(reco2.charge), 0, 1);
+                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0), 1, err_corr); 
+                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0), 1, err_corr);
                   }
                   if(RunYear == "2011A"){
-                     rmcor->momcor_mc(MuReco1, float(reco1.charge), 0, 0); 
-                     rmcor->momcor_mc(MuReco2, float(reco2.charge), 0, 0);
+                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0), 0, err_corr); 
+                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0), 0, err_corr);
+                  }
+                  if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
+                     rmcor2012->momcor_mc(MuReco1, float(reco1.charge), float(0), 0, err_corr); 
+                     rmcor2012->momcor_mc(MuReco2, float(reco2.charge), float(0), 0, err_corr);
                   }
                 } 
-/*                if (MuCorr == 2){
+/*
+                if (MuCorr == 2){
                    TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
                    TLorentzVector* MuReco2Pointer = &MuReco2;
                    if(reco1.charge < 0){
@@ -678,11 +687,15 @@ void calibSingleMuPtCorr::main(){
         // min set of cuts, vertex, cosmics
         if(HiggsNtuple == 1) { 
            /// 2012 year
-           if(RunYear == "2012ABCsmall"){
+           if(RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
               treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012A-13Jul2012-v1/minimal/SingleMuRun2012A-13Jul2012-v1_minimal.root");
               treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012B-13Jul2012-v1/minimal/SingleMuRun2012B-13Jul2012-v1_minimal.root");
               treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012C-24Aug2012-v1/minimal/SingleMuRun2012C-24Aug2012-v1_minimal.root");
            }
+           if(RunYear == "2012ABC"){
+              treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012C-PromptReco-v2/minimal/SingleMuRun2012C-PromptReco-v2_minimal_2.root");
+           }
+           
         }
         // ***** 2011A
         if(RunYear == "2011A")treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesDataSingleMuRun2011A-08Nov2011-v1/minimal/SingleMuRun2011A-08Nov2011-v1_minimal.root");
@@ -739,19 +752,25 @@ void calibSingleMuPtCorr::main(){
                 //                 runopt == 0 for 2011A correction 
                 //                 runopt == 1 for 2011B correction
                 //                TLor.  float   float   int             
-                //rmcor->momcor_data(mu, charge, sysdev, runopt); 
+                //for v4.1: rochcor2012::momcor_data( TLorentzVector& mu, float charge, float sysdev, int runopt, float& qter) 
   
                 if (MuCorr == 1){ // Rochester Correction
+                  float err_corr = 1.; 
                   if(RunYear == "2011B"){
-                     rmcor->momcor_data(MuReco1, float(reco1_data.charge), 0, 1); 
-                     rmcor->momcor_data(MuReco2, float(reco2_data.charge), 0, 1);
+                     rmcor->momcor_data(MuReco1, float(reco1_data.charge), float(0), 1, err_corr); 
+                     rmcor->momcor_data(MuReco2, float(reco2_data.charge), float(0), 1, err_corr);
                   }
                   if(RunYear == "2011A"){
-                     rmcor->momcor_data(MuReco1, float(reco1_data.charge), 0, 0); 
-                     rmcor->momcor_data(MuReco2, float(reco2_data.charge), 0, 0);
+                     rmcor->momcor_data(MuReco1, float(reco1_data.charge), float(0), 0, err_corr); 
+                     rmcor->momcor_data(MuReco2, float(reco2_data.charge), float(0), 0, err_corr);
+                  }
+                  if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
+                     rmcor2012->momcor_data(MuReco1, float(reco1_data.charge), float(0), 0, err_corr); 
+                     rmcor2012->momcor_data(MuReco2, float(reco2_data.charge), float(0), 0, err_corr);
                   }
                 } 
-/*                if (MuCorr == 2){
+/*
+                if (MuCorr == 2){
                    TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
                    TLorentzVector* MuReco2Pointer = &MuReco2;
                    if(reco1.charge < 0){

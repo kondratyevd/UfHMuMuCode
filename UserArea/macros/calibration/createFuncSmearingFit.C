@@ -39,12 +39,12 @@
 #include "./DataFormat.h"
 using namespace std;
 
-  int MuCorr = 0; // 0 - no mu correction
+  int MuCorr = 1; // 0 - no mu correction
                   // 1 - Rochester correction
                   // 2 - MuscleFit correcton in data
   TString RunYear = "2012"; // 2011A, 2011B, 2012ABCsmall, 2012
-  //TString ExtraInfo = "Zmumu";
-  TString ExtraInfo = "ZmumuTEST";
+  TString ExtraInfo = "Zmumu";
+  //TString ExtraInfo = "ZmumuTEST";
 
   const float PTbin[] = {25., 30., 35., 40., 45., 50., 70., 100., 150., 300.}; //default
   const float ETAbin[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
