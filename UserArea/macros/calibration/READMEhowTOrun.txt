@@ -7,11 +7,15 @@
 
 Include in your code YourCode.C class: 
   SmearingTool.h             
-  FuncSmearingZmumu2012PtCorr0.C
+  FuncSmearingZmumu2012PtCorr0.C -- no muon correction in DATA
+  FuncSmearingZmumu2012PtCorr1.C -- DATA after Rochester correction
 
 In root:
 
 .L FuncSmearingZmumu2012PtCorr0.C+
+or
+.L FuncSmearingZmumu2012PtCorr1.C+
+
 .L YourCode.C+
 YourCode pf;// running the make function
 pf.main();
@@ -37,10 +41,12 @@ float MuTrue1Charge;
 
 ..........fill it ........
 
-/// float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, TString ParVar = "null",float ParSig = 0);
+//float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, float PTmuonReco, int Ismear, TString ParVar = "null",float ParSig = 0);
 
-float ptSmear = smearPT -> PTsmear(MuTrue1.Pt(),  MuTrue1.Eta(), MuTrue1Charge);
+float pt1Smear = smearPT -> PTsmear(MuTrue1.Pt(), MuTrue1.Eta(),MuTrue1charge, MuReco1.Pt(), Ismear);
 
+// of cause MuTrue and MuReco should be matched before running this code
+// Ismear = 1 <- Smear MC with SF and RND (no RECO use), Ismear = 2 <- Smear with SF for RECO and GEN 
 // ParVar and ParSig use only if you want to smear ParVar with not central
 // value but by ParSig sigma shift for systematic study (look in the code for
 // detailes)
@@ -93,7 +99,7 @@ par[2]*exp(-0.5*(x[0]-par[0])*(x[0]-par[0])/par[3]/par[3]);
 ============  createFuncSmearing.C  ===============
 ===================================================
 in root:
-.x createFuncSmearing.C++
+.x run_createFuncSmearing.C
 
 == creat histogramms of MC resolution for Signle Muon   
 == write them in ntuple

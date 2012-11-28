@@ -67,15 +67,13 @@ using namespace std;
   int HiggsNtuple = 1; // 1 - Higgs to MuMu ntuple is used wiht DataFormat.h <- check it and isKinTight_2012 (d0 and Z) 
                        // 0 - Boosted Z ntuoles are used with DataFormatBoostedZ.h <- check it and isKinTight_2012 (d0 and Z) 
 
-  int MuCorr = 1; // 0 - no muon correction, 
+  int MuCorr = 0; // 0 - no muon correction, 
                   // 1 - Rochester Correction,
                   // 2 - MuscleFit correcton 
   int Ismear = 0; // 0 - take pt reco from MC
                   // 1 - smear pt with own tools using pt gen post FSR  
 
-  TString RunYear = "2011B"; // 2012; 2011A; 2011B; 2012ABCsmall; 2012ABC 
-  //const float PTbin[] = {20., 30., 40., 50., 60., 70., 100., 150., 300.};
-  //const float PTbin[] = {20., 30., 40., 45., 50., 60., 70., 100.};
+  TString RunYear = "2012ABC"; // 2012; 2011A; 2011B; 2012ABCsmall; 2012ABC 
   const float PTbin[] = {20., 30., 35., 40., 45., 50., 60., 70., 100.}; //default
   const float ETAbin[] = {0., 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1};
   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);
@@ -83,16 +81,18 @@ using namespace std;
   const int Nhist = NPThist*NETAhist;
 
   double Pi  = acos(-1.);
-  //const float PTbin_inv[] = {20., 30., 50., 100.};
-  //const float ETAbin_inv[] = {0., 0.9, 2.1};
-  //const float PTbin_inv[] = {0., 20., 30., 40., 50., 70., 100., 300.};
-  //const float PTbin_inv[] = {25., 30., 35., 40., 50., 70., 100., 300.};
-  const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
-  //const float ETAbin_inv[] = {0., 0.3, 0.8, 1.2, 1.6, 2.1};
-  const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
+  //
+  //TString ExtraInfo = "";
+  //const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
+  //const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
   //const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
-  const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
+  //const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
+  TString ExtraInfo = "HighPt";
+  const float PTbin_inv[] = {50., 300.};
+  const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
+  const float ETAbin_tag[] = {0., 2.1};
   const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
+  //
   const int NPThist_inv = (sizeof(PTbin_inv)/sizeof(float)-1);
   const int NETAhist_inv = (sizeof(ETAbin_inv)/sizeof(float)-1);
   const int NETAhist_tag = (sizeof(ETAbin_tag)/sizeof(float)-1);
@@ -125,6 +125,7 @@ TH1F* hdthetav1v2;
 TH1F* hmuonRes[Nhist];
 TH1F* hDimuonRes[Nhist];
 
+TH1F* hDimuonMassGENall;
 TH1F* hDimuonMass[Nhist_inv];
 TH1F* hDimuonMassGEN[Nhist_inv];
 TH1F* hDimuonMassDATA[Nhist_inv];
@@ -239,7 +240,7 @@ void calibSingleMuPtCorr::main(){
         if(HiggsNtuple == 0)
         treeMC -> AddFile("/data/uftrig01b/digiovan/root/CMSSW_4_2_8_patch6/Ntuples/MC/DYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythiaFall11-PU_S6_START42_V14B-v1/minimal/boostedZ_DYToMuMu_minimal.root");
         // output file
-        TFile *theFile    =new TFile(Form("calibSingleMu"+RunYear+"PtCorr%dSmearPt%d.root", MuCorr, Ismear), "RECREATE");
+        TFile *theFile    =new TFile(Form("calibSingleMu"+RunYear+ExtraInfo+"PtCorr%dSmearPt%d.root", MuCorr, Ismear), "RECREATE");
 
         bookhistos();// histo init 
         
@@ -463,6 +464,7 @@ void calibSingleMuPtCorr::main(){
  
                 // Z shape on GEN level as pt and eta for muon
                 // Z mass and resolution as pt and eta for muon
+                if(true1mu.pt >= 25 && true2mu.pt >= 25 && fabs(true1mu.eta) <= 2.1 &&fabs(true2mu.eta) <= 2.1) hDimuonMassGENall -> Fill(genZpostFSR.mass);
                 for(int iPT = 0; iPT < NPThist_inv; iPT++){
                 for(int iETA = 0; iETA < NETAhist_inv; iETA++){
                 for(int iETA_tag = 0; iETA_tag < NETAhist_tag; iETA_tag++){
@@ -512,15 +514,17 @@ void calibSingleMuPtCorr::main(){
 
                    // GEN level
                    // muon tag minus and in tag eta region
+                   float PTgenlow = PTbin_inv[iPT];    
+                   //if(iPT == 0) PTgenlow = 25.; // for acceptence calculation
                    if( 
-                         ( true1mu.pt >= PTbin_inv[iPT] && true1mu.pt < PTbin_inv[iPT+1]
+                         ( true1mu.pt >= PTgenlow && true1mu.pt < PTbin_inv[iPT+1]
                            //&& true2mu.pt >= PTbin_inv[iPT] && true2mu.pt < PTbin_inv[iPT+1] 
                            //&& fabs(true1mu.eta) >= ETAbin_inv[iETA] && fabs(true1mu.eta) < ETAbin_inv[iETA+1]
                            && true1mu.eta >= ETAbin_inv[iETA] && true1mu.eta < ETAbin_inv[iETA+1]
                            && fabs(true2mu.eta) >= ETAbin_tag[iETA_tag] && fabs(true2mu.eta) < ETAbin_tag[iETA_tag+1]
                            && true2mu.charge < 0.
                          )||
-                         ( true2mu.pt >= PTbin_inv[iPT] && true2mu.pt < PTbin_inv[iPT+1] 
+                         ( true2mu.pt >= PTgenlow && true2mu.pt < PTbin_inv[iPT+1] 
                            //&& true1mu.pt >= PTbin_inv[iPT] && true1mu.pt < PTbin_inv[iPT+1]
                            //&& fabs(true2mu.eta) >= ETAbin_inv[iETA] && fabs(true2mu.eta) < ETAbin_inv[iETA+1]
                            && true2mu.eta >= ETAbin_inv[iETA] && true2mu.eta < ETAbin_inv[iETA+1]
@@ -533,14 +537,14 @@ void calibSingleMuPtCorr::main(){
                    // GEN level
                    // muon tag plus charge and in tag eta region
                    if( 
-                         ( true1mu.pt >= PTbin_inv[iPT] && true1mu.pt < PTbin_inv[iPT+1]
+                         ( true1mu.pt >= PTgenlow && true1mu.pt < PTbin_inv[iPT+1]
                            //&& true2mu.pt >= PTbin_inv[iPT] && true2mu.pt < PTbin_inv[iPT+1] 
                            //&& fabs(true1mu.eta) >= ETAbin_inv[iETA] && fabs(true1mu.eta) < ETAbin_inv[iETA+1]
                            && true1mu.eta >= ETAbin_inv[iETA] && true1mu.eta < ETAbin_inv[iETA+1]
                            && fabs(true2mu.eta) >= ETAbin_tag[iETA_tag] && fabs(true2mu.eta) < ETAbin_tag[iETA_tag+1]
                            && true2mu.charge > 0.
                          )||
-                         ( true2mu.pt >= PTbin_inv[iPT] && true2mu.pt < PTbin_inv[iPT+1] 
+                         ( true2mu.pt >= PTgenlow && true2mu.pt < PTbin_inv[iPT+1] 
                            //&& true1mu.pt >= PTbin_inv[iPT] && true1mu.pt < PTbin_inv[iPT+1]
                            //&& fabs(true2mu.eta) >= ETAbin_inv[iETA] && fabs(true2mu.eta) < ETAbin_inv[iETA+1]
                            && true2mu.eta >= ETAbin_inv[iETA] && true2mu.eta < ETAbin_inv[iETA+1]
@@ -564,13 +568,13 @@ void calibSingleMuPtCorr::main(){
 
                    // muon tag minus and in tag eta region
                    if( 
-                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1) 
+                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1) && MuReco1.Pt() >= PTbin_inv[0] 
                            //&& fabs(reco1.eta) >= ETAbin_inv[iETA] && fabs(reco1.eta) < ETAbin_inv[iETA+1]
                            && reco1.eta >= ETAbin_inv[iETA] && reco1.eta < ETAbin_inv[iETA+1]
                            && fabs(reco2.eta) >= ETAbin_tag[iETA_tag] && fabs(reco2.eta) < ETAbin_tag[iETA_tag+1]
                            && reco2.charge < 0.
                          )||
-                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1) 
+                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1) && MuReco2.Pt() >= PTbin_inv[0]
                            //&& fabs(reco2.eta) >= ETAbin_inv[iETA] && fabs(reco2.eta) < ETAbin_inv[iETA+1]
                            && reco2.eta >= ETAbin_inv[iETA] && reco2.eta < ETAbin_inv[iETA+1]
                            && fabs(reco1.eta) >= ETAbin_tag[iETA_tag] && fabs(reco1.eta) < ETAbin_tag[iETA_tag+1]
@@ -580,13 +584,13 @@ void calibSingleMuPtCorr::main(){
                             } 
                    // muon tag plus charge and in tag eta region
                    if( 
-                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1) 
+                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1) && MuReco1.Pt() >= PTbin_inv[0] 
                            //&& fabs(reco1.eta) >= ETAbin_inv[iETA] && fabs(reco1.eta) < ETAbin_inv[iETA+1]
                            && reco1.eta >= ETAbin_inv[iETA] && reco1.eta < ETAbin_inv[iETA+1]
                            && fabs(reco2.eta) >= ETAbin_tag[iETA_tag] && fabs(reco2.eta) < ETAbin_tag[iETA_tag+1]
                            && reco2.charge > 0.
                          )||
-                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1) 
+                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1) && MuReco2.Pt() >= PTbin_inv[0]
                            //&& fabs(reco2.eta) >= ETAbin_inv[iETA] && fabs(reco2.eta) < ETAbin_inv[iETA+1]
                            && reco2.eta >= ETAbin_inv[iETA] && reco2.eta < ETAbin_inv[iETA+1]
                            && fabs(reco1.eta) >= ETAbin_tag[iETA_tag] && fabs(reco1.eta) < ETAbin_tag[iETA_tag+1]
@@ -594,7 +598,8 @@ void calibSingleMuPtCorr::main(){
                          ) ){
                              hPhiDimuonMassTagMuPlus[iK] -> Fill(rMassCorr);
                             }
- 
+
+
                    // GEN level
                    phi1 = true1mu.phi;
                    phi2 = true2mu.phi; 
@@ -602,13 +607,13 @@ void calibSingleMuPtCorr::main(){
                    if(phi2 < 0.) phi2 = 2*Pi + phi2; 
                    // GEN: muon tag minus and in tag eta region
                    if(
-                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1)
+                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1) && true1mu.pt >= PTbin_inv[0]
                            //&& fabs(true1mu.eta) >= ETAbin_inv[iETA] && fabs(true1mu.eta) < ETAbin_inv[iETA+1]
                            && true1mu.eta >= ETAbin_inv[iETA] && true1mu.eta < ETAbin_inv[iETA+1]
                            && fabs(true2mu.eta) >= ETAbin_tag[iETA_tag] && fabs(true2mu.eta) < ETAbin_tag[iETA_tag+1]
                            && true2mu.charge < 0.
                          )||
-                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1)
+                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1) && true2mu.pt >= PTbin_inv[0]
                            //&& fabs(true2mu.eta) >= ETAbin_inv[iETA] && fabs(true2mu.eta) < ETAbin_inv[iETA+1]
                            && true2mu.eta >= ETAbin_inv[iETA] && true2mu.eta < ETAbin_inv[iETA+1]
                            && fabs(true1mu.eta) >= ETAbin_tag[iETA_tag] && fabs(true1mu.eta) < ETAbin_tag[iETA_tag+1]
@@ -618,13 +623,13 @@ void calibSingleMuPtCorr::main(){
                             }
                    // GEN: muon tag plus and in tag eta region
                    if(
-                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1)
+                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1) && true1mu.pt >= PTbin_inv[0]
                            //&& fabs(true1mu.eta) >= ETAbin_inv[iETA] && fabs(true1mu.eta) < ETAbin_inv[iETA+1]
                            && true1mu.eta >= ETAbin_inv[iETA] && true1mu.eta < ETAbin_inv[iETA+1]
                            && fabs(true2mu.eta) >= ETAbin_tag[iETA_tag] && fabs(true2mu.eta) < ETAbin_tag[iETA_tag+1]
                            && true2mu.charge > 0.
                          )||
-                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1)
+                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1) && true2mu.pt >= PTbin_inv[0]
                            //&& fabs(true2mu.eta) >= ETAbin_inv[iETA] && fabs(true2mu.eta) < ETAbin_inv[iETA+1]
                            && true2mu.eta >= ETAbin_inv[iETA] && true2mu.eta < ETAbin_inv[iETA+1]
                            && fabs(true1mu.eta) >= ETAbin_tag[iETA_tag] && fabs(true1mu.eta) < ETAbin_tag[iETA_tag+1]
@@ -862,13 +867,13 @@ void calibSingleMuPtCorr::main(){
 
                    // muon tag minus and in tag eta region
                    if( 
-                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1) 
+                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1) && MuReco1.Pt() >= PTbin_inv[0] 
                            //&& fabs(reco1_data.eta) >= ETAbin_inv[iETA] && fabs(reco1_data.eta) < ETAbin_inv[iETA+1]
                            && reco1_data.eta >= ETAbin_inv[iETA] && reco1_data.eta < ETAbin_inv[iETA+1]
                            && fabs(reco2_data.eta) >= ETAbin_tag[iETA_tag] && fabs(reco2_data.eta) < ETAbin_tag[iETA_tag+1]
                            && reco2_data.charge < 0.
                          )||
-                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1) 
+                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1) && MuReco2.Pt() >= PTbin_inv[0]
                            //&& fabs(reco2_data.eta) >= ETAbin_inv[iETA] && fabs(reco2_data.eta) < ETAbin_inv[iETA+1]
                            && reco2_data.eta >= ETAbin_inv[iETA] && reco2_data.eta < ETAbin_inv[iETA+1]
                            && fabs(reco1_data.eta) >= ETAbin_tag[iETA_tag] && fabs(reco1_data.eta) < ETAbin_tag[iETA_tag+1]
@@ -878,13 +883,13 @@ void calibSingleMuPtCorr::main(){
                             } 
                    // muon tag plus charge and in tag eta region
                    if( 
-                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1) 
+                         ( phi1 >= phibin*Pi*iPHI && phi1 < phibin*Pi*(iPHI+1) && MuReco1.Pt() >= PTbin_inv[0]
                            //&& fabs(reco1_data.eta) >= ETAbin_inv[iETA] && fabs(reco1_data.eta) < ETAbin_inv[iETA+1]
                            && reco1_data.eta >= ETAbin_inv[iETA] && reco1_data.eta < ETAbin_inv[iETA+1]
                            && fabs(reco2_data.eta) >= ETAbin_tag[iETA_tag] && fabs(reco2_data.eta) < ETAbin_tag[iETA_tag+1]
                            && reco2_data.charge > 0.
                          )||
-                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1) 
+                         ( phi2 >= phibin*Pi*iPHI && phi2 < phibin*Pi*(iPHI+1) && MuReco2.Pt() >= PTbin_inv[0]
                            //&& fabs(reco2_data.eta) >= ETAbin_inv[iETA] && fabs(reco2_data.eta) < ETAbin_inv[iETA+1]
                            && reco2_data.eta >= ETAbin_inv[iETA] && reco2_data.eta < ETAbin_inv[iETA+1]
                            && fabs(reco1_data.eta) >= ETAbin_tag[iETA_tag] && fabs(reco1_data.eta) < ETAbin_tag[iETA_tag+1]
@@ -932,6 +937,7 @@ void bookhistos(){
       hmuonRes[iK] = new TH1F(Form("hmuonRes%d",iK), Form("MC Drell-Yan, PT: %4.1f-%4.1f GeV, ETA: %4.1f-%4.1f", PTbin[iPT], PTbin[iPT+1], ETAbin[iETA], ETAbin[iETA+1]), 80, -0.1, 0.1);
       hDimuonRes[iK] = new TH1F(Form("hDimuonRes%d",iK), Form("#mu#mu resolution, PT: %4.1f-%4.1f GeV, ETA: %4.1f-%4.1f", PTbin[iPT], PTbin[iPT+1], ETAbin[iETA], ETAbin[iETA+1]), 100, -0.2, 0.2);
    }}
+      hDimuonMassGENall = new TH1F(Form("hDimuonMassGENall"), Form("DY GEN, #mu^{+} p_{T}> 25 GeV, #eta: -2.1 #divide 2.1, #mu^{-} tag #eta: -2.1 #divide 2.1 "), NbinMass, 60., 120.);
    for(int iPT = 0; iPT < NPThist_inv; iPT++){
    for(int iETA = 0; iETA < NETAhist_inv; iETA++){
    for(int iETA_tag = 0; iETA_tag < NETAhist_tag; iETA_tag++){
@@ -996,9 +1002,9 @@ void printhistos(){
  /////////////////////////////////////////////////////////
  /////////////////////////////////////////////////////////
  /////////////////////////////////////////////////////////
- TString Extra = "TagMuMinus";
+ TString Extra = "TagMuMinus"+ExtraInfo;
  //fitDiMuon(hDimuonMass, hDimuonMassDATA, Extra);
- Extra = "TagMuPlus";
+ Extra = "TagMuPlus"+ExtraInfo;
  //fitDiMuon(hDimuonMassTagMuPlus, hDimuonMassTagMuPlusDATA, Extra);
 
  /////////////////////////////////////////////////////////
