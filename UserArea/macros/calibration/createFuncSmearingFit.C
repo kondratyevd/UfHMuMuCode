@@ -39,14 +39,15 @@
 #include "./DataFormat.h"
 using namespace std;
 
-  int MuCorr = 1; // 0 - no mu correction
+  int MuCorr = 0; // 0 - no mu correction
                   // 1 - Rochester correction
                   // 2 - MuscleFit correcton in data
   TString RunYear = "2012"; // 2011A, 2011B, 2012ABCsmall, 2012
-  TString ExtraInfo = "Zmumu";
-  //TString ExtraInfo = "ZmumuTEST";
+  //TString ExtraInfo = "Zmumu";
+  TString ExtraInfo = "ZmumuTEST";
 
-  const float PTbin[] = {25., 30., 35., 40., 45., 50., 70., 100., 150., 300.}; //default
+  //const float PTbin[] = {25., 30., 35., 40., 45., 50., 70., 100., 150., 300.}; //default
+  const float PTbin[] = {25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 80., 100., 150., 300.}; //default
   const float ETAbin[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);
   const int NETAhist = (sizeof(ETAbin)/sizeof(float)-1);
@@ -113,6 +114,7 @@ void createFuncSmearingFit(){
 	//modifiedStyle();
   	// ---- open the MC files ----
         TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+RunYear+"PtCorr%dGood.root", MuCorr ), "READ");
+        //TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+RunYear+"PtCorr%dSmearPt1Good.root", MuCorr ), "READ");
         theFile -> cd();
 
   for(int iPT = 0; iPT < NPThist; iPT++){
@@ -153,7 +155,7 @@ void createFuncSmearingFit(){
           myfileH << "  //SmearingTool();\n";
           myfileH << "  //SmearingTool(int seed);\n";
           myfileH << "  SmearingTool();\n";
-          myfileH << "  float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, TString ParVar = \"null\",float ParSig = 0);\n\n"; 
+          myfileH << "  float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, float PTmuonReco, int Ismear, TString ParVar = \"null\",float ParSig = 0);\n\n"; 
 
           myfileH << " private:\n";
           myfileH << "  static const float mean[" << Nhist << "];\n";
@@ -316,7 +318,9 @@ void createFuncSmearingFit(){
           myfile << "}\n";
 
 
-          myfile << "float SmearingTool::PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, TString ParVar,float ParSig){\n";
+          myfile << "float SmearingTool::PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, float PTmuonReco, int Ismear, TString ParVar,float ParSig){\n";
+          myfile << "   //Ismear = 1 - Smear with RND (no RECO use), Ismear = 2 - Smear with SF for RECO and GEN\n";
+          myfile << "   if(Ismear != 1 && Ismear != 2)std::cout << \"ERROR SmearingTool::PTsmear: set Ismear to 1 or 2 for smearing\" << std::endl;\n";
           myfile << "   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);\n";
           myfile << "   const int NETAhist = (sizeof(ETAbin)/sizeof(float)-1);\n";
           myfile << "   //const int Nhist = NPThist*NETAhist;\n";
@@ -348,13 +352,19 @@ void createFuncSmearingFit(){
 
           myfile << "   ///// Set Scale Factor\n";
           myfile << "   float ScaleFactor = 1.;\n";
-          myfile << "   if (fabs(ETAmuonGen) < 0.8) ScaleFactor = sqrt(1.2);\n";
-          myfile << "   if (fabs(ETAmuonGen) >= 0.8 && fabs(ETAmuonGen) < 1.2) ScaleFactor = sqrt(1.15);\n";
-          myfile << "   if (fabs(ETAmuonGen) >= 1.2) ScaleFactor = sqrt(1.12);\n";
-
+          if(MuCorr == 0){
+            myfile << "   if (fabs(ETAmuonGen) < 0.8) ScaleFactor = 1.21;\n";
+            myfile << "   if (fabs(ETAmuonGen) >= 0.8 && fabs(ETAmuonGen) < 1.2) ScaleFactor = 1.16;\n";
+            myfile << "   if (fabs(ETAmuonGen) >= 1.2) ScaleFactor = 1.11;\n";
+          }
+          if(MuCorr == 1){
+            myfile << "   if (fabs(ETAmuonGen) < 0.8) ScaleFactor = 0.92;\n";
+            myfile << "   if (fabs(ETAmuonGen) >= 0.8 && fabs(ETAmuonGen) < 1.2) ScaleFactor = 0.99;\n";
+            myfile << "   if (fabs(ETAmuonGen) >= 1.2) ScaleFactor = 1.045;\n";
+          }
           myfile << "   TF1* fitDoubleGauss = new TF1(\"fitDoubleGauss\", DoubleGauss, -0.1, 0.1, 5);\n";
           myfile << "   fitDoubleGauss->SetParameter(4,1.);\n";
-          myfile << "   if(iK_cand > -1){\n";
+          myfile << "   if(iK_cand > -1 && Ismear == 1){\n";
           myfile << "      float meanCorr = mean[iK_cand] + meanVar*ERRmean[iK_cand];\n"; 
           myfile << "      float sig1Corr = sig1[iK_cand] + sigVar*ERRsig1[iK_cand];\n";
           myfile << "      if(sig1Corr < 0.005) sig1Corr = 0.005;\n"; 
@@ -370,6 +380,9 @@ void createFuncSmearingFit(){
           myfile << "      PTmuonSmear = PTmuonGen*(1+resSim);\n";
           myfile << "   }\n";
           myfile << "   delete fitDoubleGauss;\n";
+          myfile << "   if(iK_cand > -1 && Ismear == 2){\n";
+          myfile << "      PTmuonSmear = PTmuonGen + ScaleFactor*(PTmuonReco - PTmuonGen);\n";
+          myfile << "   }\n";
           myfile << "   ////// End Smearing parametrization for single muon:\n\n";  
           myfile << "   return PTmuonSmear;\n";
           myfile << " }//end PTsmear function\n\n";
@@ -485,9 +498,9 @@ void printhistos(){
        hmuonResNonCorr[iK] -> Draw("histsame");
 
         TLegend* histinfo = SetLegend(.6,.57,1.,.73);
-        histinfo->AddEntry(hmuonRes[iK], "MC reco + Fit","lep");
+        histinfo->AddEntry(hmuonRes[iK], "MC resim + Fit","lep");
         histinfo->AddEntry(fitDoubleGauss2, Form("Fit, RMS = %4.3f#pm%4.3f", ResRMS[iK], ErrResRMS[iK]),"l");
-        histinfo->AddEntry(hmuonResNonCorr[iK], "MC no Corr.","lep");
+        histinfo->AddEntry(hmuonResNonCorr[iK], Form("MC, RMS = %4.3f", (hmuonResNonCorr[iK] -> GetRMS()) ),"lep");
 
        histinfo -> Draw("same");
        //c21 -> cd(iETA+1);

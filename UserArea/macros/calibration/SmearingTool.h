@@ -17,21 +17,21 @@ class SmearingTool {
   //SmearingTool();
   //SmearingTool(int seed);
   SmearingTool();
-  float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, TString ParVar = "null",float ParSig = 0);
+  float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, float PTmuonReco, int Ismear, TString ParVar = "null",float ParSig = 0);
 
  private:
-  static const float mean[72];
-  static const float sig1[72];
-  static const float sig2[72];
-  static const float Asig2[72];
-  static const float ERRmean[72];
-  static const float ERRsig1[72];
-  static const float ERRsig2[72];
-  static const float ERRAsig2[72];
-  static const float ResRMS[72];
-  static const float ErrResRMS[72];
+  static const float mean[104];
+  static const float sig1[104];
+  static const float sig2[104];
+  static const float Asig2[104];
+  static const float ERRmean[104];
+  static const float ERRsig1[104];
+  static const float ERRsig2[104];
+  static const float ERRAsig2[104];
+  static const float ResRMS[104];
+  static const float ErrResRMS[104];
 
-  static const float PTbin[10];
+  static const float PTbin[14];
   static const float ETAbin[9];
 
 };
