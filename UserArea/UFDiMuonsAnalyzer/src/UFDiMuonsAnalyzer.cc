@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.11 2012/10/23 11:01:51 jhugon Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.12 2012/10/26 08:34:16 digiovan Exp $
 //
 //
 
@@ -123,7 +123,8 @@ Implementation:
 #include "DataFormats/Math/interface/deltaR.h"
 
 // pfJets and MET
-#include "DataFormats/METReco/interface/PFMET.h"
+//#include "DataFormats/METReco/interface/PFMET.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
 #include <algorithm>
@@ -1218,7 +1219,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     }
     // ===== END Requirements ====
     
-    
     // do we pass the selection? Yes -> store the event
     // else move to the next event
     if (!passSelection) return;
@@ -1500,7 +1500,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     
     // ===========================================================================
     // Jet Info
-    edm::Handle < std::vector<reco::PFMET> > mets;
+    edm::Handle < std::vector<pat::MET> > mets;
     if( metTag.label() != "null" ) iEvent.getByLabel(metTag, mets);
     bzero(&_metInfo,sizeof(_MetInfo));
 
@@ -1596,7 +1596,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 	      _pfJetInfo.genAuxF[i]  =-1;
 	    }
 	  
-          delete genJet;
         }
       }
     }
@@ -1606,12 +1605,14 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
     edm::Handle < edm::View<pat::Jet> > jetsForPUId;
     if( pfJetsTag.label() != "null" ) iEvent.getByLabel(pfJetsTag, jetsForPUId);
+
     std::vector<float> puIdFullDisc = getPUJetIDDisc(jetsForPUId,iEvent,puJetMvaFullDiscTag);
     std::vector<float> puIdSimpleDisc = getPUJetIDDisc(jetsForPUId,iEvent,puJetMvaSimpleDiscTag);
     std::vector<float> puIdCutDisc = getPUJetIDDisc(jetsForPUId,iEvent,puJetMvaCutDiscTag);
     std::vector<int> puIdFullId = getPUJetID(jetsForPUId,iEvent,puJetMvaFullIdTag);
     std::vector<int> puIdSimpleId = getPUJetID(jetsForPUId,iEvent,puJetMvaSimpleIdTag);
     std::vector<int> puIdCutId = getPUJetID(jetsForPUId,iEvent,puJetMvaCutIdTag);
+
     for(unsigned i=0; i<10;i++)
     {
       if(i<puIdFullDisc.size())
@@ -1686,7 +1687,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 // ------------ method called once each job just before starting event loop  ------------
 void UFDiMuonsAnalyzer::beginJob()
 {
-  
   displaySelection();
 
   // create the file
@@ -2190,7 +2190,6 @@ void UFDiMuonsAnalyzer::beginRun(edm::Run const& iRun,
   edm::ESHandle<TransientTrackBuilder> builder;
   iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder", builder);
   transientTrackBuilder = builder.product();
-
 
 }
 
