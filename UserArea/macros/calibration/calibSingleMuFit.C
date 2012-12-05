@@ -58,17 +58,22 @@ using namespace std;
 */
 
   int FitReq = 1; // 0: fit from 60 to 120 GeV; 1: fit from 80to 100 GeV:
-  int MuCorr = 0; // 0 - no mu correction
+  int MuCorr = 1; // 0 - no mu correction
                   // 1 - Rochester correction
                   // 2 - MuscleFit correcton in data
   int Ismear = 0; // 1 - make smear by own 
+
   //TString ExtaInfo = ""; 
-  //TString ExtaInfo = "2011AV00_01_01"; 
+  //TString ExtaInfo = "2011V00_01_01"; 
+  TString ExtaInfo = "2011AV00_01_01"; 
   //TString ExtaInfo = "2011BV00_01_01"; 
+  //TString ExtaInfo = "2012ABCV00_01_01"; 
+
   //TString ExtaInfo = "2012AV00_01_01"; 
   //TString ExtaInfo = "2012ABCsmallV00_01_01"; 
-  TString ExtaInfo = "2012ABCHighPtV00_01_01"; 
+  //TString ExtaInfo = "2012ABCHighPtV00_01_01"; 
   //TString ExtaInfo = "2012ABCsmallTEST"; 
+
   int MCDraw = 1; // 0 - don't draw MC
                   // 1 - draw MC
   //const float PTbin[] = {20., 30., 40., 50., 60., 70., 100., 150., 300.};
@@ -80,14 +85,15 @@ using namespace std;
   const int Nhist = NPThist*NETAhist;
 
   //
-  //const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
-  //const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
-  //const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
-  //const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
-  const float PTbin_inv[] = {50., 300.};
+  const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
   const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
-  const float ETAbin_tag[] = {0., 2.1};
+  const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
   const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
+
+  //const float PTbin_inv[] = {50., 300.};
+  //const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
+  //const float ETAbin_tag[] = {0., 2.1};
+  //const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
   //
 
   const int NPThist_inv = (sizeof(PTbin_inv)/sizeof(float)-1);
@@ -453,7 +459,9 @@ void DrawWithRatio(TCanvas *canvas, char *cTitle,
  hNum->Draw("pe same");
  _leg2->Draw(); 
  PrintItLog(pad1,cTitle);
-
+delete pad1;
+delete pad2;
+delete _leg2;
 //   TLegend* leg = SetLegend(0.73, 0.7, 0.92, 0.89);
 //   leg -> AddEntry(hDen," no mass cut","f");
 //   leg -> AddEntry(hNum," 60 < M^{#mu #mu} < 120","p");
@@ -800,12 +808,12 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
        res_MC_err[iK] = par3err;
      }
      // print plot:s
-     c21_gen ->Print(gifname_invGEN[iPT][iETA_tag]+".png");
-     c21_gen ->Print(gifname_invGEN[iPT][iETA_tag]+".root");
-     c21 ->Print(gifname_inv[iPT][iETA_tag]+".png");
-     c21 ->Print(gifname_inv[iPT][iETA_tag]+".root");
-     c21_data ->Print(gifname_invDATA[iPT][iETA_tag]+".png");
-     c21_data ->Print(gifname_invDATA[iPT][iETA_tag]+".root");
+     //c21_gen ->Print(gifname_invGEN[iPT][iETA_tag]+".png");
+     //c21_gen ->Print(gifname_invGEN[iPT][iETA_tag]+".root");
+     //c21 ->Print(gifname_inv[iPT][iETA_tag]+".png");
+     //c21 ->Print(gifname_inv[iPT][iETA_tag]+".root");
+     //c21_data ->Print(gifname_invDATA[iPT][iETA_tag]+".png");
+     //c21_data ->Print(gifname_invDATA[iPT][iETA_tag]+".root");
    }
    } //end iETA_tag and iPT
    ////////////////////
@@ -975,14 +983,15 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
      fitMass->SetLineColor(4); // blue
      grMass->Fit("fitMass", "LR");
      if (MCDraw == 1)grMassMC->Draw("LP");
+
      TLegend* legMass = SetLegend(.2,.2,0.6,.35);
+     //TLegend* legMass = new Legend(.2,.2,0.6,.35);
      legMass->AddEntry(grMass, " Data","ep");
-     legMass->AddEntry(fScale, " Fit Data","l");
+     legMass->AddEntry(fitMass, " Fit Data","l");
      legMass->AddEntry(grMassMC, " MC","ep");
      legMass -> Draw("same");
      cScale1 ->Print(gifname_Mass[iETA_tag]+".png");
      cScale1 ->Print(gifname_Mass[iETA_tag]+".root");
-
 ///////////////////
 /// res bihavior:
 
@@ -1058,9 +1067,10 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
      //fScale->SetLineColor(4); // blue
      //grRes->Fit("fScale", "R");
      if (MCDraw == 1)grResMC->Draw("LP");
-     TLegend* legRes = SetLegend(.2,.2,0.6,.3);
+     //TLegend* legRes = SetLegend(.2,.2,0.6,.3);
+     TLegend* legRes = SetLegend(.2,.2,0.6,.35);
      legRes->AddEntry(grRes, " Data","ep");
-     //legRes->AddEntry(fScale, " Fit Data","l");
+     legRes->AddEntry(fitRes, " Fit Data","l");
      legRes->AddEntry(grResMC, " MC","ep");
      legRes -> Draw("same");
      cScale2 ->Print(gifname_Res[iETA_tag]+".png");
@@ -1070,9 +1080,9 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
      delete h2;
      delete h2Mass;
      delete h2Res;
-     delete fitScale;
-     delete fitMass;
-     delete fitRes; 
+     //delete fitScale;
+     //delete fitMass;
+     //delete fitRes; 
 
   } // end iETA_tag 
 }

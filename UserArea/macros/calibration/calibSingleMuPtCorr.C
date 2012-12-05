@@ -33,7 +33,8 @@
 #include<modifiedStyle.C>
 #include<userStyle.C>
 //include Rochechester correction
-#include<rochcor.h>//v4
+//#include<rochcor.h>//v4 for CMSSW4_2
+#include<rochcor_wasym_v3.h>//v3 for CMSSW4_4
 #include<rochcor2012.h>// v4.1
 #include "MuScleFitCorrector.h"
 // include smearing tool
@@ -67,13 +68,14 @@ using namespace std;
   int HiggsNtuple = 1; // 1 - Higgs to MuMu ntuple is used wiht DataFormat.h <- check it and isKinTight_2012 (d0 and Z) 
                        // 0 - Boosted Z ntuoles are used with DataFormatBoostedZ.h <- check it and isKinTight_2012 (d0 and Z) 
 
-  int MuCorr = 0; // 0 - no muon correction, 
+  int MuCorr = 1; // 0 - no muon correction, 
                   // 1 - Rochester Correction,
                   // 2 - MuscleFit correcton 
   int Ismear = 0; // 0 - take pt reco from MC
                   // 1 - smear pt with own tools using pt gen post FSR  
+                  // 2 - smear pt with PT_smear = PT_gen + (PT_reco-PT_gen)*SF
 
-  TString RunYear = "2012ABC"; // 2012; 2011A; 2011B; 2012ABCsmall; 2012ABC 
+  TString RunYear = "2011B"; // 2012; 2011; 2011A; 2011B; 2012ABCsmall; 2012ABC 
   const float PTbin[] = {20., 30., 35., 40., 45., 50., 60., 70., 100.}; //default
   const float ETAbin[] = {0., 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1};
   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);
@@ -82,16 +84,17 @@ using namespace std;
 
   double Pi  = acos(-1.);
   //
-  //TString ExtraInfo = "";
-  //const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
-  //const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
-  //const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
-  //const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
-  TString ExtraInfo = "HighPt";
-  const float PTbin_inv[] = {50., 300.};
+  TString ExtraInfo = "";
+  const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
   const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
-  const float ETAbin_tag[] = {0., 2.1};
+  const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
   const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
+
+  //TString ExtraInfo = "HighPt";
+  //const float PTbin_inv[] = {50., 300.};
+  //const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
+  //const float ETAbin_tag[] = {0., 2.1};
+  //const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
   //
   const int NPThist_inv = (sizeof(PTbin_inv)/sizeof(float)-1);
   const int NETAhist_inv = (sizeof(ETAbin_inv)/sizeof(float)-1);
@@ -269,19 +272,22 @@ void calibSingleMuPtCorr::main(){
 
         ///
 
-/*
         TString fitParFileMC, fitParFileData;
         if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011"){
-           fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2011_MC_42X.txt";// no MC_44 :(
-           fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2011_DATA_44X.txt"; 
+           //fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v3/MuScleFit_2011_MC_44X.txt";
+           //fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v3/MuScleFit_2011_DATA_44X.txt"; 
+           fitParFileMC = "./MuScleFitCorrector_v3/MuScleFit_2011_MC_44X.txt";
+           fitParFileData = "./MuScleFitCorrector_v3/MuScleFit_2011_DATA_44X.txt"; 
         } 
         if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"|| RunYear == "2012B" || RunYear == "2012C" || RunYear == "2012A" ){
-           fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2012_MC_52X.txt";// no MC_53 :(
-           fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2012_DATA_53X.txt"; 
+           //fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v3/MuScleFit_2012_MC_52X.txt";// no MC_53 :(
+           //fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v3/MuScleFit_2012_DATA_53X.txt"; 
+           fitParFileMC = "./MuScleFitCorrector_v3/MuScleFit_2012_MC_52X.txt";// no MC_53 :(
+           fitParFileData = "./MuScleFitCorrector_v3/MuScleFit_2012_DATA_53X.txt"; 
         }
         MuScleFitCorrector* correctorMC_ = new MuScleFitCorrector(fitParFileMC); 
         MuScleFitCorrector* correctorData_ = new MuScleFitCorrector(fitParFileData); 
-*/
+
         // pointer to Smearing Tool:
         SmearingTool *smearPT = new SmearingTool();  
         int nbad_tpt = 0;
@@ -359,50 +365,49 @@ void calibSingleMuPtCorr::main(){
                 //                 runopt == 1 for 2011B correction
                 //              TLor.  float   float   int             
                 // for 2012 v4.1: rochcor2012::momcor_mc( TLorentzVector& mu, float charge, float sysdev, int runopt, float& qter)
-  
+                // for 2011 v3 CMSSW_4_4: rochcor::momcor_mc( TLorentzVector& mu, float charge, float sysdev)   
                 if (MuCorr == 1){
                   float err_corr = 1.; 
-                  if(RunYear == "2011B"){
-                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0), 1, err_corr); 
-                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0), 1, err_corr);
+                  if(RunYear == "2011B" || RunYear == "2011"){
+                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0)); 
+                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0));
                   }
                   if(RunYear == "2011A"){
-                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0), 0, err_corr); 
-                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0), 0, err_corr);
+                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0)); 
+                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0));
                   }
                   if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
                      rmcor2012->momcor_mc(MuReco1, float(reco1.charge), float(0), 0, err_corr); 
                      rmcor2012->momcor_mc(MuReco2, float(reco2.charge), float(0), 0, err_corr);
                   }
                 } 
-/*
                 if (MuCorr == 2){
-                   TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
-                   TLorentzVector* MuReco2Pointer = &MuReco2;
+                   //TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
+                   //TLorentzVector* MuReco2Pointer = &MuReco2;
                    if(reco1.charge < 0){
-                        correctorMC_->applyPtCorrection(*MuReco1Pointer,-1);
-                        //correctorMC_->applyPtSmearing(*MuReco1Pointer,-1);
+                        correctorMC_->applyPtCorrection(MuReco1,-1);
+                        //If you want to apply extra smearing as well (2012 MC only!) you have to add the following code (AFTER correcting as shown): 
+                        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC")correctorMC_->applyPtSmearing(MuReco1,-1);
                    } 
                    else{
-                        correctorMC_->applyPtCorrection(*MuReco1Pointer,1);
-                        //correctorMC_->applyPtSmearing(*MuReco1Pointer,1);
+                        correctorMC_->applyPtCorrection(MuReco1,1);
+                        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC")correctorMC_->applyPtSmearing(MuReco1,1);
                    }
                    if(reco2.charge < 0){
-                        correctorMC_->applyPtCorrection(*MuReco2Pointer,-1);
-                        //correctorMC_->applyPtSmearing(*MuReco2Pointer,-1);
+                        correctorMC_->applyPtCorrection(MuReco2,-1);
+                        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC")correctorMC_->applyPtSmearing(MuReco2,-1);
                    } 
                    else{
-                        correctorMC_->applyPtCorrection(*MuReco2Pointer,1);
-                        //correctorMC_->applyPtSmearing(*MuReco2Pointer,1);
+                        correctorMC_->applyPtCorrection(MuReco2,1);
+                        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC")correctorMC_->applyPtSmearing(MuReco2,1);
                    }
                 }
-*/
                 ////////////////////////
                 /// smear PT after Correction if it took place (correction doesn't work any more, use correction function for smering):
-                /// float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, TString ParVar = "null",float ParSig = 0);
-                if (Ismear == 1){
-                   float pt1Smear = smearPT -> PTsmear(MuTrue1.Pt(), MuTrue1.Eta(), MuTrue1charge);
-                   float pt2Smear = smearPT -> PTsmear(MuTrue2.Pt(), MuTrue2.Eta(), MuTrue2charge);
+                /// float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, float PTmuonReco, int Ismear, TString ParVar = "null",float ParSig = 0);
+                if (Ismear == 1 || Ismear == 2){
+                   float pt1Smear = smearPT -> PTsmear(MuTrue1.Pt(), MuTrue1.Eta(), MuTrue1charge, MuReco1.Pt(), Ismear);
+                   float pt2Smear = smearPT -> PTsmear(MuTrue2.Pt(), MuTrue2.Eta(), MuTrue2charge, MuReco2.Pt(), Ismear);
                    // fill Smear values:
                    MuReco1.SetPtEtaPhiM(pt1Smear, reco1.eta, reco1.phi, MASS_MUON);
                    MuReco2.SetPtEtaPhiM(pt2Smear, reco2.eta, reco2.phi, MASS_MUON);
@@ -703,9 +708,9 @@ void calibSingleMuPtCorr::main(){
            
         }
         // ***** 2011A
-        if(RunYear == "2011A")treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesDataSingleMuRun2011A-08Nov2011-v1/minimal/SingleMuRun2011A-08Nov2011-v1_minimal.root");
+        if(RunYear == "2011A" || RunYear == "2011")treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesDataSingleMuRun2011A-08Nov2011-v1/minimal/SingleMuRun2011A-08Nov2011-v1_minimal.root");
         // ***** 2011B
-        if(RunYear == "2011B")treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesDataSingleMuRun2011B-19Nov2011-v1/minimal/SingleMuRun2011B-19Nov2011-v1_minimal.root");
+        if(RunYear == "2011B" || RunYear == "2011")treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesDataSingleMuRun2011B-19Nov2011-v1/minimal/SingleMuRun2011B-19Nov2011-v1_minimal.root");
         //treeData -> AddFile("");
         if(HiggsNtuple == 0)
         treeData -> AddFile("/data/uftrig01b/digiovan/root/CMSSW_4_2_8_patch6/Ntuples/Data/SingleMuRun2011B-PromptReco-v1_AOD/minimal/boostedZ_2011B_PromptRecov1_allgood_175832to180252_minimal_m20to160.root"); 
@@ -758,40 +763,39 @@ void calibSingleMuPtCorr::main(){
                 //                 runopt == 1 for 2011B correction
                 //                TLor.  float   float   int             
                 //for v4.1: rochcor2012::momcor_data( TLorentzVector& mu, float charge, float sysdev, int runopt, float& qter) 
+                // for 2011 v3 CMSSW_4_4:rochcor::momcor_data( TLorentzVector& mu, float charge, float sysdev, int runopt)    
   
                 if (MuCorr == 1){ // Rochester Correction
                   float err_corr = 1.; 
-                  if(RunYear == "2011B"){
-                     rmcor->momcor_data(MuReco1, float(reco1_data.charge), float(0), 1, err_corr); 
-                     rmcor->momcor_data(MuReco2, float(reco2_data.charge), float(0), 1, err_corr);
+                  if(RunYear == "2011B" || RunYear == "2011"){
+                     rmcor->momcor_data(MuReco1, float(reco1_data.charge), float(0), 1); 
+                     rmcor->momcor_data(MuReco2, float(reco2_data.charge), float(0), 1);
                   }
                   if(RunYear == "2011A"){
-                     rmcor->momcor_data(MuReco1, float(reco1_data.charge), float(0), 0, err_corr); 
-                     rmcor->momcor_data(MuReco2, float(reco2_data.charge), float(0), 0, err_corr);
+                     rmcor->momcor_data(MuReco1, float(reco1_data.charge), float(0), 0); 
+                     rmcor->momcor_data(MuReco2, float(reco2_data.charge), float(0), 0);
                   }
                   if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
                      rmcor2012->momcor_data(MuReco1, float(reco1_data.charge), float(0), 0, err_corr); 
                      rmcor2012->momcor_data(MuReco2, float(reco2_data.charge), float(0), 0, err_corr);
                   }
                 } 
-/*
                 if (MuCorr == 2){
-                   TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
-                   TLorentzVector* MuReco2Pointer = &MuReco2;
-                   if(reco1.charge < 0){
-                        correctorData_->applyPtCorrection(*MuReco1Pointer,-1);
+                   //TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
+                   //TLorentzVector* MuReco2Pointer = &MuReco2;
+                   if(reco1_data.charge < 0){
+                        correctorData_->applyPtCorrection(MuReco1,-1);
                    } 
                    else{
-                        correctorData_->applyPtCorrection(*MuReco1Pointer,1);
+                        correctorData_->applyPtCorrection(MuReco1,1);
                    }
-                   if(reco2.charge < 0){
-                        correctorData_->applyPtCorrection(*MuReco2Pointer,-1);
+                   if(reco2_data.charge < 0){
+                        correctorData_->applyPtCorrection(MuReco2,-1);
                    } 
                    else{
-                        correctorData_->applyPtCorrection(*MuReco2Pointer,1);
+                        correctorData_->applyPtCorrection(MuReco2,1);
                    }
                 }
-*/
                 ////////////////////////
                 ////////////////////////
 

@@ -37,7 +37,8 @@
 #include <fstream>
 
 //include Rochechester correction
-#include<rochcor.h>
+//#include<rochcor.h>//v4 for CMSSW4_2
+#include<rochcor_wasym_v3.h>//v3 for CMSSW4_4
 #include<rochcor2012.h>
 #include "MuScleFitCorrector.h"
 // include smearing tool
@@ -46,14 +47,14 @@
 #include "./DataFormat.h"
 using namespace std;
 
-  int MuCorr = 0; // 0 - no muon correction, 
+  int MuCorr = 1; // 0 - no muon correction, 
                   // 1 - Rochester Correction,
                   // 2 - MuscleFit correcton 
   int Ismear = 2; // 0 - take pt reco from MC
                   // 1 - smear pt with own tools using pt gen post FSR  
                   // 2 - smear pt with PT_smear = PT_gen + (PT_reco-PT_gen)*SF
    
-  TString RunYear = "2012"; // 2012; 2011A; 2011B;  
+  TString RunYear = "2012"; // 2012; 2011; 2011A; 2011B;  
 
   //int RunYear = 2012; // 2011 or 2012
   //const float PTbin[] = {25., 30., 35., 40., 45., 50., 70., 100., 150., 300.}; //default
@@ -167,21 +168,23 @@ void createFuncSmearing::main(){
         rochcor2012 *rmcor2012 = new rochcor2012(); // make the pointer of rochcor class
         //REMARK : Need to call "rochcor(seed)" to assign the systematic error 
         //rochcor *rmcor = new rochcor(seed); //where "seed" is the random seed number
-
-        ///
-/*
+                ///        
         TString fitParFileMC, fitParFileData;
         if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011"){
-           fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2011_MC_42X.txt";// no MC_44 :(
-           fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2011_DATA_44X.txt"; 
+           //fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v3/MuScleFit_2011_MC_44X.txt";
+           //fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v3/MuScleFit_2011_DATA_44X.txt"; 
+           fitParFileMC = "./MuScleFitCorrector_v3/MuScleFit_2011_MC_44X.txt";
+           fitParFileData = "./MuScleFitCorrector_v3/MuScleFit_2011_DATA_44X.txt";
         } 
-        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012B" || RunYear == "2012C" || RunYear == "2012A" ){
-           fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2012_MC_52X.txt";// no MC_53 :(
-           fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v1/MuScleFit_2012_DATA_53X.txt"; 
+        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"|| RunYear == "2012B" || RunYear == "2012C" || RunYear == "2012A" ){
+           //fitParFileMC = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v3/MuScleFit_2012_MC_52X.txt";// no MC_53 :(   
+           //fitParFileData = "/data/uftrig01b/kropiv/HiggsMuMu/CMSSW_5_3_3_patch3/src/Calibration/MuScleFitCorrector_v3/MuScleFit_2012_DATA_53X.txt"; 
+           fitParFileMC = "./MuScleFitCorrector_v3/MuScleFit_2012_MC_52X.txt";// no MC_53 :(
+           fitParFileData = "./MuScleFitCorrector_v3/MuScleFit_2012_DATA_53X.txt";
         }
         MuScleFitCorrector* correctorMC_ = new MuScleFitCorrector(fitParFileMC); 
-        MuScleFitCorrector* correctorData_ = new MuScleFitCorrector(fitParFileData); 
-*/
+        MuScleFitCorrector* correctorData_ = new MuScleFitCorrector(fitParFileData);
+
         // pointer to Smearing Tool:
         SmearingTool *smearPT = new SmearingTool();
         //////////////////////////////////////////////////////////// 
@@ -189,8 +192,8 @@ void createFuncSmearing::main(){
         cout << "Nevent to process = " << treeMC->GetEntries() << endl;
         int nbad_tpt = 0;
         int nbad_tMass = 0;
-        for( int k=0; k<100000; k++)
-        //for( int k=0; k<treeMC->GetEntries(); k++)
+        //for( int k=0; k<100000; k++)
+        for( int k=0; k<treeMC->GetEntries(); k++)
         {
                 //process progress
                 if(k!=0 && (k%10000)==0)
@@ -262,47 +265,56 @@ void createFuncSmearing::main(){
                 //                 runopt == 1 for 2011B correction
                 //              TLor.  float   float   int             
                 // for 2012 v4.1: rochcor2012::momcor_mc( TLorentzVector& mu, float charge, float sysdev, int runopt, float& qter)
+                // for 2011 v3 CMSSW_4_4: rochcor::momcor_mc( TLorentzVector& mu, float charge, float sysdev)
 
                 if (MuCorr == 1){
                   float err_corr = 1.;
-                  if(RunYear == "2011B"){
-                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0), 1, err_corr);
-                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0), 1, err_corr);
+                  if(RunYear == "2011B" || RunYear == "2011"){
+                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0));
+                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0));
                   }
                   if(RunYear == "2011A"){
-                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0), 0, err_corr);
-                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0), 0, err_corr);
+                     rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0));
+                     rmcor->momcor_mc(MuReco2, float(reco2.charge), float(0));
                   }
                   if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
                      rmcor2012->momcor_mc(MuReco1, float(reco1.charge), float(0), 0, err_corr);
                      rmcor2012->momcor_mc(MuReco2, float(reco2.charge), float(0), 0, err_corr);
                   }
                 }
-
-/*                if (MuCorr == 2){
-                   TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
-                   TLorentzVector* MuReco2Pointer = &MuReco2;
+                if (MuCorr == 2){
+                   //TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
+                   //TLorentzVector* MuReco2Pointer = &MuReco2;
                    if(reco1.charge < 0){
-                        correctorMC_->applyPtCorrection(*MuReco1Pointer,-1);
-                        //correctorMC_->applyPtSmearing(*MuReco1Pointer,-1);
-                   } 
+                        correctorMC_->applyPtCorrection(MuReco1,-1);
+                        //If you want to apply extra smearing as well (2012 MC only!) you have to add the following code (AFTER correcting as shown): 
+                        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC")correctorMC_->applyPtSmearing(MuReco1,-1);
+                   }
                    else{
-                        correctorMC_->applyPtCorrection(*MuReco1Pointer,1);
-                        //correctorMC_->applyPtSmearing(*MuReco1Pointer,1);
+                        correctorMC_->applyPtCorrection(MuReco1,1);
+                        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC")correctorMC_->applyPtSmearing(MuReco1,1);
                    }
                    if(reco2.charge < 0){
-                        correctorMC_->applyPtCorrection(*MuReco2Pointer,-1);
-                        //correctorMC_->applyPtSmearing(*MuReco2Pointer,-1);
-                   } 
+                        correctorMC_->applyPtCorrection(MuReco2,-1);
+                        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC")correctorMC_->applyPtSmearing(MuReco2,-1);
+                   }
                    else{
-                        correctorMC_->applyPtCorrection(*MuReco2Pointer,1);
-                        //correctorMC_->applyPtSmearing(*MuReco2Pointer,1);
+                        correctorMC_->applyPtCorrection(MuReco2,1);
+                        if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC")correctorMC_->applyPtSmearing(MuReco2,1);
                    }
                 }
-*/
                 ////////////////////////
                 /// smear PT after Correction if it took place (correction doesn't work any more, use correction function for smering):
-                /// float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, TString ParVar = "null",float ParSig = 0);
+                /// float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, float PTmuonReco, int Ismear, TString ParVar = "null",float ParSig = 0);
+                if (Ismear == 1 || Ismear == 2){
+                   float pt1Smear = smearPT -> PTsmear(MuTrue1.Pt(), MuTrue1.Eta(), MuTrue1charge, MuReco1.Pt(), Ismear);
+                   float pt2Smear = smearPT -> PTsmear(MuTrue2.Pt(), MuTrue2.Eta(), MuTrue2charge, MuReco2.Pt(), Ismear);
+                   // fill Smear values:
+                   MuReco1.SetPtEtaPhiM(pt1Smear, reco1.eta, reco1.phi, MASS_MUON);
+                   MuReco2.SetPtEtaPhiM(pt2Smear, reco2.eta, reco2.phi, MASS_MUON);
+                }
+                ////////////////////////
+
                 if (Ismear == 1 || Ismear == 2){
                    float pt1Smear = smearPT -> PTsmear(MuTrue1.Pt(), MuTrue1.Eta(), MuTrue1charge, MuReco1.Pt(), Ismear);
                    float pt2Smear = smearPT -> PTsmear(MuTrue2.Pt(), MuTrue2.Eta(), MuTrue2charge, MuReco2.Pt(), Ismear);

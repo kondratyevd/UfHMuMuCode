@@ -39,12 +39,17 @@
 #include "./DataFormat.h"
 using namespace std;
 
-  int MuCorr = 0; // 0 - no mu correction
+  int MuCorr = 1; // 0 - no mu correction
                   // 1 - Rochester correction
                   // 2 - MuscleFit correcton in data
+
+  int Ismear = 2; // 0 - take pt reco from MC
+                  // 1 - smear pt with own tools using pt gen post FSR  
+                  // 2 - smear pt with PT_smear = PT_gen + (PT_reco-PT_gen)*SF
+
   TString RunYear = "2012"; // 2011A, 2011B, 2012ABCsmall, 2012
-  //TString ExtraInfo = "Zmumu";
-  TString ExtraInfo = "ZmumuTEST";
+  TString ExtraInfo = "Zmumu";
+  //TString ExtraInfo = "ZmumuTEST";
 
   //const float PTbin[] = {25., 30., 35., 40., 45., 50., 70., 100., 150., 300.}; //default
   const float PTbin[] = {25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 80., 100., 150., 300.}; //default
@@ -76,6 +81,9 @@ using namespace std;
   Double_t ERRAsig2[Nhist]; 
   Double_t ResRMS[Nhist]; 
   Double_t ErrResRMS[Nhist]; 
+  Double_t xScale[Nhist];
+  Double_t exScale[Nhist];
+  
 // ---- CP error ----
 
 TH1F* hmuonRes[Nhist];
@@ -113,7 +121,7 @@ void createFuncSmearingFit(){
 	userStyle();
 	//modifiedStyle();
   	// ---- open the MC files ----
-        TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+RunYear+"PtCorr%dGood.root", MuCorr ), "READ");
+        TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+RunYear+"PtCorr%dIsmear%dGood.root", MuCorr, Ismear), "READ");
         //TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+RunYear+"PtCorr%dSmearPt1Good.root", MuCorr ), "READ");
         theFile -> cd();
 
@@ -422,7 +430,7 @@ void printhistos(){
   TF1* fitDoubleGauss = new TF1("fitDoubleGauss", DoubleGauss, -0.1, 0.1, 5);
   TF1* fitDoubleGauss2 = new TF1("fitDoubleGauss2", DoubleGauss, -0.1, 0.1, 5);
   for(int iPT = 0; iPT < NPThist; iPT++){
-    gifname[iPT] = Form("plots/ResolutionPTScaleFactor%1.2f_"+ExtraInfo+RunYear+"PtCorr%d_"+gifmethod+"_%d", ScaleFactor, MuCorr,iPT);
+    gifname[iPT] = Form("plots/ResolutionPTScaleFactor%1.2f_"+ExtraInfo+RunYear+"PtCorr%dIsmear%d_"+gifmethod+"_%d", ScaleFactor, MuCorr, Ismear, iPT);
     gifname[iPT] = gifname[iPT]+Extra;
     TCanvas *c20 = new TCanvas("c20","Resolution",3000,1700);
     TCanvas *c21 = new TCanvas("c21","Resolution mass",3000,1700);
@@ -480,6 +488,8 @@ void printhistos(){
        hmuonRes[iK] -> Fit(fitDoubleGauss2,"RLE");
        ResRMS[iK] = hmuonRes[iK] -> GetRMS();
        ErrResRMS[iK] = hmuonRes[iK] -> GetRMSError();
+       xScale[iK] = iK+1;
+       exScale[iK] = 0.5;
        mean[iK] = fitDoubleGauss2->GetParameter(0);
        sig1[iK] = fitDoubleGauss2->GetParameter(1);
        sig2[iK] = fitDoubleGauss2->GetParameter(3);
@@ -510,6 +520,51 @@ void printhistos(){
      c20 ->Print(gifname[iPT]+".root");
    }
   /// end: print muon resolution data, MC and MC sim
+
+/// print RMS information:
+     TCanvas *cScale1 = new TCanvas("cScale1","Resolution mass",800,600);
+     cScale1 -> cd();
+
+   TH2F *h2 = new TH2F("h2","Axes2",NPThist*NETAhist+1,0,NPThist*NETAhist+1,100,0.01,0.05);
+   h2->GetXaxis()->SetNdivisions(NPThist*NETAhist);
+   //h2->SetTitle(Form("SF #sigma_{Data}/#sigma_{MC}"));
+   h2->SetTitle(Form("Resolution RMS"));
+   h2 -> GetYaxis()->SetTitle("RMS [GeV]");
+   for(int iPT = 0; iPT < NPThist; iPT++){
+   for(int iETA = 0; iETA < NETAhist; iETA++){
+      int iK = iPT + iETA*NPThist;
+      int iKin = iPT + iETA*NPThist + 1;
+      if (iPT == 0){
+              h2->GetXaxis()->SetBinLabel((iKin+1), Form("#eta: %4.1f-%4.1f, p_{T} vary: %4.0f-%4.0f GeV", ETAbin[iETA], ETAbin[iETA+1], PTbin[0], PTbin[NPThist]));
+      }
+   }}
+
+     h2->LabelsOption("d", "X");
+     h2->Draw();
+   for(int iPT = 0; iPT < NPThist; iPT++){
+   for(int iETA = 0; iETA < NETAhist; iETA++){
+      int iK = iPT + iETA*NPThist;
+      if (iPT == 0){
+           float Xm = h2 -> GetBinLowEdge(iK+1);
+           TLine *lineGrid = new TLine(Xm,0.01,Xm,0.05);
+           lineGrid -> SetLineStyle(kDotted);
+           lineGrid -> Draw("same");
+      }
+   }}
+
+    TGraphErrors* grScale = new TGraphErrors(NPThist*NETAhist,&xScale[0], &ResRMS[0], &exScale[0], &ErrResRMS[0]);
+    grScale->SetMarkerColor(4);
+    grScale->SetMarkerStyle(21);
+
+    grScale->Draw("LP");
+
+     cScale1 ->Print(Form("plots/ResolutionRMS%1.2f_"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d.png", ScaleFactor, MuCorr, Ismear));
+     cScale1 ->Print(Form("plots/ResolutionRMS%1.2f_"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d.root", ScaleFactor, MuCorr, Ismear));
+
+    delete h2;
+/// end: print RMS information:
+
+///
 
 }
 ///////////////////////////////////////////
