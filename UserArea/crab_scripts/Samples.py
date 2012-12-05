@@ -194,9 +194,9 @@ HLT_MC     = 'HLT_IsoMu24,HLT_Mu17_Mu8,HLT_Mu17_TkMu8' #For 2012 Samples
 #HLT_MC     = 'HLT_IsoMu24,HLT_Mu17_Mu8' #For 2011 Samples
 
 # cmssw version
-cmssw = 'CMSSW_5_3_3_patch3' #2012
+cmssw = 'CMSSW_5_3_5' #2012
 #cmssw = 'CMSSW_4_4_5' # 2011
-tag   = 'V00-01-02'
+tag   = 'V00-01-03'
 
 # these are the general location paths
 caf_pathMC   = 'higgs/%s/%s/Ntuples/MC/'   % (cmssw,tag)

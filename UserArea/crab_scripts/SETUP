@@ -1,6 +1,6 @@
 
-cmsMkdir /store/user/$USER/higgs/CMSSW_5_3_3_patch3/V00-01-01/
-cmsMkdir /store/user/$USER/higgs/CMSSW_5_3_3_patch3/V00-01-01/Ntuples/
-cmsMkdir /store/user/$USER/higgs/CMSSW_5_3_3_patch3/V00-01-01/Ntuples/MC/
-cmsMkdir /store/user/$USER/higgs/CMSSW_5_3_3_patch3/V00-01-01/Ntuples/Data/
+cmsMkdir /store/user/$USER/higgs/CMSSW_5_3_5/V00-01-01/
+cmsMkdir /store/user/$USER/higgs/CMSSW_5_3_5/V00-01-01/Ntuples/
+cmsMkdir /store/user/$USER/higgs/CMSSW_5_3_5/V00-01-01/Ntuples/MC/
+cmsMkdir /store/user/$USER/higgs/CMSSW_5_3_5/V00-01-01/Ntuples/Data/
 
