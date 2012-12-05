@@ -95,11 +95,13 @@ print ' a) crab.cfg'
 
 if isData:
    os.system("cat crabTemplate/%s " \
+          "| sed -e \'s/digiovan/%s/g\' " \
           "| sed -e \'s/yourDataset/%s/g\' " \
           "| sed -e \'s/yourNtuple/%s/g\' " \
           "| sed -e \'s/yourCafFolder/%s/g\' " \
           "| sed -e \'s/yourJsonFile/%s/g\' " \
           " > %s/crab.cfg" % (crab_file,
+                              os.environ["USER"],
                               opts.dataset.replace("/","\/"),
                               opts.ntupleName,
                               opts.cafFolder.replace("/","\/"), 
@@ -111,10 +113,12 @@ if isData:
 
 else:
     os.system("cat crabTemplate/%s " \
+          "| sed -e \'s/digiovan/%s/g\' " \
               "| sed -e \'s/yourDataset/%s/g\' " \
               "| sed -e \'s/yourNtuple/%s/g\' " \
               "| sed -e \'s/yourCafFolder/%s/g\' " \
               " > %s/crab.cfg" % (crab_file,
+                                  os.environ["USER"],
                                   opts.dataset.replace("/","\/"),
                                   opts.ntupleName,
                                   opts.cafFolder.replace("/","\/"), 
