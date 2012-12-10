@@ -3,6 +3,7 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process("UFDiMuonAnalyzer")
 
 thisIsData = False
+thisIs2011 = False
 
 if thisIsData:
     print 'Running over data sample'
@@ -142,14 +143,6 @@ process.dimuons.puJetMvaSimpleIdTag = cms.InputTag("puJetMva","simpleId")
 process.dimuons.puJetMvaCutDiscTag = cms.InputTag("puJetMva","cutbasedDiscriminant")
 process.dimuons.puJetMvaCutIdTag = cms.InputTag("puJetMva","cutbased")
 
-process.dimuons.puJetMvaFullDiscTag = cms.InputTag("null")
-process.dimuons.puJetMvaFullIdTag = cms.InputTag("null")
-process.dimuons.puJetMvaSimpleDiscTag = cms.InputTag("null")
-process.dimuons.puJetMvaSimpleIdTag = cms.InputTag("null")
-process.dimuons.puJetMvaCutDiscTag = cms.InputTag("null")
-process.dimuons.puJetMvaCutIdTag = cms.InputTag("null")
-
-
 #===============================================================================
 
 process.p = cms.Path( getattr(process,"patPF2PATSequence"+postfix)*
@@ -175,3 +168,59 @@ process.source.fileNames.extend(
 #process.outpath = cms.EndPath(process.out)
 #process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20) )
 
+
+###### Temporary JEC from sqlite file until Global Tag Works
+
+if not thisIs2011:
+  process.load("CondCore.DBCommon.CondDBCommon_cfi")
+  from CondCore.DBCommon.CondDBSetup_cfi import *
+  process.jec = cms.ESSource("PoolDBESSource",
+        DBParameters = cms.PSet(
+          messageLevel = cms.untracked.int32(0)
+          ),
+        timetype = cms.string('runnumber'),
+        toGet = cms.VPSet(
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_AK5PF'),
+              label  = cms.untracked.string('AK5PF')
+              ),
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_KT6PF'),
+              label  = cms.untracked.string('KT6PF')
+              ),
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_AK5JPT'),
+              label  = cms.untracked.string('AK5JPT')
+              )
+        ## note that the tag name is specific for the particular sqlite file 
+        ), 
+        connect = cms.string('sqlite:Fall12_V5Final_MC.db')
+       # uncomment above tag lines and this comment to use MC JEC
+       # connect = cms.string('sqlite:Summer12_V7_MC.db')
+  )
+  ## add an es_prefer statement to resolve a possible conflict from simultaneous connection to a global tag
+  process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
+  
+  if thisIsData:
+    process.toGet = cms.VPSet(
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_AK5PF'),
+              label  = cms.untracked.string('AK5PF')
+              ),
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_KT6PF'),
+              label  = cms.untracked.string('KT6PF')
+              ),
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_AK5JPT'),
+              label  = cms.untracked.string('AK5JPT')
+              )
+        ## note that the tag name is specific for the particular sqlite file 
+        )
+    process.jec.connect = 'sqlite:Fall12_V5Final_DATA.db'
