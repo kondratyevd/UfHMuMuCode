@@ -22,7 +22,7 @@ cvs co -r V06-05-06-03 DataFormats/PatCandidates
 cvs co -r V08-09-42 PhysicsTools/PatAlgos 
 cvs co -r V15-02-06 RecoParticleFlow/PFProducer # for EGM Iso
 
-cvs co -r V00-01-05 -d UserArea UserCode/UfHMuMuCode/UserArea
+cvs co -r V00-01-06 -d UserArea UserCode/UfHMuMuCode/UserArea
 
 nice scram b -j8
 

@@ -197,7 +197,7 @@ if not thisIs2011:
               )
         ## note that the tag name is specific for the particular sqlite file 
         ), 
-        connect = cms.string('sqlite:Fall12_V5Final_MC.db')
+        connect = cms.string('sqlite_fip:UserArea/UFDiMuonsAnalyzer/data/Fall12_V5Final_MC.db')
        # uncomment above tag lines and this comment to use MC JEC
        # connect = cms.string('sqlite:Summer12_V7_MC.db')
   )
@@ -223,4 +223,4 @@ if not thisIs2011:
               )
         ## note that the tag name is specific for the particular sqlite file 
         )
-    process.jec.connect = 'sqlite:Fall12_V5Final_DATA.db'
+    process.jec.connect = 'sqlite_fip:UserArea/UFDiMuonsAnalyzer/data/Fall12_V5Final_DATA.db'

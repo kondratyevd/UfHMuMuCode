@@ -21,15 +21,9 @@ MCSamples = [
            'DYJetsToLL', 'DYJetsToLL_M-50_TuneZ2Star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v1',
            'START53_V7F', 30459503, 3503.71, 8),
     mcsample('ttjets',
-<<<<<<< Samples.py
            '/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola/Summer12_DR53X-PU_S10_START53_V7A-v3/AODSIM',
            'TTJets', 'TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7A-v3',
            'START53_V7F', 6923750, 225.197, 8),
-=======
-           '/TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola/Summer12_DR53X-PU_S10_START53_V7C-v1/AODSIM',
-           'TTJets', 'TTJets_MassiveBinDECAY_TuneZ2star_8TeV-madgraph-tauola_Summer12_DR53X-PU_S10_START53_V7C-v1',
-           'START53_V7E', 6923652, 225.197),
->>>>>>> 1.10
     mcsample('ww',
            '/WW_TuneZ2star_8TeV_pythia6_tauola/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',
            'WW', 'WW_TuneZ2star_8TeV_pythia6_tauola_Summer12_DR53X-PU_S10_START53_V7A-v1',
@@ -223,7 +217,7 @@ HLT_MC_7TeV     = 'HLT_IsoMu24,HLT_Mu17_Mu8' #For 2011 Samples
 # cmssw version
 cmssw_8TeV = 'CMSSW_5_3_5' #2012
 cmssw_7TeV = 'CMSSW_4_4_5' # 2011
-tag   = 'V00-01-05'
+tag   = 'V00-01-06'
 
 # these are the general location paths:
 # higgs/<CMSSW Version>/<Ntupler Tag>/Ntuples/<Data or MC>/

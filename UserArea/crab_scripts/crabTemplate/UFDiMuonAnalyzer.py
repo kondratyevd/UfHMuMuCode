@@ -19,14 +19,10 @@ process.load('Configuration.EventContent.EventContent_cff')
 
 
 # global tag
-if thisIsData:
-    print 'Loading Global Tag For Data'
-    process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-    process.GlobalTag.globaltag = "GLOBALTAG::All"
-else:
-    print 'Loading Global Tag For MC'
-    process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-    process.GlobalTag.globaltag = "GLOBALTAG::All"
+print 'Loading Global Tag: GLOBALTAG'
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+process.GlobalTag.globaltag = "GLOBALTAG::All"
+
 
 # ------------ PoolSource -------------
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
@@ -113,10 +109,6 @@ process.cleanPatJetsPFlow = cms.EDProducer("PATJetCleaner",
 )
 
 process.load("CMGTools.External.pujetidsequence_cff")
-<<<<<<< UFDiMuonAnalyzer.py
-process.puJetId.jets = cms.InputTag("cleanPatJetsPFlow")
-process.puJetMva.jets = cms.InputTag("cleanPatJetsPFlow")
-=======
 process.puJetId.jets = cms.InputTag("cleanPatJetsPFlow")
 process.puJetMva.jets = cms.InputTag("cleanPatJetsPFlow")
 
@@ -146,50 +138,10 @@ process.dimuons.puJetMvaSimpleIdTag = cms.InputTag("puJetMva","simpleId")
 process.dimuons.puJetMvaCutDiscTag = cms.InputTag("puJetMva","cutbasedDiscriminant")
 process.dimuons.puJetMvaCutIdTag = cms.InputTag("puJetMva","cutbased")
 
-process.dimuons.puJetMvaFullDiscTag = cms.InputTag("null")
-process.dimuons.puJetMvaFullIdTag = cms.InputTag("null")
-process.dimuons.puJetMvaSimpleDiscTag = cms.InputTag("null")
-process.dimuons.puJetMvaSimpleIdTag = cms.InputTag("null")
-process.dimuons.puJetMvaCutDiscTag = cms.InputTag("null")
-process.dimuons.puJetMvaCutIdTag = cms.InputTag("null")
-
->>>>>>> 1.4
-
-#===============================================================================
-# UFDiMuonAnalyzer
-process.load("UserArea.UFDiMuonsAnalyzer.UFDiMuonAnalyzer_nocuts_cff")
-process.dimuons = process.DiMuons.clone()
-
-if thisIsData:
-  process.dimuons.isMonteCarlo   = cms.bool(False) 
-else:
-  process.dimuons.isMonteCarlo   = cms.bool(True) 
-process.dimuons.checkTrigger   = cms.bool(False)
-process.dimuons.processName    = cms.string("HLT")
-process.dimuons.triggerNames   = cms.vstring("TRIGGERLIST")
-process.dimuons.triggerResults = cms.InputTag("TriggerResults","","HLT")
-process.dimuons.triggerEvent   = cms.InputTag("hltTriggerSummaryAOD","","HLT")
-
-<<<<<<< UFDiMuonAnalyzer.py
-process.dimuons.metTag         = cms.InputTag("patMETsPFlow")
-process.dimuons.pfJetsTag      = cms.InputTag("cleanPatJetsPFlow")
-process.dimuons.genJetsTag     = cms.InputTag("null")
-
-process.dimuons.puJetMvaFullDiscTag = cms.InputTag("puJetMva","fullDiscriminant")
-process.dimuons.puJetMvaFullIdTag = cms.InputTag("puJetMva","fullId")
-process.dimuons.puJetMvaSimpleDiscTag = cms.InputTag("puJetMva","simpleDiscriminant")
-process.dimuons.puJetMvaSimpleIdTag = cms.InputTag("puJetMva","simpleId")
-process.dimuons.puJetMvaCutDiscTag = cms.InputTag("puJetMva","cutbasedDiscriminant")
-process.dimuons.puJetMvaCutIdTag = cms.InputTag("puJetMva","cutbased")
-
 #===============================================================================
 
 process.p = cms.Path( getattr(process,"patPF2PATSequence"+postfix)*
                       process.cleanPatJetsPFlow*
-=======
-process.p = cms.Path( getattr(process,"patPF2PATSequence"+postfix)*
-                      process.cleanPatJetsPFlow*
->>>>>>> 1.4
                       process.puJetId*
                       process.puJetMva*
                       process.dimuons
@@ -207,7 +159,6 @@ process.source.fileNames.extend(
 #"file:/home/jhugon/scratchRaid7/hmumu/recoData/VBFHToMM_M125_8TeV-powheg-pythia6-tauola-RECO_1.root"
 ]
 )
-<<<<<<< UFDiMuonAnalyzer.py
 #process.out.outputCommands = cms.untracked.vstring("keep *")
 #process.outpath = cms.EndPath(process.out)
 #process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20) )
@@ -241,7 +192,7 @@ if not thisIs2011:
               )
         ## note that the tag name is specific for the particular sqlite file 
         ), 
-        connect = cms.string('sqlite:Fall12_V5Final_MC.db')
+        connect = cms.string('sqlite_fip:UserArea/UFDiMuonsAnalyzer/data/Fall12_V5Final_MC.db')
        # uncomment above tag lines and this comment to use MC JEC
        # connect = cms.string('sqlite:Summer12_V7_MC.db')
   )
@@ -267,10 +218,4 @@ if not thisIs2011:
               )
         ## note that the tag name is specific for the particular sqlite file 
         )
-    process.jec.connect = 'sqlite:Fall12_V5Final_DATA.db'
-=======
-#process.out.outputCommands = cms.untracked.vstring("keep *")
-#process.outpath = cms.EndPath(process.out)
-#process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20) )
-
->>>>>>> 1.4
+    process.jec.connect = 'sqlite_fip:UserArea/UFDiMuonsAnalyzer/data/Fall12_V5Final_DATA.db'
