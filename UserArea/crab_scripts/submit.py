@@ -39,28 +39,48 @@ command = ''
 if isMC:          
     for s in Samples.MCSamples:
         if (s.name == opts.sample):
-            command += './createCrab.py -c %s -d %s -n %s -g %s -f %s ' \
-                       % (Samples.cmssw,
+            hltString = ""
+            cmsswString = ""
+            if s.energy==7:
+              hltString = Samples.HLT_MC_7TeV
+              cmsswString = Samples.cmssw_7TeV
+            elif s.energy==8:
+              hltString = Samples.HLT_MC_8TeV
+              cmsswString = Samples.cmssw_8TeV
+            else:
+              print("Error: No MC HLT Trigger or CMSSW version for Energy: '%s' TeV" % s.energy)
+              sys.exit(1)
+            cafFolder = "higgs/%s/%s/Ntuples/%s/" % (cmsswString,s.ntuple,"MC")
+            command += './createCrab.py -c %s -d %s -n %s -g %s -e %s -f %s --hlt %s ' \
+                       % (cmsswString,
                           s.dataset,
                           s.ntuple,
                           s.global_tag,
-                          Samples.caf_pathMC+s.caf_folder_extd)
-                         
+                          s.energy,
+                          cafFolder+s.caf_folder_extd,
+                          hltString)
             
 else:
     for s in Samples.DATASamples:
         if (s.name == opts.sample):
-            command += './createCrab.py -c %s -d %s -n %s -g %s -f %s -j %s ' \
-                       % (Samples.cmssw,
+            cmsswString = ""
+            if s.energy==7:
+              cmsswString = Samples.cmssw_7TeV
+            elif s.energy==8:
+              cmsswString = Samples.cmssw_8TeV
+            else:
+              print("Error: No Data CMSSW version for Energy: '%s' TeV" % s.energy)
+              sys.exit(1)
+            cafFolder = "higgs/%s/%s/Ntuples/%s/" % (cmsswString,s.ntuple,"MC")
+            command += './createCrab.py -c %s -d %s -n %s -g %s -e %s -f %s -j %s ' \
+                       % (cmsswString,
                           s.dataset,
                           s.ntuple,
                           s.global_tag,
-                          Samples.caf_pathData+s.caf_folder_extd,
+                          s.energy,
+                          cafFolder+s.caf_folder_extd,
                           s.json_file) 
 
-if (isMC):
-    command += '--hlt %s' % Samples.HLT_MC
-else:
     if ('DoubleMu' in command):
         command += '--hlt %s' % Samples.HLT_Double
     elif ('SingleMu' and '2011A' in command):
@@ -71,5 +91,6 @@ else:
         command += '--hlt %s' % Samples.HLT_Single2012A
     else:
         command += '--hlt %s' % Samples.HLT_Single
+
     
 print '\n %s \n' % command

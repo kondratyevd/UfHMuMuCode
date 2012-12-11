@@ -44,6 +44,11 @@ parser.add_option('-j', '--json',
                   dest='jsonFile',
                   action='store')
 
+parser.add_option("-e",'--energy',
+                  help='Flag to Specify LHC Energy of Dataset',
+                  dest='energy',
+                  action='store')
+
 # get the options
 (opts, args) = parser.parse_args()
 
@@ -67,6 +72,9 @@ if opts.jsonFile is not None:
 else:
    print '\nRunning over a Monte Carlo dataset'
 
+is2011=False
+if opts.energy=="7" or opts.energy=="7.0":
+  is2011=True
 
 ## print opts.cafFolder.split("/")
 
@@ -132,12 +140,14 @@ if isData:
               "| sed -e \'s/yourNtuple/%s/g\' " \
               "| sed -e \'s/GLOBALTAG/%s/g\' " \
               "| sed -e \'s/thisIsData = False/thisIsData = True/g\' " \
+              "| sed -e \'s/thisIs2011 = False/thisIs2011 = %s/g\' " \
               "| sed -e \'s/TRIGGERLIST/%s/g\' " \
               "> %s/UFDiMuonAnalyzer.py"
               % (cmssw_py_file,
                  opts.ntupleName,
                  opts.globalTag,
                  opts.triggerstring.replace(",","\",\""),
+                 is2011,
                  localFolder)
               )
 else:
@@ -145,11 +155,13 @@ else:
               "| sed -e \'s/yourNtuple/%s/g\' " \
               "| sed -e \'s/GLOBALTAG/%s/g\' " \
               "| sed -e \'s/TRIGGERLIST/%s/g\' " \
+              "| sed -e \'s/thisIs2011 = False/thisIs2011 = %s/g\' " \
               "> %s/UFDiMuonAnalyzer.py"
               % (cmssw_py_file,
                  opts.ntupleName,
                  opts.globalTag,
                  opts.triggerstring.replace(",","\",\""),
+                 is2011,
                  localFolder)
               )
     

@@ -155,7 +155,7 @@ process.p = cms.Path( getattr(process,"patPF2PATSequence"+postfix)*
 process.outpath = cms.EndPath()
 #===============================================================================
 
-process.dimuons.getFilename    = cms.untracked.string("vbfHmumu125.root")
+process.dimuons.getFilename    = cms.untracked.string("yourNtuple.root")
 
 process.source.fileNames.extend(
 [

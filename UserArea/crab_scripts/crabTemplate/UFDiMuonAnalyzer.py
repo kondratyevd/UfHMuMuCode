@@ -3,6 +3,7 @@ import FWCore.ParameterSet.Config as cms
 process = cms.Process("UFDiMuonAnalyzer")
 
 thisIsData = False
+thisIs2011 = False
 
 if thisIsData:
     print 'Running over data sample'
@@ -26,7 +27,6 @@ else:
     print 'Loading Global Tag For MC'
     process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
     process.GlobalTag.globaltag = "GLOBALTAG::All"
-
 
 # ------------ PoolSource -------------
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
@@ -113,6 +113,10 @@ process.cleanPatJetsPFlow = cms.EDProducer("PATJetCleaner",
 )
 
 process.load("CMGTools.External.pujetidsequence_cff")
+<<<<<<< UFDiMuonAnalyzer.py
+process.puJetId.jets = cms.InputTag("cleanPatJetsPFlow")
+process.puJetMva.jets = cms.InputTag("cleanPatJetsPFlow")
+=======
 process.puJetId.jets = cms.InputTag("cleanPatJetsPFlow")
 process.puJetMva.jets = cms.InputTag("cleanPatJetsPFlow")
 
@@ -149,11 +153,43 @@ process.dimuons.puJetMvaSimpleIdTag = cms.InputTag("null")
 process.dimuons.puJetMvaCutDiscTag = cms.InputTag("null")
 process.dimuons.puJetMvaCutIdTag = cms.InputTag("null")
 
+>>>>>>> 1.4
+
+#===============================================================================
+# UFDiMuonAnalyzer
+process.load("UserArea.UFDiMuonsAnalyzer.UFDiMuonAnalyzer_nocuts_cff")
+process.dimuons = process.DiMuons.clone()
+
+if thisIsData:
+  process.dimuons.isMonteCarlo   = cms.bool(False) 
+else:
+  process.dimuons.isMonteCarlo   = cms.bool(True) 
+process.dimuons.checkTrigger   = cms.bool(False)
+process.dimuons.processName    = cms.string("HLT")
+process.dimuons.triggerNames   = cms.vstring("TRIGGERLIST")
+process.dimuons.triggerResults = cms.InputTag("TriggerResults","","HLT")
+process.dimuons.triggerEvent   = cms.InputTag("hltTriggerSummaryAOD","","HLT")
+
+<<<<<<< UFDiMuonAnalyzer.py
+process.dimuons.metTag         = cms.InputTag("patMETsPFlow")
+process.dimuons.pfJetsTag      = cms.InputTag("cleanPatJetsPFlow")
+process.dimuons.genJetsTag     = cms.InputTag("null")
+
+process.dimuons.puJetMvaFullDiscTag = cms.InputTag("puJetMva","fullDiscriminant")
+process.dimuons.puJetMvaFullIdTag = cms.InputTag("puJetMva","fullId")
+process.dimuons.puJetMvaSimpleDiscTag = cms.InputTag("puJetMva","simpleDiscriminant")
+process.dimuons.puJetMvaSimpleIdTag = cms.InputTag("puJetMva","simpleId")
+process.dimuons.puJetMvaCutDiscTag = cms.InputTag("puJetMva","cutbasedDiscriminant")
+process.dimuons.puJetMvaCutIdTag = cms.InputTag("puJetMva","cutbased")
 
 #===============================================================================
 
 process.p = cms.Path( getattr(process,"patPF2PATSequence"+postfix)*
                       process.cleanPatJetsPFlow*
+=======
+process.p = cms.Path( getattr(process,"patPF2PATSequence"+postfix)*
+                      process.cleanPatJetsPFlow*
+>>>>>>> 1.4
                       process.puJetId*
                       process.puJetMva*
                       process.dimuons
@@ -171,7 +207,70 @@ process.source.fileNames.extend(
 #"file:/home/jhugon/scratchRaid7/hmumu/recoData/VBFHToMM_M125_8TeV-powheg-pythia6-tauola-RECO_1.root"
 ]
 )
+<<<<<<< UFDiMuonAnalyzer.py
 #process.out.outputCommands = cms.untracked.vstring("keep *")
 #process.outpath = cms.EndPath(process.out)
 #process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20) )
 
+
+###### Temporary JEC from sqlite file until Global Tag Works
+
+if not thisIs2011:
+  process.load("CondCore.DBCommon.CondDBCommon_cfi")
+  from CondCore.DBCommon.CondDBSetup_cfi import *
+  process.jec = cms.ESSource("PoolDBESSource",
+        DBParameters = cms.PSet(
+          messageLevel = cms.untracked.int32(0)
+          ),
+        timetype = cms.string('runnumber'),
+        toGet = cms.VPSet(
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_AK5PF'),
+              label  = cms.untracked.string('AK5PF')
+              ),
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_KT6PF'),
+              label  = cms.untracked.string('KT6PF')
+              ),
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_AK5JPT'),
+              label  = cms.untracked.string('AK5JPT')
+              )
+        ## note that the tag name is specific for the particular sqlite file 
+        ), 
+        connect = cms.string('sqlite:Fall12_V5Final_MC.db')
+       # uncomment above tag lines and this comment to use MC JEC
+       # connect = cms.string('sqlite:Summer12_V7_MC.db')
+  )
+  ## add an es_prefer statement to resolve a possible conflict from simultaneous connection to a global tag
+  process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
+  
+  if thisIsData:
+    process.toGet = cms.VPSet(
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_AK5PF'),
+              label  = cms.untracked.string('AK5PF')
+              ),
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_KT6PF'),
+              label  = cms.untracked.string('KT6PF')
+              ),
+        cms.PSet(
+              record = cms.string('JetCorrectionsRecord'),
+              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_AK5JPT'),
+              label  = cms.untracked.string('AK5JPT')
+              )
+        ## note that the tag name is specific for the particular sqlite file 
+        )
+    process.jec.connect = 'sqlite:Fall12_V5Final_DATA.db'
+=======
+#process.out.outputCommands = cms.untracked.vstring("keep *")
+#process.outpath = cms.EndPath(process.out)
+#process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20) )
+
+>>>>>>> 1.4
