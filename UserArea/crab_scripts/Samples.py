@@ -223,7 +223,7 @@ HLT_MC_7TeV     = 'HLT_IsoMu24,HLT_Mu17_Mu8' #For 2011 Samples
 # cmssw version
 cmssw_8TeV = 'CMSSW_5_3_5' #2012
 cmssw_7TeV = 'CMSSW_4_4_5' # 2011
-tag   = 'V00-01-04'
+tag   = 'V00-01-05'
 
 # these are the general location paths:
 # higgs/<CMSSW Version>/<Ntupler Tag>/Ntuples/<Data or MC>/
