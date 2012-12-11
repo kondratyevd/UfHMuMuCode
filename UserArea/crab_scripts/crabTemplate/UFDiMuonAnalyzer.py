@@ -184,11 +184,6 @@ if not thisIs2011:
               record = cms.string('JetCorrectionsRecord'),
               tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_KT6PF'),
               label  = cms.untracked.string('KT6PF')
-              ),
-        cms.PSet(
-              record = cms.string('JetCorrectionsRecord'),
-              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_AK5JPT'),
-              label  = cms.untracked.string('AK5JPT')
               )
         ## note that the tag name is specific for the particular sqlite file 
         ), 
@@ -200,7 +195,7 @@ if not thisIs2011:
   process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
   
   if thisIsData:
-    process.toGet = cms.VPSet(
+    process.jec.toGet = cms.VPSet(
         cms.PSet(
               record = cms.string('JetCorrectionsRecord'),
               tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_AK5PF'),
@@ -210,11 +205,6 @@ if not thisIs2011:
               record = cms.string('JetCorrectionsRecord'),
               tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_KT6PF'),
               label  = cms.untracked.string('KT6PF')
-              ),
-        cms.PSet(
-              record = cms.string('JetCorrectionsRecord'),
-              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_AK5JPT'),
-              label  = cms.untracked.string('AK5JPT')
               )
         ## note that the tag name is specific for the particular sqlite file 
         )
