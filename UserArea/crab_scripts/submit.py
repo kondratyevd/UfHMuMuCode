@@ -71,7 +71,7 @@ else:
             else:
               print("Error: No Data CMSSW version for Energy: '%s' TeV" % s.energy)
               sys.exit(1)
-            cafFolder = "higgs/%s/%s/Ntuples/%s/" % (cmsswString,Samples.tag,"MC")
+            cafFolder = "higgs/%s/%s/Ntuples/%s/" % (cmsswString,Samples.tag,"Data")
             command += './createCrab.py -c %s -d %s -n %s -g %s -e %s -f %s -j %s ' \
                        % (cmsswString,
                           s.dataset,

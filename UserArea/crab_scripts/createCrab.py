@@ -140,8 +140,8 @@ if isData:
               "| sed -e \'s/yourNtuple/%s/g\' " \
               "| sed -e \'s/GLOBALTAG/%s/g\' " \
               "| sed -e \'s/thisIsData = False/thisIsData = True/g\' " \
-              "| sed -e \'s/thisIs2011 = False/thisIs2011 = %s/g\' " \
               "| sed -e \'s/TRIGGERLIST/%s/g\' " \
+              "| sed -e \'s/thisIs2011 = False/thisIs2011 = %s/g\' " \
               "> %s/UFDiMuonAnalyzer.py"
               % (cmssw_py_file,
                  opts.ntupleName,
