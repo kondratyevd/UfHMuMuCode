@@ -46,6 +46,7 @@ if thisIsData:
   jetCorrections = ('AK5PF', ['L1FastJet','L2Relative','L3Absolute','L2L3Residual'])
 
 usePF2PAT(process,runPF2PAT=True, jetAlgo=jetAlgo, runOnMC=(not thisIsData), postfix=postfix, jetCorrections=jetCorrections, typeIMetCorrections=True)
+usePFIso( process ) # GP
 
 process.pfPileUpPFlow.Enable = True
 process.pfPileUpPFlow.checkClosestZVertex = cms.bool(False)
@@ -91,6 +92,20 @@ jetSelection += ' && ((abs(eta)>2.4) || (chargedMultiplicity > 0 '
 jetSelection += ' && chargedHadronEnergy/energy > 0.0'
 jetSelection += ' && chargedEmEnergy/energy < 0.99))'
 
+# Taken from http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/VHbbAnalysis/HbbAnalyzer/test/patMC.py?revision=1.9&view=markup
+ccElePreSel = "pt > 15.0 && abs(eta) < 2.5 &&"
+ccElePreSel += "(isEE || isEB) && !isEBEEGap &&"
+ccElePreSel += " (chargedHadronIso + neutralHadronIso + photonIso)/pt <0.10 &&"
+ccElePreSel += "dB < 0.02 && "  #dB is computed wrt PV but is transverse only, no info about dZ(vertex) 
+ccElePreSel += "( "
+ccElePreSel += "(isEE && ("
+ccElePreSel += "abs(deltaEtaSuperClusterTrackAtVtx) < 0.005 &&  abs(deltaPhiSuperClusterTrackAtVtx) < 0.02 && sigmaIetaIeta < 0.03 && hadronicOverEm < 0.10 &&  abs(1./ecalEnergy*(1.-eSuperClusterOverP)) < 0.05 "
+ccElePreSel += ")) || " 
+ccElePreSel += "(isEB && (  "
+ccElePreSel += "abs(deltaEtaSuperClusterTrackAtVtx) < 0.004 &&  abs(deltaPhiSuperClusterTrackAtVtx) < 0.03 && sigmaIetaIeta < 0.01 && hadronicOverEm < 0.12 && abs(1./ecalEnergy*(1.-eSuperClusterOverP)) < 0.05"
+ccElePreSel += "))"
+ccElePreSel += ")" 
+
 process.cleanPatJetsPFlow = cms.EDProducer("PATJetCleaner",
           src = cms.InputTag("selectedPatJetsPFlow"),
           preselection = cms.string(jetSelection),
@@ -99,6 +114,15 @@ process.cleanPatJetsPFlow = cms.EDProducer("PATJetCleaner",
                src       = cms.InputTag("selectedPatMuonsPFlow"),
                algorithm = cms.string("byDeltaR"),
                preselection        = cms.string(ccMuPreSel),
+               deltaR              = cms.double(0.5),
+               checkRecoComponents = cms.bool(False),
+               pairCut             = cms.string(""),
+               requireNoOverlaps   = cms.bool(True),
+             ),
+             electrons = cms.PSet(
+               src       = cms.InputTag("selectedPatElectronsPFlow"),
+               algorithm = cms.string("byDeltaR"),
+               preselection        = cms.string(ccElePreSel),
                deltaR              = cms.double(0.5),
                checkRecoComponents = cms.bool(False),
                pairCut             = cms.string(""),
@@ -127,6 +151,9 @@ process.dimuons.triggerNames   = cms.vstring("TRIGGERLIST")
 process.dimuons.triggerResults = cms.InputTag("TriggerResults","","HLT")
 process.dimuons.triggerEvent   = cms.InputTag("hltTriggerSummaryAOD","","HLT")
 
+process.dimuons.eleColl = cms.InputTag("selectedPatElectronsPFlow")
+process.dimuons.eleTriggerName = cms.string("HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL");
+
 process.dimuons.metTag         = cms.InputTag("patMETsPFlow")
 process.dimuons.pfJetsTag      = cms.InputTag("cleanPatJetsPFlow")
 process.dimuons.genJetsTag     = cms.InputTag("null")
@@ -138,22 +165,89 @@ process.dimuons.puJetMvaSimpleIdTag = cms.InputTag("puJetMva","simpleId")
 process.dimuons.puJetMvaCutDiscTag = cms.InputTag("puJetMva","cutbasedDiscriminant")
 process.dimuons.puJetMvaCutIdTag = cms.InputTag("puJetMva","cutbased")
 
+
+########## Hbb specific stuff starts here ########################
+# rho2.5 calculation
+process.load("RecoJets.JetProducers.kt4PFJets_cfi")
+process.kt6PFJets25 = process.kt4PFJets.clone( src = 'pfNoElectron'+postfix,rParam = 0.6,doRhoFastjet = True,Ghost_EtaMax = 2.5, Rho_EtaMax = 2.5 )
+
+#Below: special case only for HZZ-4l in order to be synchronized with the muon rho computation in the same analysis:
+
+process.kt6PFJets = process.kt4PFJets.clone(src = 'pfNoElectron'+postfix,
+                                            rParam = cms.double(0.6),
+                                            doAreaFastjet = cms.bool(True),
+                                            doRhoFastjet = cms.bool(True)
+                                            )
+
+process.kt6PFJets25asHtoZZto4l = process.kt6PFJets.clone(rParam = cms.double(0.6),
+                                                         Rho_EtaMax = cms.double(2.5),
+                                                         Ghost_EtaMax = cms.double(2.5),
+                                                         )
+
+# end of rho2.5 calculation
+
+#===============================================================================
+# Electron Selection
+
+#Electron ID
+process.load('EGamma.EGammaAnalysisTools.electronIdMVAProducer_cfi')
+process.mvaID = cms.Sequence(  process.mvaTrigV0 + process.mvaNonTrigV0 )
+
+# try
+process.patElectronsPFlow.electronIDSources = cms.PSet(
+#process.patElectrons.electronIDSources = cms.PSet(
+    #MVA
+    mvaTrigV0 = cms.InputTag("mvaTrigV0"),
+    mvaNonTrigV0 = cms.InputTag("mvaNonTrigV0"),
+)   
+
+process.patElectronsPFlow.isolationValues = cms.PSet(
+        pfNeutralHadrons = cms.InputTag("elPFIsoValueNeutral03PFIdPFIso"),
+        pfChargedAll = cms.InputTag("elPFIsoValueChargedAll03PFIdPFIso"),
+        pfPUChargedHadrons = cms.InputTag("elPFIsoValuePU03PFIdPFIso"),
+        pfPhotons = cms.InputTag("elPFIsoValueGamma03PFIdPFIso"),
+        pfChargedHadrons = cms.InputTag("elPFIsoValueCharged03PFIdPFIso")
+    )
+process.patElectronsPFlow.isolationValuesNoPFId = cms.PSet(
+        pfNeutralHadrons = cms.InputTag("elPFIsoValueNeutral03NoPFIdPFIso"),
+        pfChargedAll = cms.InputTag("elPFIsoValueChargedAll03NoPFIdPFIso"),
+        pfPUChargedHadrons = cms.InputTag("elPFIsoValuePU03NoPFIdPFIso"),
+        pfPhotons = cms.InputTag("elPFIsoValueGamma03NoPFIdPFIso"),
+        pfChargedHadrons = cms.InputTag("elPFIsoValueCharged03NoPFIdPFIso")
+    )
+
 #===============================================================================
 
-process.p = cms.Path( getattr(process,"patPF2PATSequence"+postfix)*
-                      process.cleanPatJetsPFlow*
-                      process.puJetId*
-                      process.puJetMva*
-                      process.dimuons
-                    )
+process.p = cms.Path(#
+                     process.mvaID*                  
+                     process.patDefaultSequence*
+                     getattr(process,"patPF2PATSequence"+postfix)*
+                     #process.patPF2PATSequencePFlow *
+                     process.cleanPatJetsPFlow*
+                     process.puJetId*
+                     process.puJetMva*
+                     process.kt6PFJets25*
+                     process.kt6PFJets25asHtoZZto4l*
+                     process.dimuons
+                     )
 
 process.outpath = cms.EndPath()
+
+#Test to dump file content
+## process.output = cms.OutputModule("PoolOutputModule",
+##                                   outputCommands = cms.untracked.vstring("keep *"),
+##                                   fileName = cms.untracked.string('DYJetsToLL.root')
+##                                   )
+## 
+## process.out_step = cms.EndPath(process.output)
+
 #===============================================================================
 
 process.dimuons.getFilename    = cms.untracked.string("yourNtuple.root")
 
 process.source.fileNames.extend(
 [
+#'file:/data/0b/digiovan/code/higgs/dev/addEle/CMSSW_5_3_3_patch3/src/UserArea/test/DYJetsToLL.root'
 #"file:/data/uftrig01b/jhugon/hmumu/devNtupler/testFiles/VBFHToMM_M125_8TeV-powheg-pythia6-tauola-RECO_1.root"
 #"file:/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/testPriVtxConstr/TTJetsSkims/TTJets_10_1_crI.root"
 #"file:/home/jhugon/scratchRaid7/hmumu/recoData/VBFHToMM_M125_8TeV-powheg-pythia6-tauola-RECO_1.root"
@@ -163,49 +257,3 @@ process.source.fileNames.extend(
 #process.outpath = cms.EndPath(process.out)
 #process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20) )
 
-
-###### Temporary JEC from sqlite file until Global Tag Works
-
-if not thisIs2011:
-  process.load("CondCore.DBCommon.CondDBCommon_cfi")
-  from CondCore.DBCommon.CondDBSetup_cfi import *
-  process.jec = cms.ESSource("PoolDBESSource",
-        DBParameters = cms.PSet(
-          messageLevel = cms.untracked.int32(0)
-          ),
-        timetype = cms.string('runnumber'),
-        toGet = cms.VPSet(
-        cms.PSet(
-              record = cms.string('JetCorrectionsRecord'),
-              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_AK5PF'),
-              label  = cms.untracked.string('AK5PF')
-              ),
-        cms.PSet(
-              record = cms.string('JetCorrectionsRecord'),
-              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_KT6PF'),
-              label  = cms.untracked.string('KT6PF')
-              )
-        ## note that the tag name is specific for the particular sqlite file 
-        ), 
-        connect = cms.string('sqlite_fip:UserArea/UFDiMuonsAnalyzer/data/Fall12_V5Final_MC.db')
-       # uncomment above tag lines and this comment to use MC JEC
-       # connect = cms.string('sqlite:Summer12_V7_MC.db')
-  )
-  ## add an es_prefer statement to resolve a possible conflict from simultaneous connection to a global tag
-  process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
-  
-  if thisIsData:
-    process.jec.toGet = cms.VPSet(
-        cms.PSet(
-              record = cms.string('JetCorrectionsRecord'),
-              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_AK5PF'),
-              label  = cms.untracked.string('AK5PF')
-              ),
-        cms.PSet(
-              record = cms.string('JetCorrectionsRecord'),
-              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_KT6PF'),
-              label  = cms.untracked.string('KT6PF')
-              )
-        ## note that the tag name is specific for the particular sqlite file 
-        )
-    process.jec.connect = 'sqlite_fip:UserArea/UFDiMuonsAnalyzer/data/Fall12_V5Final_DATA.db'
