@@ -26,12 +26,12 @@ if thisIsData:
 else:
     print 'Loading Global Tag For MC'
     process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-    process.GlobalTag.globaltag = "START53_V14::All"
+    process.GlobalTag.globaltag = "START53_V15::All"
 
 
 # ------------ PoolSource -------------
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
-process.source = cms.Source("PoolSource",fileNames = cms.untracked.vstring('file:/data/0b/digiovan/code/higgs/dev/addEle/CMSSW_5_3_3_patch3/src/UserArea/test/DYJetsToLL.root'))
+process.source = cms.Source("PoolSource",fileNames = cms.untracked.vstring())
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
 process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange()
 # -------- PoolSource END -------------
@@ -97,23 +97,6 @@ jetSelection += ' && ((abs(eta)>2.4) || (chargedMultiplicity > 0 '
 jetSelection += ' && chargedHadronEnergy/energy > 0.0'
 jetSelection += ' && chargedEmEnergy/energy < 0.99))'
 
-process.cleanPatJetsPFlow = cms.EDProducer("PATJetCleaner",
-          src = cms.InputTag("selectedPatJetsPFlow"),
-          preselection = cms.string(jetSelection),
-          checkOverlaps = cms.PSet(
-             muons = cms.PSet(
-               src       = cms.InputTag("selectedPatMuonsPFlow"),
-               algorithm = cms.string("byDeltaR"),
-               preselection        = cms.string(ccMuPreSel),
-               deltaR              = cms.double(0.5),
-               checkRecoComponents = cms.bool(False),
-               pairCut             = cms.string(""),
-               requireNoOverlaps   = cms.bool(True),
-             ),
-         ),
-         finalCut = cms.string('')
-)
-
 # Taken from http://cmssw.cvs.cern.ch/cgi-bin/cmssw.cgi/UserCode/VHbbAnalysis/HbbAnalyzer/test/patMC.py?revision=1.9&view=markup
 ccElePreSel = "pt > 15.0 && abs(eta) < 2.5 &&"
 ccElePreSel += "(isEE || isEB) && !isEBEEGap &&"
@@ -133,6 +116,15 @@ process.cleanPatJetsPFlow = cms.EDProducer("PATJetCleaner",
           preselection = cms.string(jetSelection),
           checkOverlaps = cms.PSet(
              muons = cms.PSet(
+               src       = cms.InputTag("selectedPatMuonsPFlow"),
+               algorithm = cms.string("byDeltaR"),
+               preselection        = cms.string(ccMuPreSel),
+               deltaR              = cms.double(0.5),
+               checkRecoComponents = cms.bool(False),
+               pairCut             = cms.string(""),
+               requireNoOverlaps   = cms.bool(True),
+             ),
+             electrons = cms.PSet(
                src       = cms.InputTag("selectedPatElectronsPFlow"),
                algorithm = cms.string("byDeltaR"),
                preselection        = cms.string(ccElePreSel),
@@ -144,7 +136,6 @@ process.cleanPatJetsPFlow = cms.EDProducer("PATJetCleaner",
          ),
          finalCut = cms.string('')
 )
-
 
 process.load("CMGTools.External.pujetidsequence_cff")
 process.puJetId.jets = cms.InputTag("cleanPatJetsPFlow")
@@ -261,6 +252,7 @@ process.dimuons.getFilename    = cms.untracked.string("yourNtuple.root")
 
 process.source.fileNames.extend(
 [
+#'file:/data/0b/digiovan/code/higgs/dev/addEle/CMSSW_5_3_3_patch3/src/UserArea/test/DYJetsToLL.root'
 #"file:/data/uftrig01b/jhugon/hmumu/devNtupler/testFiles/VBFHToMM_M125_8TeV-powheg-pythia6-tauola-RECO_1.root"
 #"file:/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/testPriVtxConstr/TTJetsSkims/TTJets_10_1_crI.root"
 #"file:/home/jhugon/scratchRaid7/hmumu/recoData/VBFHToMM_M125_8TeV-powheg-pythia6-tauola-RECO_1.root"
@@ -270,49 +262,3 @@ process.source.fileNames.extend(
 #process.outpath = cms.EndPath(process.out)
 #process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20) )
 
-
-###### Temporary JEC from sqlite file until Global Tag Works
-
-if not thisIs2011:
-  process.load("CondCore.DBCommon.CondDBCommon_cfi")
-  from CondCore.DBCommon.CondDBSetup_cfi import *
-  process.jec = cms.ESSource("PoolDBESSource",
-        DBParameters = cms.PSet(
-          messageLevel = cms.untracked.int32(0)
-          ),
-        timetype = cms.string('runnumber'),
-        toGet = cms.VPSet(
-        cms.PSet(
-              record = cms.string('JetCorrectionsRecord'),
-              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_AK5PF'),
-              label  = cms.untracked.string('AK5PF')
-              ),
-        cms.PSet(
-              record = cms.string('JetCorrectionsRecord'),
-              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_MC_KT6PF'),
-              label  = cms.untracked.string('KT6PF')
-              )
-        ## note that the tag name is specific for the particular sqlite file 
-        ), 
-        connect = cms.string('sqlite_fip:UserArea/UFDiMuonsAnalyzer/data/Fall12_V5Final_MC.db')
-       # uncomment above tag lines and this comment to use MC JEC
-       # connect = cms.string('sqlite:Summer12_V7_MC.db')
-  )
-  ## add an es_prefer statement to resolve a possible conflict from simultaneous connection to a global tag
-  process.es_prefer_jec = cms.ESPrefer('PoolDBESSource','jec')
-  
-  if thisIsData:
-    process.jec.toGet = cms.VPSet(
-        cms.PSet(
-              record = cms.string('JetCorrectionsRecord'),
-              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_AK5PF'),
-              label  = cms.untracked.string('AK5PF')
-              ),
-        cms.PSet(
-              record = cms.string('JetCorrectionsRecord'),
-              tag    = cms.string('JetCorrectorParametersCollection_Fall12_V5_DATA_KT6PF'),
-              label  = cms.untracked.string('KT6PF')
-              )
-        ## note that the tag name is specific for the particular sqlite file 
-        )
-    process.jec.connect = 'sqlite_fip:UserArea/UFDiMuonsAnalyzer/data/Fall12_V5Final_DATA.db'
