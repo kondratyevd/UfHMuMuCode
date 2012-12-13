@@ -28,4 +28,5 @@
 <use   name="DataFormats/PatCandidates"/>
 <use   name="PhysicsTools/Utilities"/>
 <use   name="RecoParticleFlow/PFClusterTools"/>
+<use   name="EGamma/EGammaAnalysisTools"/>
 <flags   EDM_PLUGIN="1"/>

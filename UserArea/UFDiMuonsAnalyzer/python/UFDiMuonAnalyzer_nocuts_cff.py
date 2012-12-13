@@ -49,6 +49,9 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          triggerResults = cms.InputTag("TriggerResults","","HLT"),
                          triggerEvent   = cms.InputTag("hltTriggerSummaryAOD","","HLT"),
                          
+                         eleColl = cms.InputTag("selectedPatElectronsPFlow"),
+                         eleTriggerName = cms.string("HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL"),
+
                          metTag         = cms.InputTag("null"),
                          pfJetsTag      = cms.InputTag("null"),
                          genJetsTag     = cms.InputTag("null")

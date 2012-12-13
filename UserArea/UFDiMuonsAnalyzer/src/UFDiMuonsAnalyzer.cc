@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.12 2012/10/26 08:34:16 digiovan Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.13 2012/12/05 21:20:20 jhugon Exp $
 //
 //
 
@@ -136,6 +136,22 @@ Implementation:
 #include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
 #include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
 
+// patEle
+// helper to apply standard cuts
+#include "EGamma/EGammaAnalysisTools/interface/EGammaCutBasedEleId.h"
+#include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
+#include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
+#include "TrackingTools/IPTools/interface/IPTools.h"
+
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Tau.h"
+#include "DataFormats/PatCandidates/interface/Photon.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
+
+#include "DataFormats/Common/interface/View.h"
+
 bool sortGenJetFunc(reco::GenJet i, reco::GenJet j){ return (i.pt()>j.pt()); }
 
 // Add the data formats
@@ -220,6 +236,11 @@ public:
 
   // general event information	
   _EventInfo eventInfo;
+
+  // rho
+  float _rho;
+  float _rho25;
+  float _rho25asHtoZZto4l;
 
   // vertex information
   _VertexInfo vertexInfo;
@@ -314,6 +335,63 @@ public:
   std::vector< int >   gammaMomFromH;
   std::vector< int >   gammaMomFromW;
 
+  // electrons info
+  edm::InputTag _eleColl;
+
+  // cut based info
+  int eleSize;
+  std::vector< int >   eleIsEB; 
+  std::vector< int >   eleIsEE;
+  std::vector< float > elePt;
+  std::vector< float > eleEta;
+  std::vector< float > elePhi;
+  std::vector< float > eleScE;
+  std::vector< float > eleScEta;
+  std::vector< float > eleScPhi;
+  std::vector< int >   eleCharge;
+  std::vector< float > eleTrackIso;          
+  std::vector< float > eleEcalIso;           
+  std::vector< float > eleHcalIso;           
+  std::vector< float > eleChargedHadronIso;  
+  std::vector< float > elePuChargedHadronIso;
+  std::vector< float > elePhotonIso;         
+  std::vector< float > elePfNeuIso;         
+  std::vector< float > eleSigmaIEtaIEta;
+  std::vector< float > eleDEtaIn;       
+  std::vector< float > eleDPhiIn;       
+  std::vector< float > eleHoe;          
+  std::vector< float > eleOoemoop;      
+  std::vector< float > eleConvDist;
+  std::vector< float > eleConvDcot;
+  std::vector< float > eleIpDb;
+  std::vector< float > eleIpErrDb;
+  std::vector< float > eleD0vtx;
+  std::vector< float > eleDzvtx;
+  std::vector< bool >  eleVtxFitConversion;
+  std::vector< int  >  eleMHits;
+
+  // mva info
+  std::vector< float > eleMvaNonTrigV0;
+  std::vector< float > eleMvaTrigV0;
+  std::vector< float > eleFBrem;
+  std::vector< float > eleKfchi2;
+  std::vector< float > eleKfhits; 
+  std::vector< float > eleGsfchi2;
+  std::vector< float > eleDEtacalo;
+  std::vector< float > eleSpp;
+  std::vector< float > eleEtawidth;
+  std::vector< float > elePhiwidth;
+  std::vector< float > eleE1x5e5x5;
+  std::vector< float > eleR9;      
+  std::vector< float > eleEoP;             
+  std::vector< float > eleIoEmIoP;         
+  std::vector< float > eleEoPout;       
+  std::vector< float > elePreShowerOverRaw;
+  std::vector< float > eleD0;
+
+  // trigger info
+  std::vector< int >   eleIsHltPassed;
+
 
   // Jets and MET
   _MetInfo     _metInfo;
@@ -342,6 +420,8 @@ private:
   void initMuon(_MuonInfo& muon);
   void initTrack(_TrackInfo& track);
   void initGenPart(_genPartInfo& part);
+  void initEle();
+
   bool checkMother(const reco::Candidate &part, int momPdgId);
   void fillDiMuonGenPart(const reco::GenParticleCollection &genColl,
                          _genPartInfo& part,
@@ -424,6 +504,9 @@ private:
   edm::InputTag triggerEventTag_;
 
   bool _selectLowestSingleMuTrigger;
+
+  std::string eleTriggerName_;
+  std::string eleTriggerBaseName_;
 
   edm::InputTag metTag;
   edm::InputTag pfJetsTag;
@@ -567,6 +650,9 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   triggerResultsTag_ = iConfig.getParameter<edm::InputTag>("triggerResults");
   triggerEventTag_   = iConfig.getParameter<edm::InputTag>("triggerEvent");
 
+  _eleColl = iConfig.getParameter<edm::InputTag>("eleColl");
+  eleTriggerBaseName_  = iConfig.getParameter< std::string >("eleTriggerName");
+
   metTag     = iConfig.getParameter<edm::InputTag>("metTag");
   pfJetsTag  = iConfig.getParameter<edm::InputTag>("pfJetsTag");
   genJetsTag = iConfig.getParameter<edm::InputTag>("genJetsTag");
@@ -651,6 +737,28 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   eventInfo.orbit = theOrbit;
 
 
+  // rho for electrons' isolation correction
+  edm::Handle<double> rhoHandle;
+  iEvent.getByLabel(edm::InputTag("kt6PFJets", "rho"),rhoHandle);   
+  _rho = *rhoHandle; 
+  
+  edm::Handle<double> rho25Handle;
+  iEvent.getByLabel(edm::InputTag("kt6PFJets25", "rho"),rho25Handle);   
+  _rho25 = *rho25Handle; 
+
+  edm::Handle<double> rho25HandleasHtoZZto4l;
+  iEvent.getByLabel(edm::InputTag("kt6PFJets25asHtoZZto4l", "rho"),rho25HandleasHtoZZto4l);   
+  _rho25asHtoZZto4l = *rho25HandleasHtoZZto4l; 
+
+  if (_isVerbose) {
+    std::cout << " ######## RHO ########\n";
+    std::cout << "rho   = " << _rho   << std::endl;
+    std::cout << "rho25 = " << _rho25 << std::endl;
+    std::cout << "rho25asHtoZZto4l = " << _rho25asHtoZZto4l 
+              << std::endl << std::endl;
+  }
+
+
   //vertices
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByLabel("offlinePrimaryVertices", vertices);
@@ -669,6 +777,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   }      
   vertexInfo.nVertices   = 0;
   
+  // primary vertex
+  bool foundPriVertex = !true;
+  int  privtxId = 0;
+
   // init (vertices)
   if (vertices.isValid()) {
     
@@ -681,6 +793,12 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
         continue;
       }
     
+      // assign the first valid primary vertex
+      if (!foundPriVertex) {
+        privtxId = iVertex; 
+        foundPriVertex = true;
+      }
+
       vertexInfo.isValid[iVertex] = 1;
       
       vertexInfo.x[iVertex]        = vtx->position().X();	
@@ -699,6 +817,9 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   }
   else std::cout << "VertexCollection is NOT valid -> vertex Info NOT filled!\n";
   
+  // assign the first valid primary vertex
+  const reco::Vertex &privertex = (*vertices)[privtxId];  //used in muon and ele id 
+
   // Get MC Truth Pileup
   _nPU = -1;
   if (_isMonteCarlo) {
@@ -718,7 +839,9 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     }
   }
   
-
+  // B E A M S P O T
+  edm::Handle<reco::BeamSpot> beamSpotHandle;
+  iEvent.getByLabel(_beamSpot, beamSpotHandle);
 
   // G E O M E T R Y
   //iSetup.get<TransientTrackRecord>().get("TransientTrackBuilder",transientTrackBuilder);
@@ -884,14 +1007,395 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
 
   // ===========================================================================
+  // E L E C T R O N S
+  //
+  
+  // needed for the some MVA based variables
+  edm::InputTag reducedEBRecHitCollection(std::string("reducedEcalRecHitsEB"));
+  edm::InputTag reducedEERecHitCollection(std::string("reducedEcalRecHitsEE"));
+
+  EcalClusterLazyTools lazyTools(iEvent, 
+                                 iSetup, 
+                                 reducedEBRecHitCollection, 
+                                 reducedEERecHitCollection);
+ 
+  
+  // get the PAT electrons collection
+  edm::Handle<edm::View<pat::Electron> > electronHandle;
+  iEvent.getByLabel(_eleColl,electronHandle);
+  edm::View<pat::Electron> electrons = *electronHandle;
+
+  if (_isVerbose) 
+    std::cout << " INPUT electrons " << electrons.size() <<std::endl;
+  
+  initEle();
+  eleSize = electrons.size();
+
+  for(edm::View<pat::Electron>::const_iterator elec = electrons.begin(); 
+      elec!=electrons.end(); ++elec){
+
+    eleIsEB.push_back( elec->isEB() );
+    eleIsEE.push_back( elec->isEE() );
+  
+    elePt .push_back( elec -> pt() );
+    eleEta.push_back( elec -> eta() );
+    elePhi.push_back( elec -> phi() );
+    
+    eleScE  .push_back( elec->superCluster()->energy()  );
+    eleScEta.push_back( elec->superCluster()->eta()     );
+    eleScPhi.push_back( elec->superCluster()->phi()     );
+    
+    eleCharge.push_back( elec->charge() );
+  
+    eleTrackIso.push_back( elec->trackIso() );          
+    eleEcalIso .push_back( elec->ecalIso()  );           
+    eleHcalIso .push_back( elec->hcalIso()  );           
+                                   
+    eleChargedHadronIso  .push_back( elec->chargedHadronIso()   );  
+    elePuChargedHadronIso.push_back( elec->puChargedHadronIso() );
+    elePhotonIso         .push_back( elec->photonIso()          );   
+    elePfNeuIso          .push_back( elec->neutralHadronIso()   );      
+
+  
+    eleSigmaIEtaIEta.push_back( elec->sigmaIetaIeta()                  );
+    eleDEtaIn       .push_back( elec->deltaPhiSuperClusterTrackAtVtx() );       
+    eleDPhiIn       .push_back( elec->deltaEtaSuperClusterTrackAtVtx() );       
+    eleHoe          .push_back( elec->hadronicOverEm()                 );          
+    eleConvDist     .push_back( elec->convDist()                       );      
+    eleConvDcot     .push_back( elec->convDcot()                       );
+  
+    eleOoemoop.push_back( (1.0/elec->ecalEnergy() - elec->eSuperClusterOverP()/elec->ecalEnergy()) );
+
+    // impact parameter variables
+    eleIpDb   .push_back( elec->dB()  );
+    eleIpErrDb.push_back( elec->edB() );
+  
+    eleD0vtx.push_back( elec->gsfTrack()->dxy(privertex.position()) );
+    eleDzvtx.push_back( elec->gsfTrack()->dz (privertex.position()) ); 
+
+    // conversion rejection variables
+    edm::Handle<reco::ConversionCollection> conversions;
+    iEvent.getByLabel("allConversions", conversions);
+    
+    eleVtxFitConversion.push_back( ConversionTools::hasMatchedConversion(*elec, 
+                                                                         conversions, 
+                                                                         beamSpotHandle->position()) );
+    
+    eleMHits.push_back( elec->gsfTrack()->trackerExpectedHitsInner().numberOfHits() ); 
+    
+    
+
+    // print
+    if (_isVerbose) {
+      std::cout << "+++++++++++++++++++++++++++++++++++++++++++++\n";
+      std::cout << " C U T   B A S E D   I N F O \n";
+      std::cout << "eleIsEB = " << eleIsEB.back() << std::endl;
+      std::cout << "eleIsEE = " << eleIsEE.back() << std::endl;
+
+      std::cout << "elePt  = " << elePt .back() << std::endl;
+      std::cout << "eleEta = " << eleEta.back() << std::endl;
+      std::cout << "elePhi = " << elePhi.back() << std::endl;
+
+      std::cout << "eleScE   = " << eleScE  .back() << std::endl;
+      std::cout << "eleScEta = " << eleScEta.back() << std::endl;
+      std::cout << "eleScPhi = " << eleScPhi.back() << std::endl;
+
+      std::cout << "eleCharge = "   << eleCharge  .back() << std::endl;
+      std::cout << "eleTrackIso = " << eleTrackIso.back() << std::endl;
+      std::cout << "eleEcalIso  = " << eleEcalIso .back() << std::endl;
+      std::cout << "eleHcalIso  = " << eleHcalIso .back() << std::endl;
+      std::cout << "eleChargedHadronIso   = " << eleChargedHadronIso  .back() << std::endl;
+      std::cout << "elePuChargedHadronIso = " << elePuChargedHadronIso.back() << std::endl;
+      std::cout << "elePhotonIso          = " << elePhotonIso         .back() << std::endl;
+      std::cout << "elePfNeuIso           = " << elePfNeuIso          .back() << std::endl;
+      
+      std::cout << "eleSigmaIEtaIEta = " << eleSigmaIEtaIEta.back() << std::endl;
+      std::cout << "eleDEtaIn        = " << eleDEtaIn       .back() << std::endl;
+      std::cout << "eleDPhiIn        = " << eleDPhiIn       .back() << std::endl;
+      std::cout << "eleHoe           = " << eleHoe          .back() << std::endl;
+      std::cout << "eleConvDist      = " << eleConvDist     .back() << std::endl;
+      std::cout << "eleConvDcot      = " << eleConvDcot     .back() << std::endl;
+      std::cout << "eleOoemoop       = " << eleOoemoop      .back() << std::endl;
+      
+      std::cout << "eleIpDb    = " << eleIpDb   .back()<< std::endl;
+      std::cout << "eleIpErrDb = " << eleIpErrDb.back()<< std::endl;
+      std::cout << "eleD0vtx   = " << eleD0vtx  .back()<< std::endl;
+      std::cout << "eleDzvtx   = " << eleDzvtx  .back()<< std::endl;
+      
+      std::cout << "eleVtxFitConversion = " << eleVtxFitConversion.back() << std::endl;   
+      std::cout << "eleMHits = " << eleMHits.back() << std::endl;   
+    }
+    
+  
+    // Multivariate approach
+    // save the output of multivariate analysis
+    eleMvaNonTrigV0.push_back( elec->electronID("mvaNonTrigV0") );
+    eleMvaTrigV0   .push_back( elec->electronID("mvaTrigV0") );
+
+
+    bool validKF= false; 
+    reco::TrackRef myTrackRef = elec->closestCtfTrackRef();
+    validKF = (myTrackRef.isAvailable());
+    validKF = (myTrackRef.isNonnull());  
+    
+    // extra variable to compute the mva analysis: store them in case of needs
+    // Pure tracking variables
+    eleFBrem .push_back( elec->fbrem() ); 
+    
+    eleKfchi2 .push_back( (validKF) ? myTrackRef->normalizedChi2() : 0 );
+    eleKfhits .push_back( (validKF) ? myTrackRef->hitPattern().trackerLayersWithMeasurement() : -1. );
+    eleGsfchi2.push_back( elec->gsfTrack()->normalizedChi2() );
+    
+    
+    // Geometrical matchings
+    eleDEtacalo.push_back( elec->deltaEtaSeedClusterTrackAtCalo() );
+    
+    
+    
+    // Pure ECAL -> shower shapes
+    std::vector<float> vCov = lazyTools.localCovariances(*(elec->superCluster()->seed())) ;
+    
+    if (!isnan(vCov[2])) eleSpp.push_back( sqrt (vCov[2]) );
+    else eleSpp.push_back( 0. );    
+    
+    eleEtawidth.push_back( elec->superCluster()->etaWidth() );
+    elePhiwidth.push_back( elec->superCluster()->phiWidth() );
+    eleE1x5e5x5.push_back( (elec->e5x5()) !=0. ? 1.-(elec->e1x5()/elec->e5x5()) : -1. );
+    eleR9      .push_back( lazyTools.e3x3(*(elec->superCluster()->seed())) / elec->superCluster()->rawEnergy() );
+    
+    
+    // Energy matching
+    eleEoP             .push_back( elec->eSuperClusterOverP() );             
+    eleIoEmIoP         .push_back( (1.0/elec->ecalEnergy()) - (1.0 / elec->p()) );         
+    eleEoPout          .push_back( elec->eEleClusterOverPout() );       
+    elePreShowerOverRaw.push_back( elec->superCluster()->preshowerEnergy() / elec->superCluster()->rawEnergy() );
+    
+    
+    
+    //d0
+    if (elec->gsfTrack().isNonnull()) {
+      eleD0.push_back( (-1.0)*elec->gsfTrack()->dxy(privertex.position()) ); 
+    } else if (elec->closestCtfTrackRef().isNonnull()) {
+      eleD0.push_back( (-1.0)*elec->closestCtfTrackRef()->dxy(privertex.position()) ); 
+    } else {
+      eleD0.push_back( -999.0 );
+    }    
+    
+    if (_isVerbose) {
+ 
+      std::cout << "+++++++++++++++++++++++++++++++++++++++++++++\n";
+      std::cout << " M V A   B A S E D   I N F O \n";
+      std::cout << "eleMvaNonTrigV0 = " << eleMvaNonTrigV0.back() << std::endl;
+      std::cout << "eleMvaTrigV0    = " << eleMvaTrigV0   .back() << std::endl;
+
+      std::cout << "eleFBrem    = " << eleFBrem   .back() << std::endl;
+      std::cout << "eleKfchi2   = " << eleKfchi2  .back() << std::endl;
+      std::cout << "eleKfhits   = " << eleKfhits  .back() << std::endl; 
+      std::cout << "eleGsfchi2  = " << eleGsfchi2 .back() << std::endl;  
+      std::cout << "eleDEtacalo = " << eleDEtacalo.back() << std::endl;
+      std::cout << "eleSpp      = " << eleSpp     .back() << std::endl;
+
+      std::cout << "eleEtawidth = " << eleEtawidth.back() << std::endl;
+      std::cout << "elePhiwidth = " << elePhiwidth.back() << std::endl;
+      std::cout << "eleE1x5e5x5 = " << eleE1x5e5x5.back() << std::endl;
+      std::cout << "eleR9       = " << eleR9      .back() << std::endl;
+
+      std::cout << "eleEoP              = " << eleEoP             .back() << std::endl;
+      std::cout << "eleIoEmIoP          = " << eleIoEmIoP         .back() << std::endl;
+      std::cout << "eleEoPout           = " << eleEoPout          .back() << std::endl;
+      std::cout << "elePreShowerOverRaw = " << elePreShowerOverRaw.back() << std::endl;
+      std::cout << "eleD0               = " << eleD0              .back() << std::endl;
+    }
+ 
+    eleIsHltPassed .push_back( isHltPassed(iEvent,iSetup,eleTriggerName_) );
+    
+    if (_isVerbose) {
+      std::cout << "is "         << eleTriggerName_ 
+                << " triggerd? " << eleIsHltPassed.back()
+                << std::endl;
+    }
+
+  }
+
+
+  // ===========================================================================
+  // Jet Info
+  edm::Handle < std::vector<pat::MET> > mets;
+  if( metTag.label() != "null" ) iEvent.getByLabel(metTag, mets);
+  bzero(&_metInfo,sizeof(_MetInfo));
+
+  if( mets.isValid() ){
+    _metInfo.px = (*mets)[0].px();
+    _metInfo.py = (*mets)[0].py();
+    _metInfo.pt = (*mets)[0].pt();
+    _metInfo.phi= (*mets)[0].phi();
+    _metInfo.sumEt = (*mets)[0].sumEt();
+  }
+
+  edm::Handle < std::vector<pat::Jet> > jets;
+  if( pfJetsTag.label() != "null" ) iEvent.getByLabel(pfJetsTag, jets);
+  bzero(&_pfJetInfo,sizeof(_PFJetInfo));
+
+  // Get JEC Uncertainty Calculator
+  edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
+  iSetup.get<JetCorrectionsRecord>().get("AK5PF",JetCorParColl); 
+  JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
+  JetCorrectionUncertainty *jecUncCalculator = new JetCorrectionUncertainty(JetCorPar);
+
+  if( jets.isValid() ){
+    //First Get PU Id's
+
+    for(unsigned int i=0; i<jets->size(); i++){
+      _pfJetInfo.nJets++;
+      if( i<10 ){
+        const pat::Jet& jet = jets->at(i);
+        _pfJetInfo.px[i] = jet.px();
+        _pfJetInfo.py[i] = jet.py();
+        _pfJetInfo.pz[i] = jet.pz();
+        _pfJetInfo.pt[i] = jet.pt();
+        _pfJetInfo.eta[i]= jet.eta();
+        _pfJetInfo.phi[i]= jet.phi();
+        _pfJetInfo.mass[i]  = jet.mass();
+        _pfJetInfo.partonFlavour[i] = jet.partonFlavour();
+        // Energy Fractions
+        _pfJetInfo.chf[i]  = jet.chargedHadronEnergyFraction();
+        _pfJetInfo.nhf[i]  = jet.neutralHadronEnergyFraction();
+        _pfJetInfo.cef[i]  = jet.chargedEmEnergyFraction();
+        _pfJetInfo.nef[i]  = jet.neutralEmEnergyFraction();
+        _pfJetInfo.muf[i]  = jet.muonEnergyFraction();
+        _pfJetInfo.hfhf[i]  = jet.HFHadronEnergyFraction();
+        _pfJetInfo.hfef[i]  = jet.HFEMEnergyFraction();
+        // Multiplicities
+        _pfJetInfo.cm[i]  = jet.chargedMultiplicity();
+        _pfJetInfo.chm[i]  = jet.chargedHadronMultiplicity();
+        _pfJetInfo.nhm[i]  = jet.neutralHadronMultiplicity();
+        _pfJetInfo.cem[i]  = jet.electronMultiplicity();
+        _pfJetInfo.nem[i]  = jet.photonMultiplicity();
+        _pfJetInfo.mum[i]  = jet.muonMultiplicity();
+        _pfJetInfo.hfhm[i]  = jet.HFHadronMultiplicity();
+        _pfJetInfo.hfem[i]  = jet.HFEMMultiplicity();
+        //               _pfJetInfo.pfJetCh[i] = jet.jetCharge();
+        // Get JEC Uncertainty
+        jecUncCalculator->setJetEta(jet.eta());
+        jecUncCalculator->setJetPt(jet.pt()); // here you must use the CORRECTED jet pt
+        _pfJetInfo.jecUnc[i] = jecUncCalculator->getUncertainty(true);
+        _pfJetInfo.jecFactor[i]  = jet.jecFactor("Uncorrected");
+        // b-Tag
+        _pfJetInfo.csv[i]  = jet.bDiscriminator("combinedSecondaryVertexBJetTags");
+        //PAT matched Generator Jet
+        const reco::GenJet* genJet = jet.genJet();
+        if (genJet != NULL)
+          {
+            _pfJetInfo.genMatched[i] = true;
+            _pfJetInfo.genPx[i] = genJet->px();
+            _pfJetInfo.genPy[i] = genJet->py();
+            _pfJetInfo.genPz[i] = genJet->pz();
+            _pfJetInfo.genPt[i] = genJet->pt();
+            _pfJetInfo.genEta[i]= genJet->eta();
+            _pfJetInfo.genPhi[i]= genJet->phi();
+            _pfJetInfo.genMass[i]  = genJet->mass();
+            double genJetEnergy = genJet->energy();
+            _pfJetInfo.genEMF[i]  = genJet->emEnergy()/genJetEnergy;
+            _pfJetInfo.genHadF[i]  = genJet->hadEnergy()/genJetEnergy;
+            _pfJetInfo.genInvF[i]  = genJet->invisibleEnergy()/genJetEnergy;
+            _pfJetInfo.genAuxF[i]  = genJet->auxiliaryEnergy()/genJetEnergy;
+
+          }
+        else
+          {
+            _pfJetInfo.genMatched[i] = false;
+            _pfJetInfo.genPx[i] =-1;
+            _pfJetInfo.genPy[i] =-1;
+            _pfJetInfo.genPz[i] =-1;
+            _pfJetInfo.genPt[i] =-1;
+            _pfJetInfo.genEta[i]=-1;
+            _pfJetInfo.genPhi[i]=-1;
+            _pfJetInfo.genMass[i]  =-1;
+            _pfJetInfo.genEMF[i]  =-1;
+            _pfJetInfo.genHadF[i]  =-1;
+            _pfJetInfo.genInvF[i]  =-1;
+            _pfJetInfo.genAuxF[i]  =-1;
+          }
+
+        //delete genJet;	  
+      
+      }
+    }
+  }
+  
+  delete jecUncCalculator;
+
+
+  edm::Handle < edm::View<pat::Jet> > jetsForPUId;
+  if( pfJetsTag.label() != "null" ) iEvent.getByLabel(pfJetsTag, jetsForPUId);
+
+  std::vector<float> puIdFullDisc = getPUJetIDDisc(jetsForPUId,iEvent,puJetMvaFullDiscTag);
+  std::vector<float> puIdSimpleDisc = getPUJetIDDisc(jetsForPUId,iEvent,puJetMvaSimpleDiscTag);
+  std::vector<float> puIdCutDisc = getPUJetIDDisc(jetsForPUId,iEvent,puJetMvaCutDiscTag);
+  std::vector<int> puIdFullId = getPUJetID(jetsForPUId,iEvent,puJetMvaFullIdTag);
+  std::vector<int> puIdSimpleId = getPUJetID(jetsForPUId,iEvent,puJetMvaSimpleIdTag);
+  std::vector<int> puIdCutId = getPUJetID(jetsForPUId,iEvent,puJetMvaCutIdTag);
+
+  for(unsigned i=0; i<10;i++)
+    {
+      if(i<puIdFullDisc.size())
+ 	_puJetFullDisc[i] = puIdFullDisc[i];
+      else
+ 	_puJetFullDisc[i] = -1000.0;
+
+      if(i<puIdFullId.size())
+ 	_puJetFullId[i] = puIdFullId[i];
+      else
+ 	_puJetFullId[i] = -1000.0;
+
+      if(i<puIdSimpleDisc.size())
+ 	_puJetSimpleDisc[i] = puIdSimpleDisc[i];
+      else
+ 	_puJetSimpleDisc[i] = -1000.0;
+
+      if(i<puIdSimpleId.size())
+ 	_puJetSimpleId[i] = puIdSimpleId[i];
+      else
+ 	_puJetSimpleId[i] = -1000.0;
+
+      if(i<puIdCutDisc.size())
+ 	_puJetCutDisc[i] = puIdCutDisc[i];
+      else
+ 	_puJetCutDisc[i] = -1000.0;
+
+      if(i<puIdCutId.size())
+ 	_puJetCutId[i] = puIdCutId[i];
+      else
+ 	_puJetCutId[i] = -1000.0;
+    }
+
+  edm::Handle < reco::GenJetCollection > genJets;
+  if( genJetsTag.label() != "null" ) iEvent.getByLabel(genJetsTag, genJets);
+  bzero(&_genJetInfo,sizeof(_GenJetInfo));
+
+  if( genJets.isValid() ){
+    reco::GenJetCollection sortedGenJets = (*genJets);
+    sort(sortedGenJets.begin(), sortedGenJets.end(), sortGenJetFunc);
+    for(unsigned int i=0; i<sortedGenJets.size(); i++){
+      _genJetInfo.nJets++;
+      if( i<10 ){
+        _genJetInfo.px[i] = sortedGenJets[i].px();
+        _genJetInfo.py[i] = sortedGenJets[i].py();
+        _genJetInfo.pz[i] = sortedGenJets[i].pz();
+        _genJetInfo.pt[i] = sortedGenJets[i].pt();
+        _genJetInfo.eta[i] = sortedGenJets[i].eta();
+        _genJetInfo.phi[i] = sortedGenJets[i].phi();
+        _genJetInfo.mass[i] = sortedGenJets[i].mass();
+      }
+    }
+  }
+
+
+  // ===========================================================================
   // M U O N S
   //
   edm::Handle<reco::MuonCollection> muons;
   iEvent.getByLabel(_muonColl, muons);
-
-  // B E A M S P O T
-  edm::Handle<reco::BeamSpot> beamSpotHandle;
-  iEvent.getByLabel(_beamSpot, beamSpotHandle);
 
   // reco muons collection 
   reco::MuonCollection muonsSelected; 
@@ -1497,7 +2001,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 //                 << ", pTPVC(mm): " << _recoCandPtPVC 
 //                 << std::endl; 
 //     }
-    
+
+/*    
     // ===========================================================================
     // Jet Info
     edm::Handle < std::vector<pat::MET> > mets;
@@ -1666,7 +2171,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
         }
       }
     }
-
+*/
     // ===========================================================================
     // store everything in a ntuple
     _outTree->Fill();
@@ -1700,8 +2205,14 @@ void UFDiMuonsAnalyzer::beginJob()
   // eventInfo;
   _outTree->Branch( "eventInfo",  &eventInfo, "run/I:lumi/I:event/I:bx/I:orbit/I");
   
-  std::cout << "beginJob" << std::endl;
-  std::cout << "triggerBaseNames_.size()= " << triggerBaseNames_.size() << std::endl;
+  // rho
+  _outTree->Branch("rho"  ,            &_rho,              "rho/F"             );
+  _outTree->Branch("rho25",            &_rho25,            "rho25/F"           );
+  _outTree->Branch("rho25asHtoZZto4l", &_rho25asHtoZZto4l, "rho25asHtoZZto4l/F");
+
+
+  //std::cout << "beginJob" << std::endl;
+  //std::cout << "triggerBaseNames_.size()= " << triggerBaseNames_.size() << std::endl;
 
 
   _outTree->Branch("vertexInfo", &vertexInfo, "nVertices/I:isValid[20]/I:"
@@ -1896,6 +2407,58 @@ void UFDiMuonsAnalyzer::beginJob()
 
     _outTree->Branch("nPU", 	&_nPU   	,"nPU/I");              
   }
+
+ // ele
+  _outTree->Branch( "eleSize",               &eleSize);                 
+  _outTree->Branch( "eleIsEB",               &eleIsEB);                 
+  _outTree->Branch( "eleIsEE",               &eleIsEE);                 
+  _outTree->Branch( "elePt",                 &elePt);                   
+  _outTree->Branch( "eleEta",                &eleEta);                  
+  _outTree->Branch( "elePhi",                &elePhi);                  
+  _outTree->Branch( "eleScE",                &eleScE);                  
+  _outTree->Branch( "eleScEta",              &eleScEta);                
+  _outTree->Branch( "eleScPhi",              &eleScPhi);                
+  _outTree->Branch( "eleCharge",             &eleCharge);               
+  _outTree->Branch( "eleTrackIso",           &eleTrackIso);             
+  _outTree->Branch( "eleEcalIso",            &eleEcalIso);              
+  _outTree->Branch( "eleHcalIso",            &eleHcalIso);              
+  _outTree->Branch( "eleChargedHadronIso",   &eleChargedHadronIso);     
+  _outTree->Branch( "elePuChargedHadronIso", &elePuChargedHadronIso);   
+  _outTree->Branch( "elePhotonIso",          &elePhotonIso);            
+  _outTree->Branch( "elePfNeuIso",           &elePfNeuIso);             
+  _outTree->Branch( "eleSigmaIEtaIEta",      &eleSigmaIEtaIEta);        
+  _outTree->Branch( "eleDEtaIn",             &eleDEtaIn);               
+  _outTree->Branch( "eleDPhiIn",             &eleDPhiIn);               
+  _outTree->Branch( "eleHoe",                &eleHoe);                  
+  _outTree->Branch( "eleOoemoop",            &eleOoemoop);              
+  _outTree->Branch( "eleConvDist",           &eleConvDist);             
+  _outTree->Branch( "eleConvDcot",           &eleConvDcot);             
+  _outTree->Branch( "eleIpDb",               &eleIpDb);                 
+  _outTree->Branch( "eleIpErrDb",            &eleIpErrDb);              
+  _outTree->Branch( "eleD0vtx",              &eleD0vtx);                
+  _outTree->Branch( "eleDzvtx",              &eleDzvtx);                
+  _outTree->Branch( "eleVtxFitConversion",   &eleVtxFitConversion);     
+  _outTree->Branch( "eleMHits",              &eleMHits);                
+                                             
+  _outTree->Branch( "eleMvaNonTrigV0",       &eleMvaNonTrigV0);         
+  _outTree->Branch( "eleMvaTrigV0",          &eleMvaTrigV0);            
+  _outTree->Branch( "eleFBrem",              &eleFBrem);                
+  _outTree->Branch( "eleKfchi2",             &eleKfchi2);               
+  _outTree->Branch( "eleKfhits",             &eleKfhits);               
+  _outTree->Branch( "eleGsfchi2",            &eleGsfchi2);              
+  _outTree->Branch( "eleDEtacalo",           &eleDEtacalo);             
+  _outTree->Branch( "eleSpp",                &eleSpp);                  
+  _outTree->Branch( "eleEtawidth",           &eleEtawidth);             
+  _outTree->Branch( "elePhiwidth",           &elePhiwidth);             
+  _outTree->Branch( "eleE1x5e5x5",           &eleE1x5e5x5);             
+  _outTree->Branch( "eleR9",                 &eleR9);                   
+  _outTree->Branch( "eleEoP",                &eleEoP);                  
+  _outTree->Branch( "eleIoEmIoP",            &eleIoEmIoP);              
+  _outTree->Branch( "eleEoPout",             &eleEoPout);               
+  _outTree->Branch( "elePreShowerOverRaw",   &elePreShowerOverRaw);     
+  _outTree->Branch( "eleD0",                 &eleD0);                   
+                                             
+  _outTree->Branch( "eleIsHltPassed",        &eleIsHltPassed);           
 
 }
 
@@ -2168,6 +2731,27 @@ void UFDiMuonsAnalyzer::beginRun(edm::Run const& iRun,
         else filterNames_[iTrigger] = findFilterName ( hltConfig_, triggerNames_[iTrigger] ) ;
         
       }
+
+      //elec trigger
+      addVersion(hltConfig_, 
+                 eleTriggerBaseName_, 
+                 eleTriggerName_);
+      
+      if (_isVerbose)
+        std::cout << "The ele trigger is" << eleTriggerName_ << std::endl;
+      
+      const unsigned int triggerIndex(hltConfig_.triggerIndex(eleTriggerName_));
+      if (triggerIndex>=n) {
+        std::cout << "\n\nHLTEventAnalyzerAOD::analyze:"
+                  << " TriggerName \"" << eleTriggerName_ 
+                  << "\" is NOT available in (new) config!" << std::endl << std::endl;
+        std::cout << " The available TriggerNames are: " << std::endl;
+        hltConfig_.dump("Triggers");
+          
+        throw cms::Exception("UFDiMuonsAnalyzer")<< "Throwing an exception because "
+                                                 << "the trigger path name you want to check DOES NOT EXIST";
+      }
+
       // dear god you do not want to uncomment them... but one day you could be
       // interested so I leave them there as a potential reference.
       //hltConfig_.dump("Streams");
@@ -2684,6 +3268,61 @@ void UFDiMuonsAnalyzer::initGenPart(_genPartInfo& part){
   part.eta  = -999;
   part.y    = -999;
   part.phi  = -999;
+}
+
+void UFDiMuonsAnalyzer::initEle() {
+
+  eleIsEB.clear(); 
+  eleIsEE.clear();
+  elePt.clear();
+  eleEta.clear();
+  elePhi.clear();
+  eleScE.clear();
+  eleScEta.clear();
+  eleScPhi.clear();
+  eleCharge.clear();
+  eleTrackIso.clear();          
+  eleEcalIso.clear();           
+  eleHcalIso.clear();           
+  eleChargedHadronIso.clear();  
+  elePuChargedHadronIso.clear();
+  elePhotonIso.clear();         
+  elePfNeuIso.clear();         
+  eleSigmaIEtaIEta.clear();
+  eleDEtaIn.clear();       
+  eleDPhiIn.clear();       
+  eleHoe.clear();          
+  eleOoemoop.clear();      
+  eleConvDist.clear();
+  eleConvDcot.clear();
+  eleIpDb.clear();
+  eleIpErrDb.clear();
+  eleD0vtx.clear();
+  eleDzvtx.clear();
+  eleVtxFitConversion.clear();
+  eleMHits.clear();
+
+  
+  eleMvaNonTrigV0.clear();
+  eleMvaTrigV0.clear();
+  eleFBrem.clear();
+  eleKfchi2.clear();
+  eleKfhits.clear(); 
+  eleGsfchi2.clear();
+  eleDEtacalo.clear();
+  eleSpp.clear();
+  eleEtawidth.clear();
+  elePhiwidth.clear();
+  eleE1x5e5x5.clear();
+  eleR9.clear();      
+  eleEoP.clear();             
+  eleIoEmIoP.clear();         
+  eleEoPout.clear();       
+  elePreShowerOverRaw.clear();
+  eleD0.clear();
+  
+  eleIsHltPassed.clear();
+
 }
 
 bool UFDiMuonsAnalyzer::checkMother(const reco::Candidate &part,
