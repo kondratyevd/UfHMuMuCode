@@ -222,7 +222,7 @@ HLT_Ele = 'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_T
 # cmssw version
 cmssw_8TeV = 'CMSSW_5_3_5' #2012
 cmssw_7TeV = 'CMSSW_4_4_5' # 2011
-tag   = 'V00-01-08'
+tag   = 'V00-01-09'
 
 # these are the general location paths:
 # higgs/<CMSSW Version>/<Ntupler Tag>/Ntuples/<Data or MC>/
