@@ -205,7 +205,7 @@ DATASamples = [
 
 # these are the triggers' strings
 #  data
-HLT_Single2011A = 'HLT_IsoMu24,HLT_Mu40'
+HLT_Single2011A = 'HLT_IsoMu24,HLT_Mu30'
 HLT_Single2011B = 'HLT_IsoMu24_eta2p1,HLT_Mu40_eta2p1'
 HLT_Single2012A = 'HLT_IsoMu24_eta2p1,HLT_Mu40_eta2p1'
 HLT_Single = 'HLT_IsoMu24,HLT_Mu40_eta2p1'
@@ -213,6 +213,11 @@ HLT_Double = 'HLT_Mu17_Mu8,HLT_Mu17_TkMu8'
 #  mc
 HLT_MC_8TeV     = 'HLT_IsoMu24,HLT_Mu17_Mu8,HLT_Mu17_TkMu8' #For 2012 Samples
 HLT_MC_7TeV     = 'HLT_IsoMu24,HLT_Mu17_Mu8' #For 2011 Samples
+HLT_MC_Ele_7TeV = 'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL'
+HLT_MC_Ele_8TeV = 'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL'
+# ele
+HLT_Ele2011A = 'HLT_Ele17_CaloIdL_CaloIsoVL_Ele8_CaloIdL_CaloIsoVL'
+HLT_Ele = 'HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL'
 
 # cmssw version
 cmssw_8TeV = 'CMSSW_5_3_5' #2012

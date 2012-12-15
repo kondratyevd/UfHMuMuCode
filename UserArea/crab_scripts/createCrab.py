@@ -34,9 +34,14 @@ parser.add_option('-g', '--globaltag',
                   dest='globalTag',
                   action='store')
 
-parser.add_option('--hlt', 
-                  help='specify the list of triggers (mandatory)',
+parser.add_option('--hlt_muon', 
+                  help='specify the list of muon triggers (mandatory)',
                   dest='triggerstring',
+                  action='store')
+
+parser.add_option('--hlt_ele', 
+                  help='specify the ele trigger (mandatory)',
+                  dest='triggerele',
                   action='store')
 
 parser.add_option('-j', '--json',
@@ -54,7 +59,7 @@ parser.add_option("-e",'--energy',
 
 
 # Sanity check: Making sure all mandatory options appeared
-mandatories = ['CMSSW', 'dataset', 'ntupleName', 'cafFolder','globalTag', 'triggerstring']
+mandatories = ['CMSSW', 'dataset', 'ntupleName', 'cafFolder','globalTag', 'triggerstring', 'triggerele']
 for m in mandatories:
     if not opts.__dict__[m]:
         print "at least mandatory option is missing\n"
@@ -141,12 +146,14 @@ if isData:
               "| sed -e \'s/GLOBALTAG/%s/g\' " \
               "| sed -e \'s/thisIsData = False/thisIsData = True/g\' " \
               "| sed -e \'s/TRIGGERLIST/%s/g\' " \
+              "| sed -e \'s/TRIGGERELE/%s/g\' " \
               "| sed -e \'s/thisIs2011 = False/thisIs2011 = %s/g\' " \
               "> %s/UFDiMuonAnalyzer.py"
               % (cmssw_py_file,
                  opts.ntupleName,
                  opts.globalTag,
                  opts.triggerstring.replace(",","\",\""),
+                 opts.triggerele.replace(",","\",\""),
                  is2011,
                  localFolder)
               )
@@ -155,12 +162,14 @@ else:
               "| sed -e \'s/yourNtuple/%s/g\' " \
               "| sed -e \'s/GLOBALTAG/%s/g\' " \
               "| sed -e \'s/TRIGGERLIST/%s/g\' " \
+              "| sed -e \'s/TRIGGERELE/%s/g\' " \
               "| sed -e \'s/thisIs2011 = False/thisIs2011 = %s/g\' " \
               "> %s/UFDiMuonAnalyzer.py"
               % (cmssw_py_file,
                  opts.ntupleName,
                  opts.globalTag,
                  opts.triggerstring.replace(",","\",\""),
+                 opts.triggerele.replace(",","\",\""),
                  is2011,
                  localFolder)
               )

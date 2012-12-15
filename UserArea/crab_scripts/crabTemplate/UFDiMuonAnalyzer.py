@@ -18,8 +18,10 @@ process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 ## Geometry and Detector Conditions (needed for a few patTuple production steps)
 
 if thisIs2011:
+    print "Analyzing a 7 TeV dataset"
     process.load("Configuration.StandardSequences.GeometryExtended_cff")
 else:
+    print "Analyzing a 8 TeV dataset"
     process.load("Configuration.Geometry.GeometryIdeal_cff")
 
 process.load('Configuration.EventContent.EventContent_cff')

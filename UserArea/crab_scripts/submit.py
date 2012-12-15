@@ -40,25 +40,29 @@ if isMC:
     for s in Samples.MCSamples:
         if (s.name == opts.sample):
             hltString = ""
+            hltEle = ""
             cmsswString = ""
             if s.energy==7:
               hltString = Samples.HLT_MC_7TeV
+              hltEle = Samples.HLT_MC_Ele_7TeV
               cmsswString = Samples.cmssw_7TeV
             elif s.energy==8:
               hltString = Samples.HLT_MC_8TeV
+              hltEle = Samples.HLT_MC_Ele_8TeV
               cmsswString = Samples.cmssw_8TeV
             else:
               print("Error: No MC HLT Trigger or CMSSW version for Energy: '%s' TeV" % s.energy)
               sys.exit(1)
             cafFolder = "higgs/%s/%s/Ntuples/%s/" % (cmsswString,Samples.tag,"MC")
-            command += './createCrab.py -c %s -d %s -n %s -g %s -e %s -f %s --hlt %s ' \
+            command += './createCrab.py -c %s -d %s -n %s -g %s -e %s -f %s --hlt_muon %s --hlt_ele %s ' \
                        % (cmsswString,
                           s.dataset,
                           s.ntuple,
                           s.global_tag,
                           s.energy,
                           cafFolder+s.caf_folder_extd,
-                          hltString)
+                          hltString,
+                          hltEle)
             
 else:
     for s in Samples.DATASamples:
@@ -82,15 +86,15 @@ else:
                           s.json_file) 
 
     if ('DoubleMu' in command):
-        command += '--hlt %s' % Samples.HLT_Double
+        command += '--hlt_muon %s' % Samples.HLT_Double
     elif ('SingleMu' and '2011A' in command):
-        command += '--hlt %s' % Samples.HLT_Single2011A
+        command += '--hlt_muon %s --hlt_ele %s' % (Samples.HLT_Single2011A, Samples.HLT_Ele2011A)
     elif ('SingleMu' and '2011B' in command):
-        command += '--hlt %s' % Samples.HLT_Single2011B
+        command += '--hlt_muon %s --hlt_ele %s' % (Samples.HLT_Single2011B, Samples.HLT_Ele)
     elif ('SingleMu' and '2012A' in command):
-        command += '--hlt %s' % Samples.HLT_Single2012A
+        command += '--hlt_muon %s --hlt_ele %s' % (Samples.HLT_Single2012A, Samples.HLT_Ele)
     else:
-        command += '--hlt %s' % Samples.HLT_Single
+        command += '--hlt_muon %s --hlt_ele %s' % (Samples.HLT_Single, Samples.HLT_Ele)
 
     
 print '\n %s \n' % command
