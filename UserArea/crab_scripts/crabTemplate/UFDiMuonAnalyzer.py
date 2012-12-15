@@ -14,8 +14,18 @@ process.load("FWCore.MessageService.MessageLogger_cfi")
 process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 process.load("Configuration.StandardSequences.MagneticField_38T_cff")
-process.load("Configuration.StandardSequences.GeometryExtended_cff")
+
+## Geometry and Detector Conditions (needed for a few patTuple production steps)
+
+if thisIs2011:
+    process.load("Configuration.StandardSequences.GeometryExtended_cff")
+else:
+    process.load("Configuration.Geometry.GeometryIdeal_cff")
+
 process.load('Configuration.EventContent.EventContent_cff')
+
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+from Configuration.AlCa.autoCond import autoCond
 
 
 # global tag
@@ -33,10 +43,54 @@ process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange()
 
 #===============================================================================
 
-## PF2PAT
-from PhysicsTools.PatAlgos.patTemplate_cfg import *
-from PhysicsTools.PatAlgos.tools.coreTools import *
+## Test JEC from test instances of the global DB
+#process.load("PhysicsTools.PatAlgos.patTestJEC_cfi")
+
+## Test JEC from local sqlite file
+#process.load("PhysicsTools.PatAlgos.patTestJEC_local_cfi")
+
+## Standard PAT Configuration File
+process.load("PhysicsTools.PatAlgos.patSequences_cff")
+
+## Output Module Configuration (expects a path 'p')
+from PhysicsTools.PatAlgos.patEventContent_cff import patEventContent
+process.out = cms.OutputModule("PoolOutputModule",
+                               fileName = cms.untracked.string('patTuple.root'),
+                               # save only events passing the full path
+			       dropMetaData = cms.untracked.string('ALL'),
+	                       splitLevel = cms.untracked.int32(99),
+                               SelectEvents = cms.untracked.PSet(      SelectEvents = cms.vstring('p')     ),
+                               # save PAT Layer 1 output; you need a '*' to
+                               # unpack the list of commands 'patEventContent'
+                               outputCommands = cms.untracked.vstring('drop *' )
+                               )
+
+process.outpath = cms.EndPath(process.out)
+
+
+# load the PAT config
+process.load("PhysicsTools.PatAlgos.patSequences_cff")
+
+
+# Configure PAT to use PF2PAT instead of AOD sources
+# this function will modify the PAT sequences.
 from PhysicsTools.PatAlgos.tools.pfTools import *
+
+
+
+#PF2PAT
+from PhysicsTools.PatAlgos.tools.pfTools import *
+
+# An empty postfix means that only PF2PAT is run,
+# otherwise both standard PAT and PF2PAT are run. In the latter case PF2PAT
+# collections have standard names + postfix (e.g. patElectronPFlow)
+#### Standard PAT Configuration File
+##process.load("PhysicsTools.PatAlgos.patSequences_cff")
+##
+#### PF2PAT
+###from PhysicsTools.PatAlgos.patTemplate_cfg import *
+###from PhysicsTools.PatAlgos.tools.coreTools import *
+##from PhysicsTools.PatAlgos.tools.pfTools import *
 
 postfix = "PFlow"
 jetAlgo="AK5"
@@ -46,7 +100,12 @@ if thisIsData:
   jetCorrections = ('AK5PF', ['L1FastJet','L2Relative','L3Absolute','L2L3Residual'])
 
 usePF2PAT(process,runPF2PAT=True, jetAlgo=jetAlgo, runOnMC=(not thisIsData), postfix=postfix, jetCorrections=jetCorrections, typeIMetCorrections=True)
-usePFIso( process ) # GP
+usePFIso( process ) 
+
+if thisIsData:
+    # removing MC matching for standard PAT sequence
+    # for the PF2PAT+PAT sequence, it is done in the usePF2PAT function
+    removeMCMatchingPF2PAT( process, '' )
 
 process.pfPileUpPFlow.Enable = True
 process.pfPileUpPFlow.checkClosestZVertex = cms.bool(False)
@@ -152,7 +211,7 @@ process.dimuons.triggerResults = cms.InputTag("TriggerResults","","HLT")
 process.dimuons.triggerEvent   = cms.InputTag("hltTriggerSummaryAOD","","HLT")
 
 process.dimuons.eleColl = cms.InputTag("selectedPatElectronsPFlow")
-process.dimuons.eleTriggerName = cms.string("HLT_Ele17_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL_Ele8_CaloIdT_CaloIsoVL_TrkIdVL_TrkIsoVL");
+process.dimuons.eleTriggerName = cms.string("TRIGGERELE");
 
 process.dimuons.metTag         = cms.InputTag("patMETsPFlow")
 process.dimuons.pfJetsTag      = cms.InputTag("cleanPatJetsPFlow")
