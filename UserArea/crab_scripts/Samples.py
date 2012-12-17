@@ -155,12 +155,12 @@ DATASamples = [
     datasample('SingleMuRun2012C',
                '/SingleMu/Run2012C-PromptReco-v2/AOD', 'SingleMuRun2012C-PromptReco-v2', 'SingleMuRun2012C-PromptReco-v2',
                'GR_P_V42_AN3',
-               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-203002_8TeV_PromptReco_Collisions12_JSON.txt',
+               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-208686_8TeV_PromptReco_Collisions12_JSON.txt',
                8),
     datasample('SingleMuRun2012D',
                '/SingleMu/Run2012D-PromptReco-v1/AOD', 'SingleMuRun2012D-PromptReco-v1', 'SingleMuRun2012D-PromptReco-v1',
                'GR_P_V42_AN3',
-               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-203002_8TeV_PromptReco_Collisions12_JSON.txt',
+               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-208686_8TeV_PromptReco_Collisions12_JSON.txt',
                8),
 
     # single mu 2011 datasets
@@ -194,12 +194,12 @@ DATASamples = [
     datasample('DoubleMuRun2012C',
                '/DoubleMu/Run2012C-PromptReco-v2/AOD', 'DoubleMuRun2012C-PromptReco-v2', 'DoubleMuRun2012C-PromptReco-v2',
                'GR_P_V42_AN3',
-               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-203002_8TeV_PromptReco_Collisions12_JSON.txt',
+               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-208686_8TeV_PromptReco_Collisions12_JSON.txt',
                8),
     datasample('DoubleMuRun2012D',
                '/DoubleMu/Run2012D-PromptReco-v1/AOD', 'DoubleMuRun2012D-PromptReco-v1', 'DoubleMuRun2012D-PromptReco-v1',
                'GR_P_V42_AN3',
-               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-203002_8TeV_PromptReco_Collisions12_JSON.txt',
+               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Prompt/Cert_190456-208686_8TeV_PromptReco_Collisions12_JSON.txt',
                8)
 ]
 
