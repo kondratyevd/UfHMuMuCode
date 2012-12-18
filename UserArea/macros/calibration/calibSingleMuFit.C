@@ -58,20 +58,20 @@ using namespace std;
 */
 
   int FitReq = 1; // 0: fit from 60 to 120 GeV; 1: fit from 80to 100 GeV:
-  int MuCorr = 1; // 0 - no mu correction
+  int MuCorr = 32; // 0 - no mu correction
                   // 1 - Rochester correction
                   // 2 - MuscleFit correcton in data
   int Ismear = 0; // 1 - make smear by own 
 
   //TString ExtaInfo = ""; 
   //TString ExtaInfo = "2011V00_01_01"; 
-  TString ExtaInfo = "2011AV00_01_01"; 
+  //TString ExtaInfo = "2011AV00_01_01"; 
   //TString ExtaInfo = "2011BV00_01_01"; 
   //TString ExtaInfo = "2012ABCV00_01_01"; 
 
   //TString ExtaInfo = "2012AV00_01_01"; 
+  TString ExtaInfo = "2012ABCHighPtV00_01_01"; 
   //TString ExtaInfo = "2012ABCsmallV00_01_01"; 
-  //TString ExtaInfo = "2012ABCHighPtV00_01_01"; 
   //TString ExtaInfo = "2012ABCsmallTEST"; 
 
   int MCDraw = 1; // 0 - don't draw MC
@@ -85,15 +85,15 @@ using namespace std;
   const int Nhist = NPThist*NETAhist;
 
   //
-  const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
-  const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
-  const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
-  const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
-
-  //const float PTbin_inv[] = {50., 300.};
+  //const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
   //const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
-  //const float ETAbin_tag[] = {0., 2.1};
+  //const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
   //const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
+
+  const float PTbin_inv[] = {50., 300.};
+  const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
+  const float ETAbin_tag[] = {0., 2.1};
+  const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
   //
 
   const int NPThist_inv = (sizeof(PTbin_inv)/sizeof(float)-1);
@@ -875,10 +875,10 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
      for(int iETA = 0; iETA < NETAhist_inv; iETA++){
         int iK = iPT + iETA*NFunc+1;
         if (iPT == 0){
-           if(ETAbin_inv[iETA] < -1.15 && ETAbin_inv[iETA] > - 1.25) XEndM = h2 -> GetBinLowEdge(iK+1);
-           if(ETAbin_inv[iETA] > 1.15 && ETAbin_inv[iETA] <  1.25) XEndPl = h2 -> GetBinLowEdge(iK+1);
-           if(ETAbin_inv[iETA] < -0.75 && ETAbin_inv[iETA] > - 0.85) XBarM = h2 -> GetBinLowEdge(iK+1);
-           if(ETAbin_inv[iETA] > 0.75 && ETAbin_inv[iETA] < 0.85) XBarPl = h2 -> GetBinLowEdge(iK+1);
+           if(ETAbin_inv[iETA] < -1.15 && ETAbin_inv[iETA] > - 1.25) XEndM = h2 -> GetBinLowEdge(iK+1)-0.5;
+           if(ETAbin_inv[iETA] > 1.15 && ETAbin_inv[iETA] <  1.25) XEndPl = h2 -> GetBinLowEdge(iK+1)-0.5;
+           if(ETAbin_inv[iETA] < -0.75 && ETAbin_inv[iETA] > - 0.85) XBarM = h2 -> GetBinLowEdge(iK+1)-0.5;
+           if(ETAbin_inv[iETA] > 0.75 && ETAbin_inv[iETA] < 0.85) XBarPl = h2 -> GetBinLowEdge(iK+1)-0.5;
            float Xm = h2 -> GetBinLowEdge(iK+1);
            TLine *lineGrid = new TLine(Xm,0.,Xm,2.0);
            lineGrid -> SetLineStyle(kDotted);
@@ -954,10 +954,10 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
      for(int iETA = 0; iETA < NETAhist_inv; iETA++){
         int iK = iPT + iETA*NFunc+1;
         if (iPT == 0){
-           if(ETAbin_inv[iETA] < -1.15 && ETAbin_inv[iETA] > - 1.25) XEndM = h2 -> GetBinLowEdge(iK+1);
-           if(ETAbin_inv[iETA] > 1.15 && ETAbin_inv[iETA] <  1.25) XEndPl = h2 -> GetBinLowEdge(iK+1);
-           if(ETAbin_inv[iETA] < -0.75 && ETAbin_inv[iETA] > - 0.85) XBarM = h2 -> GetBinLowEdge(iK+1);
-           if(ETAbin_inv[iETA] > 0.75 && ETAbin_inv[iETA] < 0.85) XBarPl = h2 -> GetBinLowEdge(iK+1);
+           if(ETAbin_inv[iETA] < -1.15 && ETAbin_inv[iETA] > - 1.25) XEndM = h2 -> GetBinLowEdge(iK+1)-0.5;
+           if(ETAbin_inv[iETA] > 1.15 && ETAbin_inv[iETA] <  1.25) XEndPl = h2 -> GetBinLowEdge(iK+1)-0.5;
+           if(ETAbin_inv[iETA] < -0.75 && ETAbin_inv[iETA] > - 0.85) XBarM = h2 -> GetBinLowEdge(iK+1)-0.5;
+           if(ETAbin_inv[iETA] > 0.75 && ETAbin_inv[iETA] < 0.85) XBarPl = h2 -> GetBinLowEdge(iK+1)-0.5;
            float Xm = h2Mass -> GetBinLowEdge(iK+1);
            //TLine *lineGrid = new TLine(Xm,90.,Xm,91.5);
            TLine *lineGrid = new TLine(Xm,89.5,Xm,92.);
@@ -1037,10 +1037,10 @@ void fitDiMuon(TH1F* histoMC[], TH1F* histoDATA[], TH1F* histoGEN[], TString AsF
      for(int iETA = 0; iETA < NETAhist_inv; iETA++){
         int iK = iPT + iETA*NFunc+1;
         if (iPT == 0){
-           if(ETAbin_inv[iETA] < -1.15 && ETAbin_inv[iETA] > - 1.25) XEndM = h2 -> GetBinLowEdge(iK+1);
-           if(ETAbin_inv[iETA] > 1.15 && ETAbin_inv[iETA] <  1.25) XEndPl = h2 -> GetBinLowEdge(iK+1);
-           if(ETAbin_inv[iETA] < -0.75 && ETAbin_inv[iETA] > - 0.85) XBarM = h2 -> GetBinLowEdge(iK+1);
-           if(ETAbin_inv[iETA] > 0.75 && ETAbin_inv[iETA] < 0.85) XBarPl = h2 -> GetBinLowEdge(iK+1);
+           if(ETAbin_inv[iETA] < -1.15 && ETAbin_inv[iETA] > - 1.25) XEndM = h2 -> GetBinLowEdge(iK+1)-0.5;
+           if(ETAbin_inv[iETA] > 1.15 && ETAbin_inv[iETA] <  1.25) XEndPl = h2 -> GetBinLowEdge(iK+1)-0.5;
+           if(ETAbin_inv[iETA] < -0.75 && ETAbin_inv[iETA] > - 0.85) XBarM = h2 -> GetBinLowEdge(iK+1)-0.5;
+           if(ETAbin_inv[iETA] > 0.75 && ETAbin_inv[iETA] < 0.85) XBarPl = h2 -> GetBinLowEdge(iK+1)-0.5;
            float Xm = h2Res -> GetBinLowEdge(iK+1);
            //TLine *lineGrid = new TLine(Xm,0.,Xm,3.);
            TLine *lineGrid = new TLine(Xm,0.,Xm,3.);

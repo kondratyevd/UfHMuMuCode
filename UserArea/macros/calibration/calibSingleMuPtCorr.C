@@ -68,14 +68,19 @@ using namespace std;
   int HiggsNtuple = 1; // 1 - Higgs to MuMu ntuple is used wiht DataFormat.h <- check it and isKinTight_2012 (d0 and Z) 
                        // 0 - Boosted Z ntuoles are used with DataFormatBoostedZ.h <- check it and isKinTight_2012 (d0 and Z) 
 
-  int MuCorr = 1; // 0 - no muon correction, 
+  int MuCorr = 32; // 0 - no muon correction, 
                   // 1 - Rochester Correction,
                   // 2 - MuscleFit correcton 
+                  // 11 - Rocester + scale to mZ = 91.188 GeV 
+                  // 12 - MuscleFit + scale to mZ = 91.188 GeV 
+                  // 21 - Combined + scale to mZ = 91.188 GeV
+                  // 31 - Rochester tag and no corr prob + scale to mZ = 91.188 GeV 
+                  // 32 - MuScleFit tag and no corr prob + scale to mZ = 91.188 GeV 
   int Ismear = 0; // 0 - take pt reco from MC
                   // 1 - smear pt with own tools using pt gen post FSR  
                   // 2 - smear pt with PT_smear = PT_gen + (PT_reco-PT_gen)*SF
 
-  TString RunYear = "2011B"; // 2012; 2011; 2011A; 2011B; 2012ABCsmall; 2012ABC 
+  TString RunYear = "2012ABC"; // 2012; 2011; 2011A; 2011B; 2012ABCsmall; 2012ABC 
   const float PTbin[] = {20., 30., 35., 40., 45., 50., 60., 70., 100.}; //default
   const float ETAbin[] = {0., 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1};
   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);
@@ -84,17 +89,17 @@ using namespace std;
 
   double Pi  = acos(-1.);
   //
-  TString ExtraInfo = "";
-  const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
-  const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
-  const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
-  const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
-
-  //TString ExtraInfo = "HighPt";
-  //const float PTbin_inv[] = {50., 300.};
+  //TString ExtraInfo = "";
+  //const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
   //const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
-  //const float ETAbin_tag[] = {0., 2.1};
+  //const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
   //const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
+
+  TString ExtraInfo = "HighPt";
+  const float PTbin_inv[] = {50., 300.};
+  const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
+  const float ETAbin_tag[] = {0., 2.1};
+  const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
   //
   const int NPThist_inv = (sizeof(PTbin_inv)/sizeof(float)-1);
   const int NETAhist_inv = (sizeof(ETAbin_inv)/sizeof(float)-1);
@@ -306,10 +311,13 @@ void calibSingleMuPtCorr::main(){
 
                 // check that dtheata between 2 muons less then Pi-0.02
                 TLorentzVector MuReco1, MuReco2, MuTrue1, MuTrue2;
+                TLorentzVector MuReco1nocorr, MuReco2nocorr;
                 float MuTrue1charge = true1mu.charge; 
                 float MuTrue2charge = true2mu.charge; 
                 MuReco1.SetPtEtaPhiM(reco1.pt, reco1.eta, reco1.phi, MASS_MUON);
                 MuReco2.SetPtEtaPhiM(reco2.pt, reco2.eta, reco2.phi, MASS_MUON);
+                MuReco1nocorr.SetPtEtaPhiM(reco1.pt, reco1.eta, reco1.phi, MASS_MUON);
+                MuReco2nocorr.SetPtEtaPhiM(reco2.pt, reco2.eta, reco2.phi, MASS_MUON);
                 float theta12 = MuReco1.Angle(MuReco2.Vect()); // angle between MuReco & MuReco
                 hdthetav1v2 -> Fill (theta12);
                 //if( theta12 >= (Pi-0.02) ) continue; 
@@ -366,7 +374,7 @@ void calibSingleMuPtCorr::main(){
                 //              TLor.  float   float   int             
                 // for 2012 v4.1: rochcor2012::momcor_mc( TLorentzVector& mu, float charge, float sysdev, int runopt, float& qter)
                 // for 2011 v3 CMSSW_4_4: rochcor::momcor_mc( TLorentzVector& mu, float charge, float sysdev)   
-                if (MuCorr == 1){
+                if (MuCorr == 1 || MuCorr == 11 || MuCorr == 31){
                   float err_corr = 1.; 
                   if(RunYear == "2011B" || RunYear == "2011"){
                      rmcor->momcor_mc(MuReco1, float(reco1.charge), float(0)); 
@@ -381,7 +389,7 @@ void calibSingleMuPtCorr::main(){
                      rmcor2012->momcor_mc(MuReco2, float(reco2.charge), float(0), 0, err_corr);
                   }
                 } 
-                if (MuCorr == 2){
+                if (MuCorr == 2 || MuCorr == 12 || MuCorr == 32){
                    //TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
                    //TLorentzVector* MuReco2Pointer = &MuReco2;
                    if(reco1.charge < 0){
@@ -402,6 +410,99 @@ void calibSingleMuPtCorr::main(){
                         if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC")correctorMC_->applyPtSmearing(MuReco2,1);
                    }
                 }
+                // extra correction to mZ = 91.188 GeV
+                if(MuCorr == 11 || MuCorr == 31){
+                      float pt1corr = MuReco1.Pt()*1.0014;
+                      MuReco1.SetPtEtaPhiM(pt1corr, reco1.eta, reco1.phi, MASS_MUON);
+                      float pt2corr = MuReco2.Pt()*1.0014;
+                      MuReco2.SetPtEtaPhiM(pt2corr, reco2.eta, reco2.phi, MASS_MUON);
+                      // scale non-correct pT to mZ(PDG)
+                      pt1corr = MuReco1nocorr.Pt()*1.0014;
+                      MuReco1nocorr.SetPtEtaPhiM(pt1corr, reco1.eta, reco1.phi, MASS_MUON);
+                      pt2corr = MuReco2nocorr.Pt()*1.0014;
+                      MuReco2nocorr.SetPtEtaPhiM(pt2corr, reco2.eta, reco2.phi, MASS_MUON);
+                }
+                // extra correction to mZ = 91.188 GeV
+                if(MuCorr == 12 || MuCorr == 32){
+                      float pt1corr = MuReco1.Pt()*1.0032;
+                      MuReco1.SetPtEtaPhiM(pt1corr, reco1.eta, reco1.phi, MASS_MUON);
+                      float pt2corr = MuReco2.Pt()*1.0032;
+                      MuReco2.SetPtEtaPhiM(pt2corr, reco2.eta, reco2.phi, MASS_MUON);
+                      // scale non-correct pT to mZ(PDG)
+                      pt1corr = MuReco1nocorr.Pt()*1.0032;
+                      MuReco1nocorr.SetPtEtaPhiM(pt1corr, reco1.eta, reco1.phi, MASS_MUON);
+                      pt2corr = MuReco2nocorr.Pt()*1.0032;
+                      MuReco2nocorr.SetPtEtaPhiM(pt2corr, reco2.eta, reco2.phi, MASS_MUON);
+                }
+                // combined method: Rochester+Muscle:
+                if(MuCorr == 21){
+                  // make Rochester Correction: 
+                  float err_corr = 1.; 
+                  if(
+                          (fabs(MuReco1.Eta()) >= 1.6 && MuReco1.Pt() < 60)
+                       || (fabs(MuReco1.Eta()) < 0.8 && MuReco1.Pt() < 45)
+                       || (fabs(MuReco1.Eta()) >= 0.8 && fabs(MuReco1.Eta()) < 1.2 && MuReco1.Pt() < 50)
+                       || (fabs(MuReco1.Eta()) >= 1.2 && fabs(MuReco1.Eta()) < 1.6 && MuReco1.Pt() < 45)
+                    ){
+                  if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
+                     rmcor2012->momcor_mc(MuReco1, float(reco1.charge), float(0), 0, err_corr); 
+                     float pt1corr = MuReco1.Pt()*1.0014;
+                     MuReco1.SetPtEtaPhiM(pt1corr, reco1.eta, reco1.phi, MASS_MUON);
+                  }}
+                  if(
+                          (fabs(MuReco2.Eta()) >= 1.6 && MuReco2.Pt() < 60)
+                       || (fabs(MuReco2.Eta()) < 0.8 && MuReco2.Pt() < 45)
+                       || (fabs(MuReco2.Eta()) >= 0.8 && fabs(MuReco2.Eta()) < 1.2 && MuReco2.Pt() < 50)
+                       || (fabs(MuReco2.Eta()) >= 1.2 && fabs(MuReco2.Eta()) < 1.6 && MuReco2.Pt() < 45)
+                    ){
+                  if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
+                     rmcor2012->momcor_mc(MuReco2, float(reco2.charge), float(0), 0, err_corr);
+                     float pt2corr = MuReco2.Pt()*1.0014;
+                     MuReco2.SetPtEtaPhiM(pt2corr, reco2.eta, reco2.phi, MASS_MUON);
+                  }}
+                // make MuscleFit correction:
+                  if(
+                          (fabs(MuReco1.Eta()) >= 1.6 && MuReco1.Pt() >= 60)
+                       || (fabs(MuReco1.Eta()) < 0.8 && MuReco1.Pt() >= 45)
+                       || (fabs(MuReco1.Eta()) >= 0.8 && fabs(MuReco1.Eta()) < 1.2 && MuReco1.Pt() >= 50)
+                       || (MuReco1.Eta() >= -1.6 && MuReco1.Eta() < -1.2 && MuReco1.Pt() >= 45)
+                    ){
+                      if(reco1.charge < 0){
+                           correctorMC_->applyPtCorrection(MuReco1,-1);
+                      } 
+                      else{
+                           correctorMC_->applyPtCorrection(MuReco1,1);
+                      }
+                      float pt1corr = MuReco1.Pt()*1.0032;
+                      MuReco1.SetPtEtaPhiM(pt1corr, reco1.eta, reco1.phi, MASS_MUON);
+                  }
+                  if(
+                          (fabs(MuReco2.Eta()) >= 1.6 && MuReco2.Pt() >= 60)
+                       || (fabs(MuReco2.Eta()) < 0.8 && MuReco2.Pt() >= 45)
+                       || (fabs(MuReco2.Eta()) >= 0.8 && fabs(MuReco2.Eta()) < 1.2 && MuReco2.Pt() >= 50)
+                       || (MuReco2.Eta() >= -1.6 && MuReco2.Eta() < -1.2 && MuReco2.Pt() >= 45)
+                    ){
+                      if(reco2.charge < 0){
+                           correctorMC_->applyPtCorrection(MuReco2,-1);
+                      }
+                      else{
+                           correctorMC_->applyPtCorrection(MuReco2,1);
+                      }
+                      float pt2corr = MuReco2.Pt()*1.0032;
+                      MuReco2.SetPtEtaPhiM(pt2corr, reco2.eta, reco2.phi, MASS_MUON);
+                  }
+                // only Mass correction for eta = 1.2-1.6 and pt > 45
+                if(MuReco1.Eta() >= 1.2 && MuReco1.Eta() < 1.6 && MuReco1.Pt() >= 45){
+                      float pt1corr = MuReco1.Pt()*1.0032;
+                      MuReco1.SetPtEtaPhiM(pt1corr, reco1.eta, reco1.phi, MASS_MUON);
+                } 
+                if(MuReco2.Eta() >= 1.2 && MuReco2.Eta() < 1.6 && MuReco2.Pt() >= 45){
+                      float pt2corr = MuReco2.Pt()*1.0032;
+                      MuReco2.SetPtEtaPhiM(pt2corr, reco2.eta, reco2.phi, MASS_MUON);
+                } 
+
+                }// end MuCorr == 21
+                ////////////////////////
                 ////////////////////////
                 /// smear PT after Correction if it took place (correction doesn't work any more, use correction function for smering):
                 /// float PTsmear(float PTmuonGen, float ETAmuonGen, float CHARGEmuonGen, float PTmuonReco, int Ismear, TString ParVar = "null",float ParSig = 0);
@@ -418,7 +519,11 @@ void calibSingleMuPtCorr::main(){
                 }
                 ////////////////////////
                 TLorentzVector MuRecoCand = MuReco1 + MuReco2; 
+                TLorentzVector MuRecoCand12nocorr = MuReco1 + MuReco2nocorr; 
+                TLorentzVector MuRecoCand1nocorr2 = MuReco1nocorr + MuReco2; 
                 float rMassCorr = MuRecoCand.M(); 
+                float rMassCorr12nocorr = MuRecoCand12nocorr.M(); 
+                float rMassCorr1nocorr2 = MuRecoCand1nocorr2.M(); 
                 if (rMassCorr <  60) continue;// mass restriction
                 if (rMassCorr > 120) continue;
 
@@ -495,7 +600,9 @@ void calibSingleMuPtCorr::main(){
                              //<< " iETA_tag = " << iETA_tag << " eta2 = " << reco2.eta <<  " charge mu2 = " << reco2.charge << endl;
                              //if (reco1.charge < 0.) cout << " mu2- invert iPT = " << iPT << " pt1 = " << MuReco2.Pt() << " iETA = " << iETA << " eta1 = " << reco2.eta
                              //<< " iETA_tag = " << iETA_tag << " eta2 = " << reco1.eta << " charge mu2 = " << reco1.charge << endl;
-                             hDimuonMass[iK] -> Fill(rMassCorr);
+                             if((MuCorr == 31 || MuCorr == 32) && reco1.charge < 0.){hDimuonMass[iK] -> Fill(rMassCorr1nocorr2);}
+                             else if((MuCorr == 31 || MuCorr == 32) && reco2.charge < 0.){hDimuonMass[iK] -> Fill(rMassCorr12nocorr);}
+                             else {hDimuonMass[iK] -> Fill(rMassCorr);}
                              if(rMassCorr < 80)hdeltaR80[iK] -> Fill(deltaR_r1r2);
                              if(rMassCorr > 85 && rMassCorr < 95) hdeltaR85_95[iK] -> Fill(deltaR_r1r2);
                              if(rMassCorr > 105) hdeltaR105[iK] -> Fill(deltaR_r1r2);
@@ -515,8 +622,11 @@ void calibSingleMuPtCorr::main(){
                            && reco2.eta >= ETAbin_inv[iETA] && reco2.eta < ETAbin_inv[iETA+1]
                            && fabs(reco1.eta) >= ETAbin_tag[iETA_tag] && fabs(reco1.eta) < ETAbin_tag[iETA_tag+1]
                            && reco1.charge > 0.
-                         ) )hDimuonMassTagMuPlus[iK] -> Fill(rMassCorr);
-
+                         ) ){ 
+                             if((MuCorr == 31 || MuCorr == 32) && reco1.charge > 0.){hDimuonMassTagMuPlus[iK] -> Fill(rMassCorr1nocorr2);}
+                             else if((MuCorr == 31 || MuCorr == 32) && reco2.charge > 0.){hDimuonMassTagMuPlus[iK] -> Fill(rMassCorr12nocorr);}
+                             else {hDimuonMassTagMuPlus[iK] -> Fill(rMassCorr);}
+                   }
                    // GEN level
                    // muon tag minus and in tag eta region
                    float PTgenlow = PTbin_inv[iPT];    
@@ -585,7 +695,9 @@ void calibSingleMuPtCorr::main(){
                            && fabs(reco1.eta) >= ETAbin_tag[iETA_tag] && fabs(reco1.eta) < ETAbin_tag[iETA_tag+1]
                            && reco1.charge < 0.
                          ) ){
-                             hPhiDimuonMass[iK] -> Fill(rMassCorr);
+                             if((MuCorr == 31 || MuCorr == 32) && reco1.charge < 0.){hPhiDimuonMass[iK] -> Fill(rMassCorr1nocorr2);}
+                             else if((MuCorr == 31 || MuCorr == 32) && reco2.charge < 0.){hPhiDimuonMass[iK] -> Fill(rMassCorr12nocorr);}
+                             else {hPhiDimuonMass[iK] -> Fill(rMassCorr);}
                             } 
                    // muon tag plus charge and in tag eta region
                    if( 
@@ -601,7 +713,9 @@ void calibSingleMuPtCorr::main(){
                            && fabs(reco1.eta) >= ETAbin_tag[iETA_tag] && fabs(reco1.eta) < ETAbin_tag[iETA_tag+1]
                            && reco1.charge > 0.
                          ) ){
-                             hPhiDimuonMassTagMuPlus[iK] -> Fill(rMassCorr);
+                             if((MuCorr == 31 || MuCorr == 32) && reco1.charge > 0.){hPhiDimuonMassTagMuPlus[iK] -> Fill(rMassCorr1nocorr2);}
+                             else if((MuCorr == 31 || MuCorr == 32) && reco2.charge > 0.){hPhiDimuonMassTagMuPlus[iK] -> Fill(rMassCorr12nocorr);}
+                             else {hPhiDimuonMassTagMuPlus[iK] -> Fill(rMassCorr);}
                             }
 
 
@@ -739,8 +853,11 @@ void calibSingleMuPtCorr::main(){
                 if (reco1_data.charge == reco2_data.charge) continue;
 
                 TLorentzVector MuReco1, MuReco2;
+                TLorentzVector MuReco1nocorr, MuReco2nocorr;
                 MuReco1.SetPtEtaPhiM(reco1_data.pt, reco1_data.eta, reco1_data.phi, MASS_MUON);
                 MuReco2.SetPtEtaPhiM(reco2_data.pt, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                MuReco1nocorr.SetPtEtaPhiM(reco1_data.pt, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                MuReco2nocorr.SetPtEtaPhiM(reco2_data.pt, reco2_data.eta, reco2_data.phi, MASS_MUON);
                 float theta12 = MuReco1.Angle(MuReco2.Vect()); // angle between MuReco1 & MuReco2
                 //if( theta12 >= (Pi-0.02) ) continue; 
                 //cout << "Loose selection event = " << k << " MuReco1.Pt() = " << MuReco1.Pt() << " reco1.eta = " << reco1.eta << endl;
@@ -765,7 +882,7 @@ void calibSingleMuPtCorr::main(){
                 //for v4.1: rochcor2012::momcor_data( TLorentzVector& mu, float charge, float sysdev, int runopt, float& qter) 
                 // for 2011 v3 CMSSW_4_4:rochcor::momcor_data( TLorentzVector& mu, float charge, float sysdev, int runopt)    
   
-                if (MuCorr == 1){ // Rochester Correction
+                if (MuCorr == 1 || MuCorr == 11 || MuCorr == 31){ // Rochester Correction
                   float err_corr = 1.; 
                   if(RunYear == "2011B" || RunYear == "2011"){
                      rmcor->momcor_data(MuReco1, float(reco1_data.charge), float(0), 1); 
@@ -780,7 +897,7 @@ void calibSingleMuPtCorr::main(){
                      rmcor2012->momcor_data(MuReco2, float(reco2_data.charge), float(0), 0, err_corr);
                   }
                 } 
-                if (MuCorr == 2){
+                if (MuCorr == 2 || MuCorr == 12 || MuCorr == 32){
                    //TLorentzVector* MuReco1Pointer = &MuReco1;//make pointer to MuReco1
                    //TLorentzVector* MuReco2Pointer = &MuReco2;
                    if(reco1_data.charge < 0){
@@ -796,11 +913,173 @@ void calibSingleMuPtCorr::main(){
                         correctorData_->applyPtCorrection(MuReco2,1);
                    }
                 }
+                // extra correction to mZ = 91.188 GeV
+                if(MuCorr == 11 || MuCorr == 31){
+                  if(fabs(MuReco1.Eta()) <= 1.2){
+                      float pt1corr = MuReco1.Pt()*1.0021;
+                      MuReco1.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                      pt1corr = MuReco1nocorr.Pt()*1.0021;
+                      MuReco1nocorr.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                  } 
+                  if(fabs(MuReco2.Eta()) <= 1.2){
+                      float pt2corr = MuReco2.Pt()*1.0021;
+                      MuReco2.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                      pt2corr = MuReco2nocorr.Pt()*1.0021;
+                      MuReco2nocorr.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                  } 
+                  if(fabs(MuReco1.Eta()) > 1.2){
+                      float pt1corr = MuReco1.Pt()*1.0025;
+                      MuReco1.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                      pt1corr = MuReco1nocorr.Pt()*1.0025;
+                      MuReco1nocorr.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                  } 
+                  if(fabs(MuReco2.Eta()) > 1.2){
+                      float pt2corr = MuReco2.Pt()*1.0025;
+                      MuReco2.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                      pt2corr = MuReco2nocorr.Pt()*1.0025;
+                      MuReco2nocorr.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                  } 
+                }
+                // extra correction to mZ = 91.188 GeV
+                if(MuCorr == 12 || MuCorr == 32){
+                  if(fabs(MuReco1.Eta()) <= 1.2){
+                      float pt1corr = MuReco1.Pt()*1.0035;
+                      MuReco1.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                      pt1corr = MuReco1nocorr.Pt()*1.0035;
+                      MuReco1nocorr.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                  } 
+                  if(fabs(MuReco2.Eta()) <= 1.2){
+                      float pt2corr = MuReco2.Pt()*1.0035;
+                      MuReco2.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                      pt2corr = MuReco2nocorr.Pt()*1.0035;
+                      MuReco2nocorr.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                  } 
+                  if(fabs(MuReco1.Eta()) > 1.2){
+                      float pt1corr = MuReco1.Pt()*1.0046;
+                      MuReco1.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                      pt1corr = MuReco1nocorr.Pt()*1.0046;
+                      MuReco1nocorr.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                  } 
+                  if(fabs(MuReco2.Eta()) > 1.2){
+                      float pt2corr = MuReco2.Pt()*1.0046;
+                      MuReco2.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                      pt2corr = MuReco2nocorr.Pt()*1.0046;
+                      MuReco2nocorr.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                  } 
+                }
+                // combined method: Rochester+Muscle:
+                if(MuCorr == 21){
+                  // make Rochester Correction: 
+                  float err_corr = 1.; 
+                  if(
+                          (fabs(MuReco1.Eta()) >= 1.6 && MuReco1.Pt() < 60)
+                       || (fabs(MuReco1.Eta()) < 0.8 && MuReco1.Pt() < 45)
+                       || (fabs(MuReco1.Eta()) >= 0.8 && fabs(MuReco1.Eta()) < 1.2 && MuReco1.Pt() < 50)
+                       || (fabs(MuReco1.Eta()) >= 1.2 && fabs(MuReco1.Eta()) < 1.6 && MuReco1.Pt() < 45)
+                    ){
+                  if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
+                     rmcor2012->momcor_data(MuReco1, float(reco1_data.charge), float(0), 0, err_corr); 
+                     if(fabs(MuReco1.Eta()) <= 1.2){
+                         float pt1corr = MuReco1.Pt()*1.0021;
+                         MuReco1.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                     } 
+                     if(fabs(MuReco1.Eta()) > 1.2){
+                         float pt1corr = MuReco1.Pt()*1.0025;
+                         MuReco1.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                     } 
+                  }}
+                  if(
+                          (fabs(MuReco2.Eta()) >= 1.6 && MuReco2.Pt() < 60)
+                       || (fabs(MuReco2.Eta()) < 0.8 && MuReco2.Pt() < 45)
+                       || (fabs(MuReco2.Eta()) >= 0.8 && fabs(MuReco2.Eta()) < 1.2 && MuReco2.Pt() < 50)
+                       || (fabs(MuReco2.Eta()) >= 1.2 && fabs(MuReco2.Eta()) < 1.6 && MuReco2.Pt() < 45)
+                    ){
+                  if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
+                     rmcor2012->momcor_data(MuReco2, float(reco2_data.charge), float(0), 0, err_corr);
+                     if(fabs(MuReco2.Eta()) <= 1.2){
+                         float pt2corr = MuReco2.Pt()*1.0021;
+                         MuReco2.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                     } 
+                     if(fabs(MuReco2.Eta()) > 1.2){
+                         float pt2corr = MuReco2.Pt()*1.0025;
+                         MuReco2.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                     } 
+                  }}
+                // make MuscleFit correction:
+                  if(
+                          (fabs(MuReco1.Eta()) >= 1.6 && MuReco1.Pt() >= 60)
+                       || (fabs(MuReco1.Eta()) < 0.8 && MuReco1.Pt() >= 45)
+                       || (fabs(MuReco1.Eta()) >= 0.8 && fabs(MuReco1.Eta()) < 1.2 && MuReco1.Pt() >= 50)
+                       || (MuReco1.Eta() >= -1.6 && MuReco1.Eta() < -1.2 && MuReco1.Pt() >= 45)
+                    ){
+                      if(reco1_data.charge < 0){
+                           correctorData_->applyPtCorrection(MuReco1,-1);
+                      } 
+                      else{
+                           correctorData_->applyPtCorrection(MuReco1,1);
+                      }
+                      if(fabs(MuReco1.Eta()) <= 1.2){
+                          float pt1corr = MuReco1.Pt()*1.0035;
+                          MuReco1.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                      } 
+                      if(fabs(MuReco1.Eta()) > 1.2){
+                          float pt1corr = MuReco1.Pt()*1.0046;
+                           MuReco1.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                       } 
+                  }
+                  if(
+                          (fabs(MuReco2.Eta()) >= 1.6 && MuReco2.Pt() >= 60)
+                       || (fabs(MuReco2.Eta()) < 0.8 && MuReco2.Pt() >= 45)
+                       || (fabs(MuReco2.Eta()) >= 0.8 && fabs(MuReco2.Eta()) < 1.2 && MuReco2.Pt() >= 50)
+                       || (MuReco2.Eta() >= -1.6 && MuReco2.Eta() < -1.2 && MuReco2.Pt() >= 45)
+                    ){
+                      if(reco2_data.charge < 0){
+                           correctorData_->applyPtCorrection(MuReco2,-1);
+                      }
+                      else{
+                           correctorData_->applyPtCorrection(MuReco2,1);
+                      }
+                      if(fabs(MuReco2.Eta()) <= 1.2){
+                          float pt2corr = MuReco2.Pt()*1.0035;
+                          MuReco2.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                      }
+                      if(fabs(MuReco2.Eta()) > 1.2){
+                          float pt2corr = MuReco2.Pt()*1.0046;
+                           MuReco2.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                       }
+                  }
+                // only Mass correction for eta = 1.2-1.6 and pt > 45
+                if(MuReco1.Eta() >= 1.2 && MuReco1.Eta() < 1.6 && MuReco1.Pt() >= 45){
+                      if(fabs(MuReco1.Eta()) <= 1.2){
+                          float pt1corr = MuReco1.Pt()*1.0035;
+                          MuReco1.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                      } 
+                      if(fabs(MuReco1.Eta()) > 1.2){
+                          float pt1corr = MuReco1.Pt()*1.0046;
+                           MuReco1.SetPtEtaPhiM(pt1corr, reco1_data.eta, reco1_data.phi, MASS_MUON);
+                       } 
+                } 
+                if(MuReco2.Eta() >= 1.2 && MuReco2.Eta() < 1.6 && MuReco2.Pt() >= 45){
+                      if(fabs(MuReco2.Eta()) <= 1.2){
+                          float pt2corr = MuReco2.Pt()*1.0035;
+                          MuReco2.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                      } 
+                      if(fabs(MuReco2.Eta()) > 1.2){
+                          float pt2corr = MuReco2.Pt()*1.0046;
+                           MuReco2.SetPtEtaPhiM(pt2corr, reco2_data.eta, reco2_data.phi, MASS_MUON);
+                       } 
+                } 
+
+                }// end MuCorr == 21
                 ////////////////////////
                 ////////////////////////
 
                 TLorentzVector MuRecoCand = MuReco1 + MuReco2; 
+                TLorentzVector MuRecoCand12nocorr = MuReco1 + MuReco2nocorr; 
+                TLorentzVector MuRecoCand1nocorr2 = MuReco1nocorr + MuReco2; 
                 float rMassCorr = MuRecoCand.M(); 
+                float rMassCorr12nocorr = MuRecoCand12nocorr.M(); 
+                float rMassCorr1nocorr2 = MuRecoCand1nocorr2.M(); 
                 if (rMassCorr <  60) continue;// mass restriction
                 if (rMassCorr > 120) continue;
 
@@ -835,7 +1114,9 @@ void calibSingleMuPtCorr::main(){
                            && fabs(reco1_data.eta) >= ETAbin_tag[iETA_tag] && fabs(reco1_data.eta) < ETAbin_tag[iETA_tag+1]
                            && reco1_data.charge < 0.
                          ) ){
-                             hDimuonMassDATA[iK] -> Fill(rMassCorr);
+                             if((MuCorr == 31 || MuCorr == 32) && reco1_data.charge < 0.){hDimuonMassDATA[iK] -> Fill(rMassCorr1nocorr2);}
+                             else if((MuCorr == 31 || MuCorr == 32) && reco2_data.charge < 0.){hDimuonMassDATA[iK] -> Fill(rMassCorr12nocorr);}
+                             else {hDimuonMassDATA[iK] -> Fill(rMassCorr);}
                              if(rMassCorr < 80)hdeltaRDATA80[iK] -> Fill(deltaR_r1r2);
                              if(rMassCorr > 85 && rMassCorr < 95) hdeltaRDATA85_95[iK] -> Fill(deltaR_r1r2);
                              if(rMassCorr > 105) hdeltaRDATA105[iK] -> Fill(deltaR_r1r2);
@@ -855,8 +1136,11 @@ void calibSingleMuPtCorr::main(){
                            && reco2_data.eta >= ETAbin_inv[iETA] && reco2_data.eta < ETAbin_inv[iETA+1]
                            && fabs(reco1_data.eta) >= ETAbin_tag[iETA_tag] && fabs(reco1_data.eta) < ETAbin_tag[iETA_tag+1]
                            && reco1_data.charge > 0.
-                         ) )hDimuonMassTagMuPlusDATA[iK] -> Fill(rMassCorr);
-
+                         ) ){
+                             if((MuCorr == 31 || MuCorr == 32) && reco1_data.charge > 0.){hDimuonMassTagMuPlusDATA[iK] -> Fill(rMassCorr1nocorr2);}
+                             else if((MuCorr == 31 || MuCorr == 32) && reco2_data.charge > 0.){hDimuonMassTagMuPlusDATA[iK] -> Fill(rMassCorr12nocorr);}
+                             else {hDimuonMassTagMuPlusDATA[iK] -> Fill(rMassCorr);}
+                  }   
                 }}}
 // Phi binning
                 for(int iPHI = 0; iPHI < NPHIbin_inv; iPHI++){
@@ -883,7 +1167,9 @@ void calibSingleMuPtCorr::main(){
                            && fabs(reco1_data.eta) >= ETAbin_tag[iETA_tag] && fabs(reco1_data.eta) < ETAbin_tag[iETA_tag+1]
                            && reco1_data.charge < 0.
                          ) ){
-                             hPhiDimuonMassDATA[iK] -> Fill(rMassCorr);
+                             if((MuCorr == 31 || MuCorr == 32) && reco1_data.charge < 0.){hPhiDimuonMassDATA[iK] -> Fill(rMassCorr1nocorr2);}
+                             else if((MuCorr == 31 || MuCorr == 32) && reco2_data.charge < 0.){hPhiDimuonMassDATA[iK] -> Fill(rMassCorr12nocorr);}
+                             else {hPhiDimuonMassDATA[iK] -> Fill(rMassCorr);}
                             } 
                    // muon tag plus charge and in tag eta region
                    if( 
@@ -899,7 +1185,9 @@ void calibSingleMuPtCorr::main(){
                            && fabs(reco1_data.eta) >= ETAbin_tag[iETA_tag] && fabs(reco1_data.eta) < ETAbin_tag[iETA_tag+1]
                            && reco1_data.charge > 0.
                          ) ){
-                             hPhiDimuonMassTagMuPlusDATA[iK] -> Fill(rMassCorr);
+                             if((MuCorr == 31 || MuCorr == 32) && reco1_data.charge > 0.){hPhiDimuonMassTagMuPlusDATA[iK] -> Fill(rMassCorr1nocorr2);}
+                             else if((MuCorr == 31 || MuCorr == 32) && reco2_data.charge > 0.){hPhiDimuonMassTagMuPlusDATA[iK] -> Fill(rMassCorr12nocorr);}
+                             else {hPhiDimuonMassTagMuPlusDATA[iK] -> Fill(rMassCorr);}
                             }
  
                 }}}
