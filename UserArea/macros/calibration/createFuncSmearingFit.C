@@ -39,11 +39,11 @@
 #include "./DataFormat.h"
 using namespace std;
 
-  int MuCorr = 1; // 0 - no mu correction
+  int MuCorr = 0; // 0 - no mu correction
                   // 1 - Rochester correction
                   // 2 - MuscleFit correcton in data
 
-  int Ismear = 2; // 0 - take pt reco from MC
+  int Ismear = 1; // 0 - take pt reco from MC
                   // 1 - smear pt with own tools using pt gen post FSR  
                   // 2 - smear pt with PT_smear = PT_gen + (PT_reco-PT_gen)*SF
 
@@ -81,13 +81,27 @@ using namespace std;
   Double_t ERRAsig2[Nhist]; 
   Double_t ResRMS[Nhist]; 
   Double_t ErrResRMS[Nhist]; 
+
+  Double_t meanMuPlus[Nhist];
+  Double_t sig1MuPlus[Nhist];
+  Double_t sig2MuPlus[Nhist];
+  Double_t Asig2MuPlus[Nhist]; 
+  Double_t ERRmeanMuPlus[Nhist];
+  Double_t ERRsig1MuPlus[Nhist];
+  Double_t ERRsig2MuPlus[Nhist];
+  Double_t ERRAsig2MuPlus[Nhist]; 
+  Double_t ResRMSMuPlus[Nhist]; 
+  Double_t ErrResRMSMuPlus[Nhist]; 
+  Double_t RatioRMSMuPlusOverMinus[Nhist]; 
+  Double_t ErrRatioRMSMuPlusOverMinus[Nhist]; 
+
   Double_t xScale[Nhist];
   Double_t exScale[Nhist];
   
 // ---- CP error ----
 
-TH1F* hmuonRes[Nhist];
-TH1F* hmuonResNonCorr[Nhist];
+TH1F* hmuonRes[2*Nhist];
+TH1F* hmuonResNonCorr[2*Nhist];
 
 // unfolding matrix
 
@@ -130,6 +144,8 @@ void createFuncSmearingFit(){
       int iK = iPT + iETA*NPThist;
       hmuonRes[iK] = (TH1F*)theFile -> Get(Form("hmuonRes%d",iK));
       hmuonResNonCorr[iK] = (TH1F*)theFile -> Get(Form("hmuonResNonCorr%d",iK));
+      hmuonRes[iK+NPThist*NETAhist] = (TH1F*)theFile -> Get(Form("hmuonRes%d",(iK+NPThist*NETAhist)));
+      hmuonResNonCorr[iK+NPThist*NETAhist] = (TH1F*)theFile -> Get(Form("hmuonResNonCorr%d",(iK+NPThist*NETAhist)));
     }}
 
 
@@ -178,6 +194,21 @@ void createFuncSmearingFit(){
 
           myfileH << "  static const float ResRMS[" << Nhist << "];\n";
           myfileH << "  static const float ErrResRMS[" << Nhist << "];\n\n";
+          ////////
+          myfileH << "  static const float meanMuPlus[" << Nhist << "];\n";
+          myfileH << "  static const float sig1MuPlus[" << Nhist << "];\n";
+          myfileH << "  static const float sig2MuPlus[" << Nhist << "];\n";
+          myfileH << "  static const float Asig2MuPlus[" << Nhist << "];\n";
+
+          myfileH << "  static const float ERRmeanMuPlus[" << Nhist << "];\n";
+          myfileH << "  static const float ERRsig1MuPlus[" << Nhist << "];\n";
+          myfileH << "  static const float ERRsig2MuPlus[" << Nhist << "];\n";
+          myfileH << "  static const float ERRAsig2MuPlus[" << Nhist << "];\n";
+
+          myfileH << "  static const float ResRMSMuPlus[" << Nhist << "];\n";
+          myfileH << "  static const float ErrResRMSMuPlus[" << Nhist << "];\n\n";
+          ////////
+
 
           myfileH << "  static const float PTbin[" << NPThist+1 << "];\n";
           myfileH << "  static const float ETAbin[" << NETAhist+1 << "];\n\n";
@@ -320,7 +351,114 @@ void createFuncSmearingFit(){
           }}
           myfile << "};\n\n";
           //////////////////////////////////////////
-          myfile << "   ////// End smearing parametrization for single muon:\n\n";  
+          myfile << "   ////// End smearing parametrization for single muon minus:\n\n";  
+          myfile << "   ////// Smearing parametrization for single muon plus:\n";  
+          //////////////////////////////////////////
+          //////////////////////////////////////////
+          myfile << "   const float SmearingTool::meanMuPlus[" << Nhist << "]={";
+
+          for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
+              int iK = iPT + iETA*NPThist;
+              if(iPT == 0) myfile << "\n                   ";
+              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << meanMuPlus[iK] << ", ";
+              else myfile << meanMuPlus[iK]; 
+          }}
+          myfile << "};\n";
+          myfile << "   const float SmearingTool::sig1MuPlus[" << Nhist << "]={";
+
+          for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
+              int iK = iPT + iETA*NPThist;
+              if(iPT == 0) myfile << "\n                   ";
+              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << sig1MuPlus[iK] << ", ";
+              else myfile << sig1MuPlus[iK];
+          }}
+          myfile << "};\n";
+          myfile << "   const float SmearingTool::sig2MuPlus[" << Nhist << "]={";
+
+          for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
+              int iK = iPT + iETA*NPThist;
+              if(iPT == 0) myfile << "\n                   ";
+              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << sig2MuPlus[iK] << ", ";
+              else myfile << sig2MuPlus[iK];
+          }}
+          myfile << "};\n";
+          myfile << "   const float SmearingTool::Asig2MuPlus[" << Nhist << "]={";
+
+          for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
+              int iK = iPT + iETA*NPThist;
+              if(iPT == 0) myfile << "\n                   ";
+              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << Asig2MuPlus[iK] << ", ";
+              else myfile << Asig2MuPlus[iK];
+          }}
+          myfile << "};\n\n";
+          //////////////////////////////////////////
+          myfile << "   const float SmearingTool::ERRmeanMuPlus[" << Nhist << "]={";
+
+          for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
+              int iK = iPT + iETA*NPThist;
+              if(iPT == 0) myfile << "\n                   ";
+              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRmeanMuPlus[iK] << ", ";
+              else myfile << ERRmeanMuPlus[iK];
+          }}
+          myfile << "};\n";
+          myfile << "   const float SmearingTool::ERRsig1MuPlus[" << Nhist << "]={";
+
+          for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
+              int iK = iPT + iETA*NPThist;
+              if(iPT == 0) myfile << "\n                   ";
+              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRsig1MuPlus[iK] << ", ";
+              else myfile << ERRsig1MuPlus[iK];
+          }}
+          myfile << "};\n";
+          myfile << "   const float SmearingTool::ERRsig2MuPlus[" << Nhist << "]={";
+
+          for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
+              int iK = iPT + iETA*NPThist;
+              if(iPT == 0) myfile << "\n                   ";
+              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRsig2MuPlus[iK] << ", ";
+              else myfile << ERRsig2MuPlus[iK];
+          }}
+          myfile << "};\n";
+          myfile << "   const float SmearingTool::ERRAsig2MuPlus[" << Nhist << "]={";
+
+          for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
+              int iK = iPT + iETA*NPThist;
+              if(iPT == 0) myfile << "\n                   ";
+              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ERRAsig2MuPlus[iK] << ", ";
+              else myfile << ERRAsig2MuPlus[iK];
+          }}
+          myfile << "};\n\n";
+          //////////////////////////////////////////
+          myfile << "   const float SmearingTool::ResRMSMuPlus[" << Nhist << "]={";
+
+          for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
+              int iK = iPT + iETA*NPThist;
+              if(iPT == 0) myfile << "\n                   ";
+              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ResRMSMuPlus[iK] << ", ";
+              else myfile << ResRMSMuPlus[iK];
+          }}
+          myfile << "};\n";
+          myfile << "   const float SmearingTool::ErrResRMSMuPlus[" << Nhist << "]={";
+
+          for(int iETA = 0; iETA < NETAhist; iETA++){
+          for(int iPT = 0; iPT < NPThist; iPT++){
+              int iK = iPT + iETA*NPThist;
+              if(iPT == 0) myfile << "\n                   ";
+              if (iK != (NPThist - 1 + (NETAhist-1)*NPThist) ) myfile << ErrResRMSMuPlus[iK] << ", ";
+              else myfile << ErrResRMSMuPlus[iK];
+          }}
+          myfile << "};\n\n";
+          //////////////////////////////////////////
+          myfile << "   ////// End smearing parametrization for single muon plus:\n\n";  
 
           myfile << "SmearingTool::SmearingTool(){\n";
           myfile << "}\n";
@@ -372,7 +510,8 @@ void createFuncSmearingFit(){
           }
           myfile << "   TF1* fitDoubleGauss = new TF1(\"fitDoubleGauss\", DoubleGauss, -0.1, 0.1, 5);\n";
           myfile << "   fitDoubleGauss->SetParameter(4,1.);\n";
-          myfile << "   if(iK_cand > -1 && Ismear == 1){\n";
+
+          myfile << "   if(iK_cand > -1 && Ismear == 1 && CHARGEmuonGen < 0){\n";
           myfile << "      float meanCorr = mean[iK_cand] + meanVar*ERRmean[iK_cand];\n"; 
           myfile << "      float sig1Corr = sig1[iK_cand] + sigVar*ERRsig1[iK_cand];\n";
           myfile << "      if(sig1Corr < 0.005) sig1Corr = 0.005;\n"; 
@@ -387,6 +526,23 @@ void createFuncSmearingFit(){
           myfile << "      Double_t resSim = fitDoubleGauss->GetRandom();\n";
           myfile << "      PTmuonSmear = PTmuonGen*(1+resSim);\n";
           myfile << "   }\n";
+
+          myfile << "   if(iK_cand > -1 && Ismear == 1 && CHARGEmuonGen > 0){\n";
+          myfile << "      float meanCorr = meanMuPlus[iK_cand] + meanVar*ERRmeanMuPlus[iK_cand];\n"; 
+          myfile << "      float sig1Corr = sig1MuPlus[iK_cand] + sigVar*ERRsig1MuPlus[iK_cand];\n";
+          myfile << "      if(sig1Corr < 0.005) sig1Corr = 0.005;\n"; 
+          myfile << "      float sig2Corr = sig2MuPlus[iK_cand] + sigVar*ERRsig2MuPlus[iK_cand];\n"; 
+          myfile << "      if(sig2Corr < 0.005) sig2Corr = 0.005;\n"; 
+          myfile << "      float Asig2Corr = Asig2MuPlus[iK_cand] + Asig2Var*ERRAsig2MuPlus[iK_cand];\n"; 
+          myfile << "      if(Asig2Corr < 0.) Asig2Corr = 0.;\n"; 
+          myfile << "      fitDoubleGauss->SetParameter(0,meanCorr);\n";
+          myfile << "      fitDoubleGauss->SetParameter(1,ScaleFactor*sig1Corr);\n";
+          myfile << "      fitDoubleGauss->SetParameter(2,Asig2Corr);\n";
+          myfile << "      fitDoubleGauss->SetParameter(3,ScaleFactor*sig2Corr);\n";
+          myfile << "      Double_t resSim = fitDoubleGauss->GetRandom();\n";
+          myfile << "      PTmuonSmear = PTmuonGen*(1+resSim);\n";
+          myfile << "   }\n";
+
           myfile << "   delete fitDoubleGauss;\n";
           myfile << "   if(iK_cand > -1 && Ismear == 2){\n";
           myfile << "      PTmuonSmear = PTmuonGen + ScaleFactor*(PTmuonReco - PTmuonGen);\n";
@@ -419,23 +575,19 @@ void printhistos(){
    /// print muon resolution data, MC and MC sim
    gStyle->SetOptFit(1111);
    TString gifname[NPThist];
-   //TString gifname_inv[NPThist];
    TString gifmethod = "DoubleGauss";
-   //TString gifmethodinv = "DoubleGauss";
-   //TString gifmethod = "BWnonrel";
-   //TString gifmethodinv = "Voigtian";
    gStyle->SetPalette(1,0);            // blue to red false color palette. Use 9 for b/w
    gStyle->SetOptTitle(1); 
 
   TF1* fitDoubleGauss = new TF1("fitDoubleGauss", DoubleGauss, -0.1, 0.1, 5);
   TF1* fitDoubleGauss2 = new TF1("fitDoubleGauss2", DoubleGauss, -0.1, 0.1, 5);
+
+/////
   for(int iPT = 0; iPT < NPThist; iPT++){
-    gifname[iPT] = Form("plots/ResolutionPTScaleFactor%1.2f_"+ExtraInfo+RunYear+"PtCorr%dIsmear%d_"+gifmethod+"_%d", ScaleFactor, MuCorr, Ismear, iPT);
+    gifname[iPT] = Form("plots/ResolutionPT_"+ExtraInfo+RunYear+"PtCorr%dIsmear%d_"+gifmethod+"_MuMinus%d", MuCorr, Ismear, iPT);
     gifname[iPT] = gifname[iPT]+Extra;
     TCanvas *c20 = new TCanvas("c20","Resolution",3000,1700);
-    TCanvas *c21 = new TCanvas("c21","Resolution mass",3000,1700);
     c20-> Divide(4,2);
-    c21-> Divide(4,2);
     int Neta = NETAhist;
     if(Neta > 8) {Neta = 8; cout << "more then 8 bins, change canvas size" << endl;}
     for(int iETA = 0; iETA < Neta; iETA++){
@@ -445,7 +597,7 @@ void printhistos(){
        // 
        fitDoubleGauss->SetParameters(0., 0.85*hmuonRes[iK] -> GetRMS(), 0.07,0.85*hmuonRes[iK] -> GetRMS()+0.015, 1000.);
        if( (PTbin[iPT] > 65. && ( ETAbin[iETA] > 1.15 || ETAbin[iETA] < -1.25) ) 
-           || (PTbin[iPT] > 145.) ){ 
+           || (PTbin[iPT] > 95. && (ETAbin[iETA] < -0.85 || ETAbin[iETA] > 0.75))|| (PTbin[iPT] > 145.) ){ 
        //if (PTbin[iPT] > 145.){
           fitDoubleGauss->SetParameters(0., hmuonRes[iK] -> GetRMS(), 0.0, 0.03, 100.); 
           fitDoubleGauss->FixParameter(2,0.);//fix Asig2 to 0
@@ -467,7 +619,7 @@ void printhistos(){
        hmuonRes[iK] -> Fit(fitDoubleGauss,"RLE");
        fitDoubleGauss2->SetParameters(fitDoubleGauss->GetParameter(0),fitDoubleGauss->GetParameter(1),fitDoubleGauss->GetParameter(2),fitDoubleGauss->GetParameter(3),fitDoubleGauss->GetParameter(4));
        if( (PTbin[iPT] > 65. && ( ETAbin[iETA] > 1.15 || ETAbin[iETA] < -1.25) ) 
-           || (PTbin[iPT] > 145.) ){ 
+           || (PTbin[iPT] > 95. && (ETAbin[iETA] < -0.85 || ETAbin[iETA] > 0.75))|| (PTbin[iPT] > 145.) ){ 
        //if (PTbin[iPT] > 145.){
           fitDoubleGauss2->FixParameter(2,0.);//fix Asig2 to 0
           fitDoubleGauss2->FixParameter(3,3.); // fix sig2 to any big value (sig1 < sig2)
@@ -513,8 +665,98 @@ void printhistos(){
         histinfo->AddEntry(hmuonResNonCorr[iK], Form("MC, RMS = %4.3f", (hmuonResNonCorr[iK] -> GetRMS()) ),"lep");
 
        histinfo -> Draw("same");
-       //c21 -> cd(iETA+1);
-       //hDimuonRes[iK] -> Draw("e");
+     }
+     c20 ->Print(gifname[iPT]+".png");
+     c20 ->Print(gifname[iPT]+".root");
+   }
+  /// end: print muon resolution data, MC and MC sim
+///// print muon plus:w
+  for(int iPT = 0; iPT < NPThist; iPT++){
+    gifname[iPT] = Form("plots/ResolutionPT_"+ExtraInfo+RunYear+"PtCorr%dIsmear%d_"+gifmethod+"_MuPlus%d", MuCorr, Ismear, iPT);
+    gifname[iPT] = gifname[iPT]+Extra;
+    TCanvas *c20 = new TCanvas("c20","Resolution",3000,1700);
+    c20-> Divide(4,2);
+    int Neta = NETAhist;
+    if(Neta > 8) {Neta = 8; cout << "more then 8 bins, change canvas size" << endl;}
+    for(int iETA = 0; iETA < Neta; iETA++){
+      int iK = iPT + iETA*NPThist;
+      int iKcorr = iPT + iETA*NPThist + NPThist*NETAhist;
+       c20 -> cd(iETA+1);
+       if(ETAbin[iETA] < 0.) c20 -> cd(int(Neta/2) - iETA); 
+       // 
+       fitDoubleGauss->SetParameters(0., 0.85*hmuonRes[iKcorr] -> GetRMS(), 0.07,0.85*hmuonRes[iKcorr] -> GetRMS()+0.015, 1000.);
+       if( (PTbin[iPT] > 65. && ( ETAbin[iETA] > 1.15 || ETAbin[iETA] < -1.25) ) 
+           || (PTbin[iPT] > 95. && (ETAbin[iETA] < -0.85 || ETAbin[iETA] > 0.75)) || (PTbin[iPT] > 145.)){ 
+       //if (PTbin[iPT] > 145.){
+          fitDoubleGauss->SetParameters(0., hmuonRes[iKcorr] -> GetRMS(), 0.0, 0.03, 100.); 
+          fitDoubleGauss->FixParameter(2,0.);//fix Asig2 to 0
+          fitDoubleGauss->FixParameter(3,3.); // fix sig2 to any big value (sig1 < sig2)
+          fitDoubleGauss->SetParLimits(1, 0.005, 0.1);//restrict sigma1
+       }
+       else{
+          fitDoubleGauss->SetParLimits(2, 0.01, 0.4);//restrict Asig2
+          fitDoubleGauss->SetParLimits(3,0.005, 0.1); //restrict sig2
+          fitDoubleGauss->SetParLimits(1, 0.005, hmuonRes[iKcorr] -> GetRMS());//restrict sigma1
+       } 
+       //fitDoubleGauss->FixParameter(0,0.); // fix mean of resolution
+       fitDoubleGauss->SetParName(0,"mean");
+       fitDoubleGauss->SetParName(1,"sig1");
+       fitDoubleGauss->SetParName(2,"Asig2");
+       fitDoubleGauss->SetParName(3,"sig2");
+       fitDoubleGauss->SetParName(4,"Norm");
+
+       hmuonRes[iKcorr] -> Fit(fitDoubleGauss,"RLE");
+       fitDoubleGauss2->SetParameters(fitDoubleGauss->GetParameter(0),fitDoubleGauss->GetParameter(1),fitDoubleGauss->GetParameter(2),fitDoubleGauss->GetParameter(3),fitDoubleGauss->GetParameter(4));
+       if( (PTbin[iPT] > 65. && ( ETAbin[iETA] > 1.15 || ETAbin[iETA] < -1.25) ) 
+           || (PTbin[iPT] > 95. && (ETAbin[iETA] < -0.85 || ETAbin[iETA] > 0.75))|| (PTbin[iPT] > 145.) ){ 
+       //if (PTbin[iPT] > 145.){
+          fitDoubleGauss2->FixParameter(2,0.);//fix Asig2 to 0
+          fitDoubleGauss2->FixParameter(3,3.); // fix sig2 to any big value (sig1 < sig2)
+          fitDoubleGauss2->SetParLimits(1, 0.005, 0.1);//restrict sigma1
+       }
+       else{
+          fitDoubleGauss2->SetParLimits(2, 0.01, 0.4);//restrict Asig2
+          fitDoubleGauss2->SetParLimits(3,0.005, 0.1); //restrict sig2
+          fitDoubleGauss2->SetParLimits(1, 0.005, hmuonRes[iKcorr] -> GetRMS());//restrict sigma1
+       } 
+       //fitDoubleGauss2->FixParameter(0,0.); // fix mean of resolution
+       fitDoubleGauss2->SetParName(0,"mean");
+       fitDoubleGauss2->SetParName(1,"sig1");
+       fitDoubleGauss2->SetParName(2,"Asig2");
+       fitDoubleGauss2->SetParName(3,"sig2");
+       fitDoubleGauss2->SetParName(4,"Norm");
+
+       hmuonRes[iKcorr] -> Fit(fitDoubleGauss2,"RLE");
+       ResRMSMuPlus[iK] = hmuonRes[iKcorr] -> GetRMS();
+       ErrResRMSMuPlus[iK] = hmuonRes[iKcorr] -> GetRMSError();
+       // calculate Ratio MuPlus over MuMinus 
+       RatioRMSMuPlusOverMinus[iK] = ResRMSMuPlus[iK]/ResRMS[iK];
+       ErrRatioRMSMuPlusOverMinus[iK] = RatioRMSMuPlusOverMinus[iK]*sqrt(ErrResRMS[iK]*ErrResRMS[iK]/ResRMS[iK]/ResRMS[iK]+ ErrResRMSMuPlus[iK]*ErrResRMSMuPlus[iK]/ResRMSMuPlus[iK]/ResRMSMuPlus[iK]);
+       //xScale[iK] = iK+1;
+       //exScale[iK] = 0.5;
+       meanMuPlus[iK] = fitDoubleGauss2->GetParameter(0);
+       sig1MuPlus[iK] = fitDoubleGauss2->GetParameter(1);
+       sig2MuPlus[iK] = fitDoubleGauss2->GetParameter(3);
+       Asig2MuPlus[iK] = fitDoubleGauss2->GetParameter(2);
+       ERRmeanMuPlus[iK] = fitDoubleGauss2->GetParError(0);
+       ERRsig1MuPlus[iK] = fitDoubleGauss2->GetParError(1);
+       ERRsig2MuPlus[iK] = fitDoubleGauss2->GetParError(3);
+       ERRAsig2MuPlus[iK] = fitDoubleGauss2->GetParError(2);
+
+       hmuonRes[iKcorr] ->  GetXaxis() ->SetNdivisions(505);// n = n1 + 100*n2 + 10000*n3
+       hmuonRes[iKcorr] -> GetXaxis()->SetTitle("p_{T}^{reco}(#mu)/p_{T}^{gen}(#mu)-1");
+       hmuonRes[iKcorr] -> GetYaxis()->SetTitle("Entries");
+
+       hmuonRes[iKcorr] -> Draw("e");
+       hmuonResNonCorr[iKcorr] -> SetLineColor(kBlue);
+       hmuonResNonCorr[iKcorr] -> Draw("histsame");
+
+        TLegend* histinfo = SetLegend(.6,.57,1.,.73);
+        histinfo->AddEntry(hmuonRes[iKcorr], "MC resim + Fit","lep");
+        histinfo->AddEntry(fitDoubleGauss2, Form("Fit, RMS = %4.3f#pm%4.3f", ResRMSMuPlus[iK], ErrResRMSMuPlus[iK]),"l");
+        histinfo->AddEntry(hmuonResNonCorr[iKcorr], Form("MC, RMS = %4.3f", (hmuonResNonCorr[iKcorr] -> GetRMS()) ),"lep");
+
+       histinfo -> Draw("same");
      }
      c20 ->Print(gifname[iPT]+".png");
      c20 ->Print(gifname[iPT]+".root");
@@ -528,7 +770,7 @@ void printhistos(){
    TH2F *h2 = new TH2F("h2","Axes2",NPThist*NETAhist+1,0,NPThist*NETAhist+1,100,0.01,0.05);
    h2->GetXaxis()->SetNdivisions(NPThist*NETAhist);
    //h2->SetTitle(Form("SF #sigma_{Data}/#sigma_{MC}"));
-   h2->SetTitle(Form("Resolution RMS"));
+   h2->SetTitle(Form("Resolution RMS #mu^{-}"));
    h2 -> GetYaxis()->SetTitle("RMS [GeV]");
    for(int iPT = 0; iPT < NPThist; iPT++){
    for(int iETA = 0; iETA < NETAhist; iETA++){
@@ -558,11 +800,97 @@ void printhistos(){
 
     grScale->Draw("LP");
 
-     cScale1 ->Print(Form("plots/ResolutionRMS%1.2f_"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d.png", ScaleFactor, MuCorr, Ismear));
-     cScale1 ->Print(Form("plots/ResolutionRMS%1.2f_"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d.root", ScaleFactor, MuCorr, Ismear));
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_MuMinus.png", MuCorr, Ismear));
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_MuMinus.root", MuCorr, Ismear));
 
     delete h2;
-/// end: print RMS information:
+/// end: print RMS information Muon Minos
+/// print RMS information Muon Plus:
+     cScale1 -> cd();
+       
+   TH2F *h2MuPlus = new TH2F("h2MuPlus","Axes2",NPThist*NETAhist+1,0,NPThist*NETAhist+1,100,0.01,0.05);
+   h2MuPlus->GetXaxis()->SetNdivisions(NPThist*NETAhist);
+   h2MuPlus->SetTitle(Form("Resolution RMS #mu^{+}"));
+   h2MuPlus -> GetYaxis()->SetTitle("RMS [GeV]");
+   for(int iPT = 0; iPT < NPThist; iPT++){
+   for(int iETA = 0; iETA < NETAhist; iETA++){
+      int iK = iPT + iETA*NPThist;
+      int iKin = iPT + iETA*NPThist + 1;
+      if (iPT == 0){
+              h2MuPlus->GetXaxis()->SetBinLabel((iKin+1), Form("#eta: %4.1f-%4.1f, p_{T} vary: %4.0f-%4.0f GeV", ETAbin[iETA], ETAbin[iETA+1], PTbin[0], PTbin[NPThist]));
+      }   
+   }}  
+       
+     h2MuPlus->LabelsOption("d", "X");
+     h2MuPlus->Draw();
+   for(int iPT = 0; iPT < NPThist; iPT++){
+   for(int iETA = 0; iETA < NETAhist; iETA++){
+      int iK = iPT + iETA*NPThist;
+      if (iPT == 0){
+           float Xm = h2MuPlus -> GetBinLowEdge(iK+1);
+           TLine *lineGrid = new TLine(Xm,0.01,Xm,0.05);
+           lineGrid -> SetLineStyle(kDotted); 
+           lineGrid -> Draw("same");
+      }
+   }}  
+       
+    TGraphErrors* ResMuPlus = new TGraphErrors(NPThist*NETAhist,&xScale[0], &ResRMSMuPlus[0], &exScale[0], &ErrResRMSMuPlus[0]);
+    ResMuPlus->SetMarkerColor(4);
+    ResMuPlus->SetMarkerStyle(21);
+       
+    ResMuPlus->Draw("LP"); 
+       
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_MuPlus.png", MuCorr, Ismear));
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_MuPlus.root", MuCorr, Ismear));
+       
+    delete h2MuPlus;
+/// end: print RMS information Muon Plus
+/// print RMS information Muon Plus:
+     cScale1 -> cd();
+       
+   TH2F *h2Ratio = new TH2F("h2Ratio","Axes2",NPThist*NETAhist+1,0,NPThist*NETAhist+1,100,0.8,1.2);
+   h2Ratio->GetXaxis()->SetNdivisions(NPThist*NETAhist);
+   h2Ratio->SetTitle(Form("Resolution ratio RMS #mu^{+}/#mu^{-}"));
+   h2Ratio -> GetYaxis()->SetTitle("ratio RMS #mu^{+}/#mu^{-}");
+   for(int iPT = 0; iPT < NPThist; iPT++){
+   for(int iETA = 0; iETA < NETAhist; iETA++){
+      int iK = iPT + iETA*NPThist;
+      int iKin = iPT + iETA*NPThist + 1;
+      if (iPT == 0){
+              h2Ratio->GetXaxis()->SetBinLabel((iKin+1), Form("#eta: %4.1f-%4.1f, p_{T} vary: %4.0f-%4.0f GeV", ETAbin[iETA], ETAbin[iETA+1], PTbin[0], PTbin[NPThist]));
+      }   
+   }}  
+       
+     h2Ratio->LabelsOption("d", "X");
+     h2Ratio->Draw();
+   for(int iPT = 0; iPT < NPThist; iPT++){
+   for(int iETA = 0; iETA < NETAhist; iETA++){
+      int iK = iPT + iETA*NPThist;
+      if (iPT == 0){
+           float Xm = h2Ratio -> GetBinLowEdge(iK+1);
+           TLine *lineGrid = new TLine(Xm,0.8,Xm,1.2);
+           lineGrid -> SetLineStyle(kDotted); 
+           lineGrid -> Draw("same");
+      }
+   }}  
+       
+   TLine *line1 = new TLine(h2Ratio->GetBinLowEdge(1),1.,h2Ratio->GetBinLowEdge(NPThist*NETAhist),1.);
+          //lineGrid -> SetLineStyle(kDotted);
+          line1 -> SetLineColor(kRed);
+          line1 -> Draw("same");
+
+    TGraphErrors* ResRatio = new TGraphErrors(NPThist*NETAhist,&xScale[0], &RatioRMSMuPlusOverMinus[0], &exScale[0], &ErrRatioRMSMuPlusOverMinus[0]);
+    ResRatio->SetMarkerColor(4);
+    ResRatio->SetMarkerStyle(21);
+       
+    ResRatio->Draw("LP"); 
+       
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_Ratio.png", MuCorr, Ismear));
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_Ratio.root", MuCorr, Ismear));
+       
+    delete h2Ratio;
+/// end: print RMS information Muon Plus
+
 
 ///
 

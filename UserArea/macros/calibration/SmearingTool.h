@@ -31,6 +31,17 @@ class SmearingTool {
   static const float ResRMS[104];
   static const float ErrResRMS[104];
 
+  static const float meanMuPlus[104];
+  static const float sig1MuPlus[104];
+  static const float sig2MuPlus[104];
+  static const float Asig2MuPlus[104];
+  static const float ERRmeanMuPlus[104];
+  static const float ERRsig1MuPlus[104];
+  static const float ERRsig2MuPlus[104];
+  static const float ERRAsig2MuPlus[104];
+  static const float ResRMSMuPlus[104];
+  static const float ErrResRMSMuPlus[104];
+
   static const float PTbin[14];
   static const float ETAbin[9];
 

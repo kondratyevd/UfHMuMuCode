@@ -47,10 +47,10 @@
 #include "./DataFormat.h"
 using namespace std;
 
-  int MuCorr = 1; // 0 - no muon correction, 
+  int MuCorr = 0; // 0 - no muon correction, 
                   // 1 - Rochester Correction,
                   // 2 - MuscleFit correcton 
-  int Ismear = 2; // 0 - take pt reco from MC
+  int Ismear = 1; // 0 - take pt reco from MC
                   // 1 - smear pt with own tools using pt gen post FSR  
                   // 2 - smear pt with PT_smear = PT_gen + (PT_reco-PT_gen)*SF
    
@@ -77,20 +77,20 @@ using namespace std;
    //TString Extra = "_MATGRAPH";
 
   Double_t MASS_MUON = 0.105658367;    //GeV/c2
-  Double_t mean[Nhist];
-  Double_t sig1[Nhist];
-  Double_t sig2[Nhist];
-  Double_t Asig2[Nhist]; 
-  Double_t ERRmean[Nhist];
-  Double_t ERRsig1[Nhist];
-  Double_t ERRsig2[Nhist];
-  Double_t ERRAsig2[Nhist]; 
-  Double_t ResRMS[Nhist]; 
-  Double_t ErrResRMS[Nhist]; 
+  Double_t mean[2*Nhist];
+  Double_t sig1[2*Nhist];
+  Double_t sig2[2*Nhist];
+  Double_t Asig2[2*Nhist]; 
+  Double_t ERRmean[2*Nhist];
+  Double_t ERRsig1[2*Nhist];
+  Double_t ERRsig2[2*Nhist];
+  Double_t ERRAsig2[2*Nhist]; 
+  Double_t ResRMS[2*Nhist]; 
+  Double_t ErrResRMS[2*Nhist]; 
 // ---- CP error ----
 
-TH1F* hmuonRes[Nhist];
-TH1F* hmuonResNonCorr[Nhist];
+TH1F* hmuonRes[2*Nhist];
+TH1F* hmuonResNonCorr[2*Nhist];
 
 // unfolding matrix
 
@@ -142,7 +142,7 @@ void createFuncSmearing::main(){
            if(RunYear == "2012" || RunYear == "2012ABCsmall") treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
            if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011")treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia_Fall11-PU_S6_START44_V9B-v1/minimal/DYToMuMu_minimal.root");
 
-        TFile *theFile    = new TFile(Form("NtupleCreateFuncSmearing.root", ScaleFactor), "RECREATE");
+        TFile *theFile    = new TFile(Form("NtupleCreateFuncSmearing.root"), "RECREATE");
 
         bookhistos();// histo init 
         
@@ -192,8 +192,8 @@ void createFuncSmearing::main(){
         cout << "Nevent to process = " << treeMC->GetEntries() << endl;
         int nbad_tpt = 0;
         int nbad_tMass = 0;
-        //for( int k=0; k<100000; k++)
-        for( int k=0; k<treeMC->GetEntries(); k++)
+        for( int k=0; k<100000; k++)
+        //for( int k=0; k<treeMC->GetEntries(); k++)
         {
                 //process progress
                 if(k!=0 && (k%10000)==0)
@@ -314,19 +314,6 @@ void createFuncSmearing::main(){
                    MuReco2.SetPtEtaPhiM(pt2Smear, reco2.eta, reco2.phi, MASS_MUON);
                 }
                 ////////////////////////
-
-                if (Ismear == 1 || Ismear == 2){
-                   float pt1Smear = smearPT -> PTsmear(MuTrue1.Pt(), MuTrue1.Eta(), MuTrue1charge, MuReco1.Pt(), Ismear);
-                   float pt2Smear = smearPT -> PTsmear(MuTrue2.Pt(), MuTrue2.Eta(), MuTrue2charge, MuReco2.Pt(), Ismear);
-                   // fill Smear values:
-                   MuReco1.SetPtEtaPhiM(pt1Smear, reco1.eta, reco1.phi, MASS_MUON);
-                   MuReco2.SetPtEtaPhiM(pt2Smear, reco2.eta, reco2.phi, MASS_MUON);
-                   //TEST 
-                   //cout << "ptgen1 = " << MuTrue1.Pt() << " ptSmear1 = " << pt1Smear << " ptreco1 = " << reco1.pt << endl; 
-                   //cout << "ptgen2 = " << MuTrue2.Pt() << " ptSmear2 = " << pt2Smear << " ptreco2 = " << reco2.pt << endl; 
-                   //cout << "=====================" << endl; 
-                }
-                ////////////////////////
                 Float_t muonResCorr_t1r1 = -10.;
                 Float_t muonResCorr_t2r2 = -10.;
                 if(MuTrue1.Pt() > 0.) muonResCorr_t1r1 = (MuReco1.Pt()-MuTrue1.Pt())/MuTrue1.Pt();
@@ -349,17 +336,29 @@ void createFuncSmearing::main(){
 
                 for(int iPT = 0; iPT < NPThist; iPT++){
                 for(int iETA = 0; iETA < NETAhist; iETA++){
-                   int iK = iPT + iETA*NPThist;
+                   int iK = iPT + iETA*NPThist;// for muon minus
                    if(MuTrue1.Pt() >= PTbin[iPT] && MuTrue1.Pt() < PTbin[iPT+1] 
                       && MuTrue1.Eta() >= ETAbin[iETA] && MuTrue1.Eta() < ETAbin[iETA+1]) {
-                           hmuonRes[iK] -> Fill(muonResCorr_t1r1);
-                           hmuonResNonCorr[iK] -> Fill(muonRes_t1r1);
+                           if(reco1.charge < 0){// fill muon minus probe
+                              hmuonRes[iK] -> Fill(muonResCorr_t1r1);
+                              hmuonResNonCorr[iK] -> Fill(muonRes_t1r1);
+                           } 
+                           else{//fill muon plus probe
+                              hmuonRes[iK+NPThist*NETAhist] -> Fill(muonResCorr_t1r1);
+                              hmuonResNonCorr[iK+NPThist*NETAhist] -> Fill(muonRes_t1r1);
+                           } 
                    }  
                    if(MuTrue2.Pt() >= PTbin[iPT] && MuTrue2.Pt() < PTbin[iPT+1] 
                       && MuTrue2.Eta() >= ETAbin[iETA] && MuTrue2.Eta() < ETAbin[iETA+1]){
-                           hmuonRes[iK] -> Fill(muonResCorr_t2r2);  
-                           hmuonResNonCorr[iK] -> Fill(muonRes_t2r2);
-                   }
+                           if(reco2.charge < 0){// fill muon minus probe
+                              hmuonRes[iK] -> Fill(muonResCorr_t2r2);  
+                              hmuonResNonCorr[iK] -> Fill(muonRes_t2r2);
+                           } 
+                           else{//fill muon plus probe
+                              hmuonRes[iK+NPThist*NETAhist] -> Fill(muonResCorr_t2r2);  
+                              hmuonResNonCorr[iK+NPThist*NETAhist] -> Fill(muonRes_t2r2);
+                           } 
+                   }  
                 }} 
 
 
@@ -379,8 +378,12 @@ void bookhistos(){
    for(int iPT = 0; iPT < NPThist; iPT++){
    for(int iETA = 0; iETA < NETAhist; iETA++){
       int iK = iPT + iETA*NPThist;
-      hmuonRes[iK] = new TH1F(Form("hmuonRes%d",iK), Form("MC Drell-Yan, PT: %4.1f-%4.1f GeV, ETA: %4.1f#divide%4.1f", PTbin[iPT], PTbin[iPT+1], ETAbin[iETA], ETAbin[iETA+1]), 80, -0.1, 0.1);
-      hmuonResNonCorr[iK] = new TH1F(Form("hmuonResNonCorr%d",iK), Form("MC Drell-Yan, PT: %4.1f-%4.1f GeV, ETA: %4.1f#divide%4.1f", PTbin[iPT], PTbin[iPT+1], ETAbin[iETA], ETAbin[iETA+1]), 80, -0.1, 0.1);
+      // mu minus probe
+      hmuonRes[iK] = new TH1F(Form("hmuonRes%d",iK), Form("MC Drell-Yan, #mu^{-}, PT: %4.1f-%4.1f GeV, ETA: %4.1f#divide%4.1f", PTbin[iPT], PTbin[iPT+1], ETAbin[iETA], ETAbin[iETA+1]), 80, -0.1, 0.1);
+      hmuonResNonCorr[iK] = new TH1F(Form("hmuonResNonCorr%d",iK), Form("MC Drell-Yan, #mu^{-}, PT: %4.1f-%4.1f GeV, ETA: %4.1f#divide%4.1f", PTbin[iPT], PTbin[iPT+1], ETAbin[iETA], ETAbin[iETA+1]), 80, -0.1, 0.1);
+      // mu plus probe
+      hmuonRes[iK+NPThist*NETAhist] = new TH1F(Form("hmuonRes%d",(iK+NPThist*NETAhist)), Form("MC Drell-Yan, #mu^{+}, PT: %4.1f-%4.1f GeV, ETA: %4.1f#divide%4.1f", PTbin[iPT], PTbin[iPT+1], ETAbin[iETA], ETAbin[iETA+1]), 80, -0.1, 0.1);
+      hmuonResNonCorr[iK+NPThist*NETAhist] = new TH1F(Form("hmuonResNonCorr%d",(iK+NPThist*NETAhist)), Form("MC Drell-Yan, #mu^{+}, PT: %4.1f-%4.1f GeV, ETA: %4.1f#divide%4.1f", PTbin[iPT], PTbin[iPT+1], ETAbin[iETA], ETAbin[iETA+1]), 80, -0.1, 0.1);
    }}
 
 }
