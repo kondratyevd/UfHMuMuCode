@@ -58,6 +58,24 @@ MCSamples = [
            'START53_V15',20284602, 3.64E8*3.7E-4, 8),
 
     # special MC datasets
+    mcsample('dy1jetstoll',
+           '/DY1JetsToLL_M-50_TuneZ2Star_8TeV-madgraph/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',
+           'DY1JetsToLL', 'DY1JetsToLL_M-50_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1',
+           'START53_V15', 24045248, 9999, 8),
+    mcsample('dy2jetstoll',
+           '/DY2JetsToLL_M-50_TuneZ2Star_8TeV-madgraph/Summer12_DR53X-PU_S10_START53_V7C-v1/AODSIM',
+           'DY2JetsToLL', 'DY2JetsToLL_M-50_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7C-v1',
+           'START53_V15', 21852156, 9999, 8),
+    mcsample('dy3jetstoll',
+           '/DY3JetsToLL_M-50_TuneZ2Star_8TeV-madgraph/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',
+           'DY3JetsToLL', 'DY3JetsToLL_M-50_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1',
+           'START53_V15', 11015445, 9999, 8),
+    mcsample('dy4jetstoll',
+           '/DY4JetsToLL_M-50_TuneZ2Star_8TeV-madgraph/Summer12_DR53X-PU_S10_START53_V7A-v1/AODSIM',
+           'DY4JetsToLL', 'DY4JetsToLL_M-50_TuneZ2Star_8TeV-madgraph_Summer12_DR53X-PU_S10_START53_V7A-v1',
+           'START53_V15', 6402827, 9999, 8),
+
+
     mcsample('dyjetstoll_ptz-100',
            '/DYJetsToLL_PtZ-100_TuneZ2star_8TeV-madgraph/Summer12_DR53X-PU_S10_START53_V7A-v2/AODSIM',
            'DYJetsToLL_PtZ-100', 'DYJetsToLL_PtZ-100_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v2',
@@ -137,15 +155,21 @@ class datasample(object):
 
 DATASamples = [
     # single mu datasets
+    # see https://twiki.cern.ch/twiki/bin/viewauth/CMS/PdmV2012Analysis#Analysis_using_the_Golden_JSON_f
     datasample('SingleMuRun2012A',
                '/SingleMu/Run2012A-13Jul2012-v1/AOD', 'SingleMuRun2012A-13Jul2012-v1', 'SingleMuRun2012A-13Jul2012-v1',
                'FT_53_V6_AN3',
-               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON.txt',
+               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON_v2.txt',
+               8),
+    datasample('SingleMuRun2012A-recover-06Aug2012-v1',
+               '/SingleMu/Run2012A-recover-06Aug2012-v1/AOD', 'SingleMuRun2012A-recover-06Aug2012-v1', 'SingleMuRun2012A-recover-06Aug2012-v1',
+               'FT_53_V6C_AN3',
+               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190782-190949_8TeV_06Aug2012ReReco_Collisions12_JSON.txt',
                8),
     datasample('SingleMuRun2012B',
                '/SingleMu/Run2012B-13Jul2012-v1/AOD', 'SingleMuRun2012B-13Jul2012-v1', 'SingleMuRun2012B-13Jul2012-v1',
                'FT_53_V6_AN3',
-               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON.txt',
+               '/afs/cern.ch/cms/CAF/CMSCOMM/COMM_DQM/certification/Collisions12/8TeV/Reprocessing/Cert_190456-196531_8TeV_13Jul2012ReReco_Collisions12_JSON_v2.txt',
                8),
     datasample('SingleMuRun2012C-24Aug2012-v1',
                '/SingleMu/Run2012C-24Aug2012-v1/AOD', 'SingleMuRun2012C-24Aug2012-v1', 'SingleMuRun2012C-24Aug2012-v1',
