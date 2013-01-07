@@ -10,7 +10,7 @@ root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(5,0\) >& scripts/htomm/sk
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(6,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_WZ
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(7,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_ZZ
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(8,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_QCD_Pt_20_MuEnriched_Pt_15
-
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(9,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_DY2JetsToLL
 
 ### S P E C I A L    M C ###
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(9990,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_DYJetsToLL_PtZ-50to70
@@ -44,6 +44,7 @@ root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(5,1\) >& scripts/htomm/sk
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(6,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_WZ
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(7,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_ZZ
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(8,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_QCD_Pt_20_MuEnriched_Pt_15
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(9,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_DY2JetsToLL
 
 
 ### S P E C I A L    M C ###
@@ -79,6 +80,7 @@ root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(5,2\) >& scripts/htomm/sk
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(6,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_WZ
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(7,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_ZZ
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(8,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_QCD_Pt_20_MuEnriched_Pt_15
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(9,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_DYJetsToLL
 
 
 ### S P E C I A L    M C ###
