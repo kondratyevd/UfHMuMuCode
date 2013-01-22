@@ -20,9 +20,11 @@ root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(9992,0\) >& scripts/htomm
 
 ### D A T A ###
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(10,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_SingleMuRun2012A-13Jul2012-v1
-root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(11,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_SingleMuRun2012B-13Jul2012-v1
-root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(12,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_SingleMuRun2012C-24Aug2012-v1
-root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(13,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_SingleMuRun2012C-PromptReco-v1
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(11,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_SingleMuRun2012A-recover-06Aug2012-v1
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(12,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_SingleMuRun2012B-13Jul2012-v1
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(13,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_SingleMuRun2012C-24Aug2012-v1
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(14,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_SingleMuRun2012C-PromptReco-v2
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(15,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_SingleMuRun2012D-PromptReco-v1
 
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(20,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_DoubleMuRun2012A-13Jul2012-v1
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(21,0\) >& scripts/htomm/skims/V00-01-10/logfile_merged_DoubleMuRun2012B-13Jul2012-v4
@@ -55,9 +57,11 @@ root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(9992,1\) >& scripts/htomm
 
 ### D A T A ###
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(10,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_SingleMuRun2012A-13Jul2012-v1
-root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(11,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_SingleMuRun2012B-13Jul2012-v1
-root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(12,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_SingleMuRun2012C-24Aug2012-v1
-root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(13,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_SingleMuRun2012C-PromptReco-v1
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(11,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_SingleMuRun2012A-recover-06Aug2012-v1
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(12,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_SingleMuRun2012B-13Jul2012-v1
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(13,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_SingleMuRun2012C-24Aug2012-v1
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(14,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_SingleMuRun2012C-PromptReco-v2
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(15,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_SingleMuRun2012D-PromptReco-v1
 
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(20,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_DoubleMuRun2012A-13Jul2012-v1
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(21,1\) >& scripts/htomm/skims/V00-01-10/logfile_minimal_DoubleMuRun2012B-13Jul2012-v4
@@ -91,10 +95,12 @@ root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(9992,2\) >& scripts/htomm
 
 ### D A T A ###
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(10,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_SingleMuRun2012A-13Jul2012-v1
-root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(11,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_SingleMuRun2012B-13Jul2012-v1
-root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(12,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_SingleMuRun2012C-24Aug2012-v1
-root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(13,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_SingleMuRun2012C-PromptReco-v1
-                                                  2
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(11,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_SingleMuRun2012A-recover-06Aug2012-v1
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(12,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_SingleMuRun2012B-13Jul2012-v1
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(13,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_SingleMuRun2012C-24Aug2012-v1
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(14,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_SingleMuRun2012C-PromptReco-v2
+root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(15,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_SingleMuRun2012D-PromptReco-v1
+                                                  
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(20,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_DoubleMuRun2012A-13Jul2012-v1
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(21,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_DoubleMuRun2012B-13Jul2012-v4
 root -l -b -q scripts/htomm/skims/V00-01-10/skims.C++\(22,2\) >& scripts/htomm/skims/V00-01-10/logfile_completeNoAcc_DoubleMuRun2012C-24Aug2012-v1

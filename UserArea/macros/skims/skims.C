@@ -42,9 +42,12 @@ using namespace std;
 // 9992: DYJetsToLL ptZ>100
 
 //   10: 2012A-13Jul2012-v1
-//   11: 2012B-13Jul2012-v1
-//   12: 2012C-24Aug2012-v1
-//   13: 2012C-PromptReco-v2
+//   11: 2012A-recover-06Aug2012-v1
+//   12: 2012B-13Jul2012-v1
+//   13: 2012C-24Aug2012-v1
+//   14: 2012C-PromptReco-v2
+//   15: 2012D-PromptReco-v1
+
 
 //   20: 2012A-13Jul2012-v1
 //   21: 2012B-13Jul2012-v4
@@ -165,23 +168,34 @@ void skims(int dataset = 0,
   }
 
   else if ( dataset == 11 ) {
+    std::cout << "SingleMu 2012A-recover-06Aug2012-v1 DATASET\n";
+    //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012A-recover-06Aug2012-v1/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012A-recover-06Aug2012-v1/"$1"\");"}' >> scripts/htomm/skims/V00-01-10/chainSingleMuRun2012A-recover-06Aug2012-v1
+    #include "scripts/htomm/skims/V00-01-10/chainSingleMuRun2012A-recover-06Aug2012-v1"
+  }
+
+  else if ( dataset == 12 ) {
     std::cout << "SingleMu 2012B-13Jul2012-v1 DATASET\n";
     //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012B-13Jul2012-v1/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012B-13Jul2012-v1/"$1"\");"}' >> scripts/htomm/skims/V00-01-10/chainSingleMuRun2012B-13Jul2012-v1
     #include "scripts/htomm/skims/V00-01-10/chainSingleMuRun2012B-13Jul2012-v1"
   }
 
-  else if ( dataset == 12 ) {
+  else if ( dataset == 13 ) {
     std::cout << "SingleMu 2012C-24Aug2012-v1 DATASET\n";
     //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012C-24Aug2012-v1/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012C-24Aug2012-v1/"$1"\");"}' >> scripts/htomm/skims/V00-01-10/chainSingleMuRun2012C-24Aug2012-v1
     #include "scripts/htomm/skims/V00-01-10/chainSingleMuRun2012C-24Aug2012-v1"
   }
 
-  else if ( dataset == 13 ) {
+  else if ( dataset == 14 ) {
     std::cout << "SingleMu 2012C-PromptReco-v2 DATASET\n";
     //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012C-PromptReco-v2/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012C-PromptReco-v2/"$1"\");"}' >> scripts/htomm/skims/V00-01-10/chainSingleMuRun2012C-PromptReco-v2
     #include "scripts/htomm/skims/V00-01-10/chainSingleMuRun2012C-PromptReco-v2"
   }
 
+  else if ( dataset == 15 ) {
+    std::cout << "SingleMu 2012D-PromptReco-v1 DATASET\n";
+    //ls /data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012D-PromptReco-v1/ | grep root | awk '{print "tree->AddFile(\"/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012D-PromptReco-v1/"$1"\");"}' >> scripts/htomm/skims/V00-01-10/chainSingleMuRun2012D-PromptReco-v1
+    #include "scripts/htomm/skims/V00-01-10/chainSingleMuRun2012D-PromptReco-v1"
+  }
 
 
   // Double Muon Dataset
@@ -236,9 +250,11 @@ void skims(int dataset = 0,
   else if ( dataset == 9992 ) path+="NtuplesMCDYJetsToLL_PtZ-100_TuneZ2star_8TeV-madgraph-tarball_Summer12_DR53X-PU_S10_START53_V7A-v2/";
 
   else if ( dataset == 10 ) path+="NtuplesDataSingleMuRun2012A-13Jul2012-v1/";
-  else if ( dataset == 11 ) path+="NtuplesDataSingleMuRun2012B-13Jul2012-v1_2ndAttempt/";
-  else if ( dataset == 12 ) path+="NtuplesDataSingleMuRun2012C-24Aug2012-v1/";
-  else if ( dataset == 13 ) path+="NtuplesDataSingleMuRun2012C-PromptReco-v2/";
+  else if ( dataset == 11 ) path+="NtuplesDataSingleMuRun2012A-recover-06Aug2012-v1/";
+  else if ( dataset == 12 ) path+="NtuplesDataSingleMuRun2012B-13Jul2012-v1/";
+  else if ( dataset == 13 ) path+="NtuplesDataSingleMuRun2012C-24Aug2012-v1/";
+  else if ( dataset == 14 ) path+="NtuplesDataSingleMuRun2012C-PromptReco-v2/";
+  else if ( dataset == 15 ) path+="NtuplesDataSingleMuRun2012D-PromptReco-v1/";
                                  
   else if ( dataset == 20 ) path+="NtuplesDataDoubleMuRun2012A-13Jul2012-v1/";
   else if ( dataset == 21 ) path+="NtuplesDataDoubleMuRun2012B-13Jul2012-v4/";
@@ -280,9 +296,11 @@ void skims(int dataset = 0,
 
 
   else if ( dataset == 10 ) path += "SingleMuRun2012A-13Jul2012-v1_";
-  else if ( dataset == 11 ) path += "SingleMuRun2012B-13Jul2012-v1_";
-  else if ( dataset == 12 ) path += "SingleMuRun2012C-24Aug2012-v1_";
-  else if ( dataset == 13 ) path += "SingleMuRun2012C-PromptReco-v2_";
+  else if ( dataset == 11 ) path += "SingleMuRun2012A-recover-06Aug2012-v1_";
+  else if ( dataset == 12 ) path += "SingleMuRun2012B-13Jul2012-v1_";
+  else if ( dataset == 13 ) path += "SingleMuRun2012C-24Aug2012-v1_";
+  else if ( dataset == 14 ) path += "SingleMuRun2012C-PromptReco-v2_";
+  else if ( dataset == 15 ) path += "SingleMuRun2012D-PromptReco-v1_";
 
 
   else if ( dataset == 20 ) path += "DoubleMuRun2012A-13Jul2012-v1_";
