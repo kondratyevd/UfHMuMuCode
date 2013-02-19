@@ -1,0 +1,12 @@
+Useful twikis:
+https://twiki.cern.ch/twiki/bin/view/CMS/MuonReferenceEffs#2012_data
+
+File 2012C is in 
+https://twiki.cern.ch/twiki/pub/CMS/MuonReferenceEffs/MuonEfficiencies_Run_2012C_53X.pkl
+https://twiki.cern.ch/twiki/pub/CMS/MuonReferenceEffs/MuonEfficiencies_Run_2012C_53X.root
+
+
+python -i 
+import pickle
+f = open('MuonEfficiencies_Run_2012C_53X.pkl', 'r')
+dict = pickle.load(f)
