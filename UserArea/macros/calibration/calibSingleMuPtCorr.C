@@ -68,7 +68,7 @@ using namespace std;
   int HiggsNtuple = 1; // 1 - Higgs to MuMu ntuple is used wiht DataFormat.h <- check it and isKinTight_2012 (d0 and Z) 
                        // 0 - Boosted Z ntuoles are used with DataFormatBoostedZ.h <- check it and isKinTight_2012 (d0 and Z) 
 
-  int MuCorr = 32; // 0 - no muon correction, 
+  int MuCorr = 2; // 0 - no muon correction, 
                   // 1 - Rochester Correction,
                   // 2 - MuscleFit correcton 
                   // 11 - Rocester + scale to mZ = 91.188 GeV 
@@ -80,7 +80,7 @@ using namespace std;
                   // 1 - smear pt with own tools using pt gen post FSR  
                   // 2 - smear pt with PT_smear = PT_gen + (PT_reco-PT_gen)*SF
 
-  TString RunYear = "2012ABC"; // 2012; 2011; 2011A; 2011B; 2012ABCsmall; 2012ABC 
+  TString RunYear = "2012"; // 2012; 2011; 2011A; 2011B; 2012ABCsmall; 2012ABC 
   const float PTbin[] = {20., 30., 35., 40., 45., 50., 60., 70., 100.}; //default
   const float ETAbin[] = {0., 0.3, 0.6, 0.9, 1.2, 1.5, 1.8, 2.1};
   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);
@@ -89,17 +89,17 @@ using namespace std;
 
   double Pi  = acos(-1.);
   //
-  //TString ExtraInfo = "";
-  //const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
-  //const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
-  //const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
-  //const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
-
-  TString ExtraInfo = "HighPt";
-  const float PTbin_inv[] = {50., 300.};
+  TString ExtraInfo = "";
+  const float PTbin_inv[] = {25., 30., 35., 40., 45., 50., 70., 150.};
   const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
-  const float ETAbin_tag[] = {0., 2.1};
+  const float ETAbin_tag[] = {0., 0.8, 1.2, 2.1};
   const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
+
+  //TString ExtraInfo = "HighPt";
+  //const float PTbin_inv[] = {50., 300.};
+  //const float ETAbin_inv[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
+  //const float ETAbin_tag[] = {0., 2.1};
+  //const int NPHIbin_inv = 10; // 10 bins from 0 to 2Pi 
   //
   const int NPThist_inv = (sizeof(PTbin_inv)/sizeof(float)-1);
   const int NETAhist_inv = (sizeof(ETAbin_inv)/sizeof(float)-1);
@@ -242,7 +242,8 @@ void calibSingleMuPtCorr::main(){
   	TChain* treeMC = new TChain("tree");
         // min cuts: vertex, cosmics, mass
         if(HiggsNtuple == 1){
-           if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC") treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
+           //if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC") treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
+           if(RunYear == "2012" || RunYear == "2012ABCsmall" || RunYear == "2012ABC") treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
            if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011")treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia_Fall11-PU_S6_START44_V9B-v1/minimal/DYToMuMu_minimal.root");
         }
         if(HiggsNtuple == 0)
@@ -811,13 +812,20 @@ void calibSingleMuPtCorr::main(){
         // min set of cuts, vertex, cosmics
         if(HiggsNtuple == 1) { 
            /// 2012 year
-           if(RunYear == "2012ABCsmall" || RunYear == "2012ABC"){
-              treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012A-13Jul2012-v1/minimal/SingleMuRun2012A-13Jul2012-v1_minimal.root");
-              treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012B-13Jul2012-v1/minimal/SingleMuRun2012B-13Jul2012-v1_minimal.root");
-              treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012C-24Aug2012-v1/minimal/SingleMuRun2012C-24Aug2012-v1_minimal.root");
+           if(RunYear == "2012ABCsmall" || RunYear == "2012ABC" || RunYear == "2012"){
+              //treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012A-13Jul2012-v1/minimal/SingleMuRun2012A-13Jul2012-v1_minimal.root");
+              //treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012B-13Jul2012-v1/minimal/SingleMuRun2012B-13Jul2012-v1_minimal.root");
+              //treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012C-24Aug2012-v1/minimal/SingleMuRun2012C-24Aug2012-v1_minimal.root");
+              treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012A-13Jul2012-v1/minimal/SingleMuRun2012A-13Jul2012-v1_minimal.root");
+              treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012B-13Jul2012-v1/minimal/SingleMuRun2012B-13Jul2012-v1_minimal.root");
+              treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012C-24Aug2012-v1/minimal/SingleMuRun2012C-24Aug2012-v1_minimal.root");
            }
-           if(RunYear == "2012ABC"){
-              treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012C-PromptReco-v2/minimal/SingleMuRun2012C-PromptReco-v2_minimal_2.root");
+           if(RunYear == "2012ABC" || RunYear == "2012"){
+              //treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesDataSingleMuRun2012C-PromptReco-v2/minimal/SingleMuRun2012C-PromptReco-v2_minimal_2.root");
+              treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012C-PromptReco-v2/minimal/SingleMuRun2012C-PromptReco-v2_minimal.root");
+           }
+           if(RunYear == "2012"){
+              treeData -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesDataSingleMuRun2012D-PromptReco-v1/minimal/SingleMuRun2012D-PromptReco-v1_minimal.root");
            }
            
         }

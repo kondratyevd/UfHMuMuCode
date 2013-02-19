@@ -121,3 +121,16 @@ cp FuncSmearing.txt FuncSmearingZmumu2012PtCorr0.C // or other name
 ************ END Smear Pt of muon *****************
 ***************************************************
 
+***************************************************
+**********  Efficiency Calculation  ***************
+***************************************************
+checkCounting.C
+run_checkCounting.C
+
+to run in root:
+
+.x run_checkCounting.C
+***************************************************
+******* End Efficiency Calculation  ***************
+***************************************************
+

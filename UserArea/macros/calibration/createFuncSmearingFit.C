@@ -49,10 +49,14 @@ using namespace std;
 
   TString RunYear = "2012"; // 2011A, 2011B, 2012ABCsmall, 2012
   TString ExtraInfo = "Zmumu";
+  //TString ExtraInfo = "ggHiggs";
   //TString ExtraInfo = "ZmumuTEST";
 
-  //const float PTbin[] = {25., 30., 35., 40., 45., 50., 70., 100., 150., 300.}; //default
-  const float PTbin[] = {25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 80., 100., 150., 300.}; //default
+  //TString Small = ""; // for default binning 
+  TString Small = "Small"; // for small binning 
+
+  //const float PTbin[] = {25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 80., 100., 150., 300.}; //default
+  const float PTbin[] = {25., 35., 45., 55., 65., 80., 300.}; //small binning
   const float ETAbin[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);
   const int NETAhist = (sizeof(ETAbin)/sizeof(float)-1);
@@ -100,6 +104,8 @@ using namespace std;
   
 // ---- CP error ----
 
+TH1F* hDiMuonPt;
+TH1F* hDiMuonPtNonCorr;
 TH1F* hmuonRes[2*Nhist];
 TH1F* hmuonResNonCorr[2*Nhist];
 
@@ -117,7 +123,7 @@ Double_t FuncVoigtianBG(Double_t*, Double_t* );
 void DrawWithRatio(TCanvas *canvas, char *cTitle,
                   TH1F *hNum, TH1F *hDen);
 
-void axis1F(TH1F  *histo,
+void axis2F(TH2F  *histo,
            TAxis *xaxis,
            TAxis *yaxis,
            char  *xtitle,
@@ -135,10 +141,12 @@ void createFuncSmearingFit(){
 	userStyle();
 	//modifiedStyle();
   	// ---- open the MC files ----
-        TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+RunYear+"PtCorr%dIsmear%dGood.root", MuCorr, Ismear), "READ");
-        //TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+RunYear+"PtCorr%dSmearPt1Good.root", MuCorr ), "READ");
+        //TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+Small+RunYear+"PtCorr%dIsmear%dGood.root", MuCorr, Ismear), "READ");
+        TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+Small+RunYear+"PtCorr%dIsmear%dSF1Good.root", MuCorr, Ismear), "READ");
         theFile -> cd();
 
+     hDiMuonPt  = (TH1F*)theFile -> Get("hDiMuonPt");
+     hDiMuonPtNonCorr  = (TH1F*)theFile -> Get("hDiMuonPtNonCorr");
   for(int iPT = 0; iPT < NPThist; iPT++){
   for(int iETA = 0; iETA < NETAhist; iETA++){
       int iK = iPT + iETA*NPThist;
@@ -579,12 +587,23 @@ void printhistos(){
    gStyle->SetPalette(1,0);            // blue to red false color palette. Use 9 for b/w
    gStyle->SetOptTitle(1); 
 
+/////////
+   TCanvas *cDiMuonPt = new TCanvas("cDiMuonPt","p_{T}(#mu#mu)",800,600);
+   cDiMuonPt ->Divide(1,1);
+   cDiMuonPt -> cd(1);
+   DrawWithRatio(cDiMuonPt, "p_{T}(#mu#mu)",hDiMuonPt, hDiMuonPtNonCorr);
+
+   cDiMuonPt ->Print("DiMuonPt.png");
+   cDiMuonPt ->Print("DiMuonPt.root");
+/////////
+
   TF1* fitDoubleGauss = new TF1("fitDoubleGauss", DoubleGauss, -0.1, 0.1, 5);
   TF1* fitDoubleGauss2 = new TF1("fitDoubleGauss2", DoubleGauss, -0.1, 0.1, 5);
+     
 
 /////
   for(int iPT = 0; iPT < NPThist; iPT++){
-    gifname[iPT] = Form("plots/ResolutionPT_"+ExtraInfo+RunYear+"PtCorr%dIsmear%d_"+gifmethod+"_MuMinus%d", MuCorr, Ismear, iPT);
+    gifname[iPT] = Form("plots/ResolutionPT_"+ExtraInfo+Small+RunYear+"PtCorr%dIsmear%d_"+gifmethod+"_MuMinus%d", MuCorr, Ismear, iPT);
     gifname[iPT] = gifname[iPT]+Extra;
     TCanvas *c20 = new TCanvas("c20","Resolution",3000,1700);
     c20-> Divide(4,2);
@@ -800,8 +819,8 @@ void printhistos(){
 
     grScale->Draw("LP");
 
-     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_MuMinus.png", MuCorr, Ismear));
-     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_MuMinus.root", MuCorr, Ismear));
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+Small+RunYear+"PtCorr%d_Ismear%d_MuMinus.png", MuCorr, Ismear));
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+Small+RunYear+"PtCorr%d_Ismear%d_MuMinus.root", MuCorr, Ismear));
 
     delete h2;
 /// end: print RMS information Muon Minos
@@ -840,8 +859,8 @@ void printhistos(){
        
     ResMuPlus->Draw("LP"); 
        
-     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_MuPlus.png", MuCorr, Ismear));
-     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_MuPlus.root", MuCorr, Ismear));
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+Small+RunYear+"PtCorr%d_Ismear%d_MuPlus.png", MuCorr, Ismear));
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+Small+RunYear+"PtCorr%d_Ismear%d_MuPlus.root", MuCorr, Ismear));
        
     delete h2MuPlus;
 /// end: print RMS information Muon Plus
@@ -885,8 +904,8 @@ void printhistos(){
        
     ResRatio->Draw("LP"); 
        
-     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_Ratio.png", MuCorr, Ismear));
-     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+RunYear+"PtCorr%d_Ismear%d_Ratio.root", MuCorr, Ismear));
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+Small+RunYear+"PtCorr%d_Ismear%d_Ratio.png", MuCorr, Ismear));
+     cScale1 ->Print(Form("plots/ResolutionRMS"+ExtraInfo+Small+RunYear+"PtCorr%d_Ismear%d_Ratio.root", MuCorr, Ismear));
        
     delete h2Ratio;
 /// end: print RMS information Muon Plus
@@ -1083,22 +1102,31 @@ void DrawWithRatio(TCanvas *canvas, char *cTitle,
  pad1 = new TPad("pad1","This is pad1",0.02,0.30,0.98,0.98,0);
  pad2 = new TPad("pad2","This is pad2",0.02,0.01,0.98,0.29,0);
  
- pad1->SetLogx();
- pad2->SetLogx();
- pad1->SetBottomMargin(0.01);
+ //pad1->SetLogx();
+ //pad2->SetLogx();
+ pad1->SetBottomMargin(0.05);
  pad2->SetBottomMargin(0.33);
  pad2->SetTopMargin   (0.10);
  
  pad1->Draw(); // Projections pad
  pad2->Draw(); // Residuals   pad
         
-        _leg2 = new TLegend(.68,.77,.98,.93);
-        _leg2->AddEntry(hDen,"Gen ","l");
-        _leg2->AddEntry(hNum,"Unfolded Reco","p");
  pad1->cd();
- hDen->Draw("histo");
+   Float_t ymaxDiMuonPt = hNum->GetBinContent(hNum->GetMaximumBin())+ 10000.;
+   TH2F* h2DiMuonPt = new TH2F("h2DiMuonPt", "p_{T}(#mu#mu)", 100, 0., 50., 100., 0., ymaxDiMuonPt );
+ TAxis *xPull = NULL;
+ TAxis *yPull = NULL;
+ //axis2F(h2DiMuonPt,xPull,yPull,"p_{T}(#mu#mu) [GeV/c]","# entries");
+ axis2F(h2DiMuonPt,xPull,yPull,"","# entries");
+   h2DiMuonPt -> Draw(); 
  hNum->Draw("pe same");
- _leg2->Draw(); 
+ hDen -> SetLineColor(kBlue);
+ hDen->Draw("histo same");
+       //TLegend* hDiMuonPtinfo = SetLegend(.5,.57,0.7,.73);
+       TLegend* hDiMuonPtinfo = new TLegend(.68,.77,.98,.93);
+       hDiMuonPtinfo->AddEntry(hNum, "MC resim, SF = 1","lep");
+       hDiMuonPtinfo->AddEntry(hDen, "MC original","l");
+       hDiMuonPtinfo -> Draw("same");
  PrintItLog(pad1,cTitle);
 
 //   TLegend* leg = SetLegend(0.73, 0.7, 0.92, 0.89);
@@ -1110,39 +1138,41 @@ void DrawWithRatio(TCanvas *canvas, char *cTitle,
  //----------------------------------------------------------------------------
  pad2->cd();
  
- TAxis *xPull = NULL;
- TAxis *yPull = NULL;
+ TH2F* h2Pull = new TH2F("h2Pull", "ratio", 100, 0., 50., 10., 0.9, 1.1 );
  char xAxisName[200];
  sprintf(xAxisName,"%s",hDen->GetXaxis()->GetTitle());
- axis1F(hPull,xPull,yPull,xAxisName,"ratio");
+ //axis2F(h2Pull,xPull,yPull,xAxisName,"ratio");
+ axis2F(h2Pull,xPull,yPull,"p_{T}(#mu#mu) [GeV/c]","ratio");
  
  if (hPull->GetMaximum() > 100) {
    hPull->SetMinimum(-100);
    hPull->SetMaximum( 100);
  }
  
- hPull->GetXaxis()->SetLabelOffset(0.005);
- hPull->GetXaxis()->SetLabelSize  (0.11);
- hPull->GetXaxis()->CenterTitle(1);
- hPull->GetXaxis()->SetTitleOffset(1.10);
- hPull->GetXaxis()->SetTitleSize  (0.12);
- hPull->GetXaxis()->SetNdivisions(7);
+ h2Pull->GetXaxis()->SetLabelOffset(0.005);
+ h2Pull->GetXaxis()->SetLabelSize  (0.11);
+ h2Pull->GetXaxis()->CenterTitle(1);
+ h2Pull->GetXaxis()->SetTitleOffset(1.10);
+ h2Pull->GetXaxis()->SetTitleSize  (0.12);
+ h2Pull->GetXaxis()->SetNdivisions(7);
+ h2Pull->GetYaxis()->SetNdivisions(5);
 
- hPull->GetYaxis()->SetLabelSize  (0.09);
- hPull->GetYaxis()->CenterTitle(1);
- hPull->GetYaxis()->SetTitleOffset(0.5);
- hPull->GetYaxis()->SetTitleSize  (0.12);
+ h2Pull->GetYaxis()->SetLabelSize  (0.09);
+ h2Pull->GetYaxis()->CenterTitle(1);
+ h2Pull->GetYaxis()->SetTitleOffset(0.5);
+ h2Pull->GetYaxis()->SetTitleSize  (0.12);
 
  hPull->SetMaximum(1.5);
  hPull->SetMinimum(0.5);
- hPull->Draw("pe");
+ h2Pull -> Draw(); 
+ hPull->Draw("pe same");
 
  pad2->Update();
  pad2->GetFrame()->DrawClone();
 
 }
 
-void axis1F(TH1F  *histo,
+void axis2F(TH2F  *histo,
            TAxis *xaxis,
            TAxis *yaxis,
            char  *xtitle,

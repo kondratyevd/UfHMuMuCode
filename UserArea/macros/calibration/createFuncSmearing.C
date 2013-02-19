@@ -56,9 +56,13 @@ using namespace std;
    
   TString RunYear = "2012"; // 2012; 2011; 2011A; 2011B;  
 
+  TString ExtraInfo = "Zmumu";
+  //TString ExtraInfo = "ggHiggs";
+
+
   //int RunYear = 2012; // 2011 or 2012
-  //const float PTbin[] = {25., 30., 35., 40., 45., 50., 70., 100., 150., 300.}; //default
-  const float PTbin[] = {25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 80., 100., 150., 300.}; //default
+  //const float PTbin[] = {25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 80., 100., 150., 300.}; //default
+  const float PTbin[] = {25., 35., 45., 55., 65., 80., 300.}; //small binning 
   const float ETAbin[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);
   const int NETAhist = (sizeof(ETAbin)/sizeof(float)-1);
@@ -91,6 +95,8 @@ using namespace std;
 
 TH1F* hmuonRes[2*Nhist];
 TH1F* hmuonResNonCorr[2*Nhist];
+TH1F* hDiMuonPt;
+TH1F* hDiMuonPtNonCorr;
 
 // unfolding matrix
 
@@ -139,7 +145,11 @@ void createFuncSmearing::main(){
 	//modifiedStyle();
   	// ---- open the MC files ----
   	TChain* treeMC = new TChain("tree");
-           if(RunYear == "2012" || RunYear == "2012ABCsmall") treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
+           //if(RunYear == "2012" || RunYear == "2012ABCsmall") treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
+           // 2012 DY V00-01-10
+           if(ExtraInfo == "Zmumu" && (RunYear == "2012" || RunYear == "2012ABCsmall") ) treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
+           // 2012 ggHiggs V00-01-10
+           if(ExtraInfo == "ggHiggs" && (RunYear == "2012" || RunYear == "2012ABCsmall") ) treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesMCPrivateSignal/ggHmumu8TeV125.root");
            if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011")treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia_Fall11-PU_S6_START44_V9B-v1/minimal/DYToMuMu_minimal.root");
 
         TFile *theFile    = new TFile(Form("NtupleCreateFuncSmearing.root"), "RECREATE");
@@ -150,8 +160,9 @@ void createFuncSmearing::main(){
         float rPt;
         float rEta;
         _MuonInfo reco1, reco2;
-        _TrackInfo true1mu, true2mu;
+        _TrackInfo true1mu, true2mu, trueH1mu, trueH2mu;
         _genPartInfo genZpostFSR;
+        _genPartInfo genHpostFSR;
         treeMC->SetBranchAddress("reco1",&reco1);
         treeMC->SetBranchAddress("reco2",&reco2);
         treeMC->SetBranchAddress("recoCandMass",&rMass);
@@ -160,6 +171,9 @@ void createFuncSmearing::main(){
         treeMC->SetBranchAddress("genZpostFSR",&genZpostFSR);
         treeMC->SetBranchAddress("genM1ZpostFSR",&true1mu);
         treeMC->SetBranchAddress("genM2ZpostFSR",&true2mu);
+        treeMC->SetBranchAddress("genHpostFSR",&genHpostFSR);
+        treeMC->SetBranchAddress("genM1HpostFSR",&trueH1mu);
+        treeMC->SetBranchAddress("genM2HpostFSR",&trueH2mu);
 
         //////////////////////////////////////////////////////////// 
         //Rochester correction 
@@ -192,7 +206,7 @@ void createFuncSmearing::main(){
         cout << "Nevent to process = " << treeMC->GetEntries() << endl;
         int nbad_tpt = 0;
         int nbad_tMass = 0;
-        for( int k=0; k<100000; k++)
+        for( int k=0; k<1000000; k++)
         //for( int k=0; k<treeMC->GetEntries(); k++)
         {
                 //process progress
@@ -204,50 +218,80 @@ void createFuncSmearing::main(){
 
                 ////////////////////////
                 //check that generator part is filled 
-                if(nbad_tpt < 10 && (true1mu.pt < -900. || true2mu.pt < -900)){//rejection for MATGRAPH
-                   cout << "CHECK ntuple, possible problem with fill gen level while RECO level is fine: true1mu.pt = " << true1mu.pt << endl; 
-                   nbad_tpt++;
+                if(ExtraInfo == "Zmumu"){
+                   if(nbad_tpt < 10 && (true1mu.pt < -900. || true2mu.pt < -900)){//rejection for MATGRAPH
+                      cout << "CHECK ntuple, possible problem with fill gen level while RECO level is fine: true1mu.pt = " << true1mu.pt << endl; 
+                      nbad_tpt++;
+                   }
+                   if(true1mu.pt < -900. || true2mu.pt < -900) continue;//rejection for MATGRAPH
+                   if(nbad_tMass < 10 && genZpostFSR.mass < -900.){//rejection for MATGRAPH
+                      cout << "CHECK ntuple, possible EXTRA problem with fill gen level while RECO level is fine: tMass = " << genZpostFSR.mass << endl; 
+                      nbad_tMass++;
+                   }
+                   if(genZpostFSR.mass < -900.) continue;//rejection for MATGRAPH
                 }
-                if(true1mu.pt < -900. || true2mu.pt < -900) continue;//rejection for MATGRAPH
-                if(nbad_tMass < 10 && genZpostFSR.mass < -900.){//rejection for MATGRAPH
-                   cout << "CHECK ntuple, possible EXTRA problem with fill gen level while RECO level is fine: tMass = " << genZpostFSR.mass << endl; 
-                   nbad_tMass++;
+                if(ExtraInfo == "ggHiggs"){
+                   if(nbad_tpt < 10 && (trueH1mu.pt < -900. || trueH2mu.pt < -900)){//rejection for MATGRAPH
+                      cout << "CHECK ntuple, possible problem with fill gen level while RECO level is fine: trueH1(2)mu.pt = " << trueH1mu.pt << trueH2mu.pt << endl; 
+                      nbad_tpt++;
+                   }
+                   if(reco1.pt < -900. || reco2.pt < -900) continue;//rejection fake in reco level 
+                   if(reco1.eta < -900. || reco2.eta < -900) continue;//rejection fake in reco level 
+                   if(nbad_tpt < 10 && (reco1.eta < -900. || reco2.eta < -900 || reco1.pt < -900. || reco2.pt < -900.)){//rejection for MATGRAPH
+                      cout << "CHECK ntuple, possible problem with fill gen level while RECO level is fine: reco1.eta = " << reco1.eta << endl; 
+                      nbad_tpt++;
+                   }
+                   if(trueH1mu.pt < -900. || trueH2mu.pt < -900) continue;//rejection for MATGRAPH
+                   if(nbad_tMass < 10 && genHpostFSR.mass < -900.){//rejection for MATGRAPH
+                      cout << "CHECK ntuple, possible EXTRA problem with fill gen level while RECO level is fine: HpostFRS mass = " << genZpostFSR.mass << endl; 
+                      nbad_tMass++;
+                   }
+                   if(genHpostFSR.mass < -900.) continue;//rejection for MATGRAPH
                 }
-                if(genZpostFSR.mass < -900.) continue;//rejection for MATGRAPH
 
                 ////////////////////////
                 if (reco1.charge == reco2.charge) continue;
  
                 TLorentzVector MuReco1, MuReco2, MuTrue1, MuTrue2;
-                float MuTrue1charge = true1mu.charge;
-                float MuTrue2charge = true2mu.charge;
+                float MuTrue1charge, MuTrue2charge;
+                if(ExtraInfo == "Zmumu")MuTrue1charge = true1mu.charge;
+                if(ExtraInfo == "Zmumu")MuTrue2charge = true2mu.charge;
+                if(ExtraInfo == "ggHiggs")MuTrue1charge = trueH1mu.charge;
+                if(ExtraInfo == "ggHiggs")MuTrue2charge = trueH2mu.charge;
                 MuReco1.SetPtEtaPhiM(reco1.pt, reco1.eta, reco1.phi, MASS_MUON);
                 MuReco2.SetPtEtaPhiM(reco2.pt, reco2.eta, reco2.phi, MASS_MUON);
-                MuTrue1.SetPtEtaPhiM(true1mu.pt, true1mu.eta, true1mu.phi, MASS_MUON);
-                MuTrue2.SetPtEtaPhiM(true2mu.pt, true2mu.eta, true2mu.phi, MASS_MUON);
+                if(ExtraInfo == "Zmumu")MuTrue1.SetPtEtaPhiM(true1mu.pt, true1mu.eta, true1mu.phi, MASS_MUON);
+                if(ExtraInfo == "Zmumu")MuTrue2.SetPtEtaPhiM(true2mu.pt, true2mu.eta, true2mu.phi, MASS_MUON);
+                if(ExtraInfo == "ggHiggs")MuTrue1.SetPtEtaPhiM(trueH1mu.pt, trueH1mu.eta, trueH1mu.phi, MASS_MUON);
+                if(ExtraInfo == "ggHiggs")MuTrue2.SetPtEtaPhiM(trueH2mu.pt, trueH2mu.eta, trueH2mu.phi, MASS_MUON);
 
                 ////////////////////////
+                Float_t DiMuonPtNonCorr = (MuReco1+MuReco2).Pt();
                 Float_t muonRes_t1r1 = -10.;
                 Float_t muonRes_t1r2 = -10.;
                 Float_t muonRes_t2r1 = -10.;
                 Float_t muonRes_t2r2 = -10.;
-                if(true1mu.pt > 0.) muonRes_t1r1 = (MuReco1.Pt()-true1mu.pt)/true1mu.pt;
-                if(true2mu.pt > 0.) muonRes_t2r2 = (MuReco2.Pt()-true2mu.pt)/true2mu.pt;
-                if(true1mu.pt > 0.) muonRes_t1r2 = (MuReco2.Pt()-true1mu.pt)/true1mu.pt;
-                if(true2mu.pt > 0.) muonRes_t2r1 = (MuReco1.Pt()-true2mu.pt)/true2mu.pt;
+                if(MuTrue1.Pt() > 0.) muonRes_t1r1 = (MuReco1.Pt()-MuTrue1.Pt())/MuTrue1.Pt();
+                if(MuTrue2.Pt() > 0.) muonRes_t2r2 = (MuReco2.Pt()-MuTrue2.Pt())/MuTrue2.Pt();
+                if(MuTrue1.Pt() > 0.) muonRes_t1r2 = (MuReco2.Pt()-MuTrue1.Pt())/MuTrue1.Pt();
+                if(MuTrue2.Pt() > 0.) muonRes_t2r1 = (MuReco1.Pt()-MuTrue2.Pt())/MuTrue2.Pt();
                 float deltaR_t1r1 = ROOT::Math::VectorUtil::DeltaR(MuTrue1, MuReco1);
                 float deltaR_t1r2 = ROOT::Math::VectorUtil::DeltaR(MuTrue1, MuReco2);
                 float deltaR_t2r1 = ROOT::Math::VectorUtil::DeltaR(MuTrue2, MuReco1);
                 float deltaR_t2r2 = ROOT::Math::VectorUtil::DeltaR(MuTrue2, MuReco2);
                 //make matching between MuTrue1,2 and MuReco1,2:
                 if(deltaR_t1r1 > deltaR_t1r2){
-                     MuTrue1.SetPtEtaPhiM(true2mu.pt, true2mu.eta, true2mu.phi, MASS_MUON);
-                     MuTrue1charge = true2mu.charge;
+                     if(ExtraInfo == "Zmumu")MuTrue1.SetPtEtaPhiM(true2mu.pt, true2mu.eta, true2mu.phi, MASS_MUON);
+                     if(ExtraInfo == "Zmumu")MuTrue1charge = true2mu.charge;
+                     if(ExtraInfo == "ggHiggs")MuTrue1.SetPtEtaPhiM(trueH2mu.pt, trueH2mu.eta, trueH2mu.phi, MASS_MUON);
+                     if(ExtraInfo == "ggHiggs")MuTrue1charge = trueH2mu.charge;
                      muonRes_t1r1 = muonRes_t2r1;
                 }
                 if(deltaR_t2r2 > deltaR_t2r1){
-                     MuTrue2.SetPtEtaPhiM(true1mu.pt, true1mu.eta, true1mu.phi, MASS_MUON);
-                     MuTrue2charge = true1mu.charge;
+                     if(ExtraInfo == "Zmumu")MuTrue2.SetPtEtaPhiM(true1mu.pt, true1mu.eta, true1mu.phi, MASS_MUON);
+                     if(ExtraInfo == "Zmumu")MuTrue2charge = true1mu.charge;
+                     if(ExtraInfo == "ggHiggs")MuTrue2.SetPtEtaPhiM(trueH1mu.pt, trueH1mu.eta, trueH1mu.phi, MASS_MUON);
+                     if(ExtraInfo == "ggHiggs")MuTrue2charge = trueH1mu.charge;
                      muonRes_t2r2 = muonRes_t1r2;
                 }
                 ////////////////////////
@@ -314,6 +358,7 @@ void createFuncSmearing::main(){
                    MuReco2.SetPtEtaPhiM(pt2Smear, reco2.eta, reco2.phi, MASS_MUON);
                 }
                 ////////////////////////
+                Float_t DiMuonPt = (MuReco1+MuReco2).Pt();
                 Float_t muonResCorr_t1r1 = -10.;
                 Float_t muonResCorr_t2r2 = -10.;
                 if(MuTrue1.Pt() > 0.) muonResCorr_t1r1 = (MuReco1.Pt()-MuTrue1.Pt())/MuTrue1.Pt();
@@ -321,8 +366,16 @@ void createFuncSmearing::main(){
                 TLorentzVector MuRecoCand = MuReco1 + MuReco2;
                 float rMassCorr = MuRecoCand.M();
 
-                if (rMassCorr <  60) continue;
-                if (rMassCorr > 120) continue;
+                if(ExtraInfo == "Zmumu" && rMassCorr <  60) continue;
+                if(ExtraInfo == "Zmumu" && rMassCorr > 120) continue;
+                if(ExtraInfo == "ggHiggs" && rMassCorr <  110) continue;
+                if(ExtraInfo == "ggHiggs" && rMassCorr > 160) continue;
+                //cout << "****************" << endl;
+                //cout << "TEST MuRecoCand = " << MuRecoCand.M() << " MuTrue1.Pt() = " << MuTrue1.Pt() << " MuTrue2.Pt() = " << MuTrue2.Pt()  << " reco1.charge = " << reco1.charge << " reco2.charge = " << reco2.charge 
+                //     << " MuReco1.Eta() = " << MuReco1.Eta() << " MuReco2.Eta() = " << MuReco2.Eta() << endl;    
+                //cout << "trueH1mu.pt = " << trueH1mu.pt << " trueH2mu.pt = " << trueH2mu.pt << endl;   
+
+
                 //cout << "Loose selection event = " << k << " reco1.pt = " << reco1.pt << " reco1.eta = " << reco1.eta << endl;
                 //     << " reco1.numValidTrackerHits = " reco1.numValidTrackerHits << " reco1.trackIsoSumPt = " << reco1.trackIsoSumPt 
                 //     << "reco1.d0 = " << reco1.d0 << endl;
@@ -334,6 +387,9 @@ void createFuncSmearing::main(){
                 if( RunYear == "2012" && (!isKinTight_2012(reco1, pTcorr1) || !isKinTight_2012(reco2, pTcorr2)) ) continue;
                 if( (RunYear == "2011A" || RunYear == "2011B")&& (!isKinTight_2011(reco1, pTcorr1) || !isKinTight_2011(reco2, pTcorr2)) ) continue;
 
+                // plot DiMuonPt
+                hDiMuonPt -> Fill(DiMuonPt);
+                hDiMuonPtNonCorr -> Fill(DiMuonPtNonCorr);
                 for(int iPT = 0; iPT < NPThist; iPT++){
                 for(int iETA = 0; iETA < NETAhist; iETA++){
                    int iK = iPT + iETA*NPThist;// for muon minus
@@ -374,6 +430,9 @@ void createFuncSmearing::main(){
 
 ///////////////////////////////////////////
 void bookhistos(){
+
+hDiMuonPt = new TH1F("hDiMuonPt", "p_{T}(#mu#mu)", 100, 0., 200);
+hDiMuonPtNonCorr = new TH1F("hDiMuonPtNonCorr", "non corrected p_{T}(#mu#mu)", 100, 0., 200);
 
    for(int iPT = 0; iPT < NPThist; iPT++){
    for(int iETA = 0; iETA < NETAhist; iETA++){
