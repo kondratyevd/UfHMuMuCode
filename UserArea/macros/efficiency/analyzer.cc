@@ -11,7 +11,10 @@
 #include <TROOT.h>
 #include <TClonesArray.h>
 #include <TParticle.h>
+// to write to file
 #include <iostream>
+#include <fstream>
+
 #include <TFile.h>
 #include <TTree.h>
 #include <TChain.h>
@@ -37,6 +40,9 @@
 
 #include "src/ScaleFactors.h"
 #include "src/ScaleFactors_2011.h"
+
+#include "TEfficiency.h"
+#include <algorithm>    // std::min
 
 //for Lorentz Vector tools
 //#include<TMath.h>
@@ -68,9 +74,12 @@ typedef std::pair<float,float> pairOfDouble;
 using namespace std;
 using namespace boost;
 
+
   TString ExtraInfo = "Higgs";
   //TString ExtraInfo = "Zmumu";
 
+  const int Nsample = 10; // devide event on subsamples 
+  int Flag_BDT = 0; // 1 - for seperated BDT training and test sample, other - no seperation
   Double_t MASS_MUON = 0.105658367;    //GeV/c2
 
 void fillMuonHist(TH1F* hist, _MuonInfo& mu1, _MuonInfo& mu2);
@@ -589,41 +598,79 @@ int main(int argc, char *argv[])
   TRandom3 randomForSF(123412845);
 
 //////////////////////////////////////////////////////////////////////
-  int counterGenBoson  = 0; // mass cut only
-  int counterMinimCuts = 0; // mass, charge, vertex, cosmic
-  int counterAccCuts   = 0; // pt, eta
-  int counterIDCuts    = 0; // tight muon id
-  int counterIsoCuts   = 0; // trk Iso
-  int counterTrigCuts  = 0; // iso mu 24_eta2p1
-  int counterJetSel    = 0; // jet selection
-  int counterBDTvbfCut = 0; // VBF BDT cut
-  int counterNonJetSel    = 0; // jet selection
-  int counterDiPt10GeV = 0; // jet selection
+  int counterGenBoson  [Nsample]; // mass cut only
+  int counterMinimCuts [Nsample]; // mass, charge, vertex, cosmic
+  int counterAccCuts   [Nsample]; // pt, eta
+  int counterIDCuts    [Nsample]; // tight muon id
+  int counterIsoCuts   [Nsample]; // trk Iso
+  int counterTrigCuts  [Nsample]; // iso mu 24_eta2p1
+  int counterJetSel    [Nsample]; // jet selection
+  int counterBDTvbfCut [Nsample]; // VBF BDT cut
+  int counterNonJetSel [Nsample]; // jet selection
+  int counterDiPt10GeV [Nsample]; // jet selection
 
-  float EffMinimCuts = 0; // mass, charge, vertex, cosmic
-  float EffAccCuts   = 0; // pt, eta
-  float EffIDCuts    = 0; // tight muon id
-  float EffIsoCuts   = 0; // trk Iso
-  float EffTrigCuts  = 0; // iso mu 24_eta2p1
-  float EffJetSel    = 0; // jet selection
-  float EffBDTvbfCut = 0; // VBF BDT cut
-  float EffNonJetSel    = 0; // jet selection
-  float EffDiPt10GeV = 0; // pt(mumu) > = 10 GeV/c 
+  float EffMinimCuts [Nsample]; // mass, charge, vertex, cosmic
+  float EffAccCuts   [Nsample]; // pt, eta
+  float EffIDCuts    [Nsample]; // tight muon id
+  float EffIsoCuts   [Nsample]; // trk Iso
+  float EffTrigCuts  [Nsample]; // iso mu 24_eta2p1
+  float EffJetSel    [Nsample]; // jet selection
+  float EffBDTvbfCut [Nsample]; // VBF BDT cut
+  float EffNonJetSel [Nsample]; // jet selection
+  float EffDiPt10GeV [Nsample]; // pt(mumu) > = 10 GeV/c 
 
-  float dEffMinimCuts = 0; // mass, charge, vertex, cosmic
-  float dEffAccCuts   = 0; // pt, eta
-  float dEffIDCuts    = 0; // tight muon id
-  float dEffIsoCuts   = 0; // trk Iso
-  float dEffTrigCuts  = 0; // iso mu 24_eta2p1
-  float dEffJetSel    = 0; // jet selection
-  float dEffBDTvbfCut = 0; // VBF BDT cut
-  float dEffNonJetSel    = 0; // jet selection
-  float dEffDiPt10GeV = 0; // pt(mumu) > = 10 GeV/c 
+  float dEffMinimCuts [Nsample]; // mass, charge, vertex, cosmic
+  float dEffAccCuts   [Nsample]; // pt, eta
+  float dEffIDCuts    [Nsample]; // tight muon id
+  float dEffIsoCuts   [Nsample]; // trk Iso
+  float dEffTrigCuts  [Nsample]; // iso mu 24_eta2p1
+  float dEffJetSel    [Nsample]; // jet selection
+  float dEffBDTvbfCut [Nsample]; // VBF BDT cut
+  float dEffNonJetSel [Nsample]; // jet selection
+  float dEffDiPt10GeV [Nsample]; // pt(mumu) > = 10 GeV/c 
+
+//reset them
+  for(unsigned iS=0; iS < Nsample;iS++){
+   counterGenBoson  [iS] = 0;
+   counterMinimCuts [iS] = 0;
+   counterAccCuts   [iS] = 0;
+   counterIDCuts    [iS] = 0;  
+   counterIsoCuts   [iS] = 0; // trk Iso
+   counterTrigCuts  [iS] = 0; // iso mu 24_eta2p1
+   counterJetSel    [iS] = 0; // jet selection
+   counterBDTvbfCut [iS] = 0; // VBF BDT cut
+   counterNonJetSel [iS] = 0; // jet selection
+   counterDiPt10GeV [iS] = 0; // jet selection
+
+   EffMinimCuts [iS] = 0; // mass, charge, vertex, cosmic
+   EffAccCuts   [iS] = 0; // pt, eta
+   EffIDCuts    [iS] = 0; // tight muon id
+   EffIsoCuts   [iS] = 0; // trk Iso
+   EffTrigCuts  [iS] = 0; // iso mu 24_eta2p1
+   EffJetSel    [iS] = 0; // jet selection
+   EffBDTvbfCut [iS] = 0; // VBF BDT cut
+   EffNonJetSel [iS] = 0; // jet selection
+   EffDiPt10GeV [iS] = 0; // pt(mumu) > = 10 GeV/c 
+
+   dEffMinimCuts [iS] = 0; // mass, charge, vertex, cosmic
+   dEffAccCuts   [iS] = 0; // pt, eta
+   dEffIDCuts    [iS] = 0; // tight muon id
+   dEffIsoCuts   [iS] = 0; // trk Iso
+   dEffTrigCuts  [iS] = 0; // iso mu 24_eta2p1
+   dEffJetSel    [iS] = 0; // jet selection
+   dEffBDTvbfCut [iS] = 0; // VBF BDT cut
+   dEffNonJetSel [iS] = 0; // jet selection
+   dEffDiPt10GeV [iS] = 0; // pt(mumu) > = 10 GeV/c 
+  }
+
 //////////////////////////////////////////////////////////////////////
+        //create txt file with fit output
+        ofstream myfile ("EffInfo.txt");
 //////////////////////////////////////////////////////////////////////
 
   unsigned nEvents = tree->GetEntries();
-  cout << "nEvents: " << nEvents << endl;
+  unsigned nSubEven = unsigned(min(int(maxEvents),int(nEvents))/Nsample);
+  cout << "nEvents: " << nEvents  << " and size of nSubEvents = " << nSubEven << endl;
 
   unsigned reportEach=1000;
   if (nEvents/1000>reportEach)
@@ -637,10 +684,23 @@ int main(int argc, char *argv[])
   float timeProcessing = 0.;
   float timeFilling = 0.;
   time_t timeStartEventLoop = time(NULL);
+
   for(unsigned i=0; i<nEvents;i++)
   {
     if(i >= maxEvents)
       continue;
+
+    //find sub sample
+    int Isample = -1;
+    for(unsigned iS = 0; iS<Nsample ;iS++){
+        if(i >= nSubEven*iS && i < nSubEven*(iS+1)) Isample = iS;
+        if(iS == (Nsample -1) && i >= nSubEven*iS)  Isample = iS;  
+    }
+    //cout << "subcategory = " << Isample << " for iEvent = " << i << " and Nsample = " << Nsample << " nSubEven = " << nSubEven << endl;  
+    if (Isample < 0) cout << " Isampe = -1 for Event = " << i << endl;
+    if (Isample < 0) continue;
+    //end: find sub sample
+      
     time_t timeStartReading = time(NULL);
     tree->GetEvent(i);
     time_t timeStopReading = time(NULL);
@@ -661,14 +721,17 @@ int main(int argc, char *argv[])
           if(ExtraInfo == "Zmumu")MassGenBoson = genZpostFSR.mass;
           if(ExtraInfo == "Higgs")MassGenBoson = genHpostFSR.mass;
 
+    //if (counterGenBoson>= 10000) continue;
+    //if (counterGenBoson>= 50000) continue;
     // check for fhe doublets:
                 pairOfDouble massPt(genHpostFSR.mass,genHpostFSR.pt);
                 //if (uniqueGeneratedEvents.insert(massPt).second) continue;
                 if(MassGenBoson >= minMmm && MassGenBoson < maxMmm && uniqueGeneratedEvents.insert(massPt).second){
                 //if(MassGenBoson >= minMmm && MassGenBoson < maxMmm && uniqueGeneratedEvents.insert(massPt).second == false){
-                    counterGenBoson++;
+                    counterGenBoson[Isample]++;
                     //hMassGenBoson ->Fill(MassGenBoson);
                 }
+    //if (counterGenBoson <= 40000) continue;
     // additional selection cuts
     if (reco1.charge == reco2.charge) continue;
     if(reco1.pt < 0. || reco2.pt < 0) continue;//rejection fake in reco level 
@@ -935,7 +998,7 @@ int main(int argc, char *argv[])
 
     if (mva.mDiMu < minMmm || mva.mDiMu > maxMmm)
         continue;
-    counterMinimCuts++;
+    counterMinimCuts[Isample]++;
     // acceptance cuts
     if (reco1.pt < 25)         continue;
     if (fabs(reco1.eta) > 2.1) continue;
@@ -943,22 +1006,22 @@ int main(int argc, char *argv[])
     if (reco2.pt < 25)         continue;
     if (fabs(reco2.eta) > 2.1) continue;
 
-    counterAccCuts++;
+    counterAccCuts[Isample]++;
 
     if (!((*muonIdFuncPtr)(reco1)) || !((*muonIdFuncPtr)(reco2)))
           continue;
-    counterIDCuts++;
+    counterIDCuts[Isample]++;
 
     if (getRelIso(reco1) > 0.12) continue;
     if (getRelIso(reco2) > 0.12) continue;
 
-    counterIsoCuts++;
+    counterIsoCuts[Isample]++;
 
 
     if (!isHltMatched(reco1,reco2,allowedHLTPaths))
         continue;
-    counterTrigCuts++;
-    if(fabs(muonRes_t1r1) > 0.3 || fabs(muonRes_t2r2) > 0.3 || DR1 > 0.4 || DR2 > 0.4){
+    counterTrigCuts[Isample]++;
+    if(fabs(muonRes_t1r1) > 0.2 || fabs(muonRes_t2r2) > 0.2 || DR1 > 0.3 || DR2 > 0.3){
        cout << "DR1 = " << DR1 << "  DR2 = " << DR2 << endl;
        cout << "Res1 = " << fabs(muonRes_t1r1) << " Res2 = " << fabs(muonRes_t2r2) <<endl;
        cout << "PtGen1Orig = " << PtGen1Orig << " PtGen1 = " << reco1GenPostFSR.pt << " MuTrue1.Pt = " << MuTrue1.Pt() << endl;   
@@ -1305,9 +1368,12 @@ int main(int argc, char *argv[])
     //  std::cout << "VBF Preselected!!";
     mva.vbfPreselection = vbfPreselection;
 
-    if(vbfPreselection) counterJetSel++;
-    if(!vbfPreselection) counterNonJetSel++;
-    if ((!vbfPreselection) && mva.ptDiMu >= 10.) counterDiPt10GeV++;
+    if(!vbfPreselection) counterNonJetSel[Isample]++;
+    if ((!vbfPreselection) && mva.ptDiMu >= 10.) counterDiPt10GeV[Isample]++;
+    if(vbfPreselection) counterJetSel[Isample]++;
+    if (Flag_BDT == 1){  
+        if ( !((counterJetSel[Isample]%2) == 0) )continue; // for seperated BDT training and test sample
+    } 
 
     if(vbfPreselection)
         hists.countsHist->Fill(6);
@@ -1348,7 +1414,7 @@ int main(int argc, char *argv[])
     float likeValVBF =  mva.getMVA(cfgNameVBF,"Likelihood");
     bool passIncBDTCut = mva.getMVAPassBDTCut(cfgNameInc);
     bool passVBFBDTCut = mva.getMVAPassBDTCut(cfgNameVBF);
-    if(vbfPreselection && passVBFBDTCut) counterBDTvbfCut++;
+    if(vbfPreselection && passVBFBDTCut) counterBDTvbfCut[Isample]++;
     mva.bdtValInc = bdtValInc;
     mva.bdtValVBF = bdtValVBF;
 
@@ -1595,78 +1661,123 @@ int main(int argc, char *argv[])
   time_t timeEndEventLoop = time(NULL);
 
 //////////////////////////////////////////////////////////////////////
-  std::cout << " ########################################## \n";
-  std::cout << " Events after: \n\n";
-  std::cout << " Gen Mass   Cuts = " << counterGenBoson << std::endl;
-  std::cout << " Minimal    Cuts = " << counterMinimCuts << std::endl;
-  std::cout << " pT/eta     Cuts = " << counterAccCuts   << std::endl;
-  std::cout << " Muon ID    Cuts = " << counterIDCuts    << std::endl;
-  std::cout << " Muon Iso   Cuts = " << counterIsoCuts   << std::endl;
-  std::cout << " Trigger    Cuts = " << counterTrigCuts  << std::endl;
-  std::cout << " VBF pres.  Cuts = " << counterJetSel  << std::endl;
-  std::cout << " VBF BDT    Cuts = " << counterBDTvbfCut  << std::endl;
-  std::cout << " non VBF pres.  Cuts = " << counterNonJetSel  << std::endl;
-  std::cout << " pt(mumu)>10 GeV = " << counterDiPt10GeV  << std::endl;
-  // calculate efficiency and binom. error:
-  // calculate efficiency and binom. error:
-  EffMinimCuts = float(counterMinimCuts)/float(counterGenBoson);
-  EffAccCuts = float(counterAccCuts)/float(counterGenBoson);
-  EffIDCuts = float(counterIDCuts)/float(counterGenBoson);
-  EffIsoCuts = float(counterIsoCuts)/float(counterGenBoson);
-  EffTrigCuts = float(counterTrigCuts)/float(counterGenBoson);
-  EffJetSel = float(counterJetSel)/float(counterGenBoson);
-  EffBDTvbfCut = float(counterBDTvbfCut)/float(counterGenBoson);
-  EffNonJetSel = float(counterNonJetSel)/float(counterGenBoson);
-  EffDiPt10GeV = float(counterDiPt10GeV)/float(counterGenBoson);
+  for(unsigned iS = 0; iS<Nsample ;iS++){
 
-  dEffMinimCuts = sqrt( EffMinimCuts*(1-EffMinimCuts)/float(counterGenBoson) );
-  dEffAccCuts = sqrt( EffAccCuts*(1-EffAccCuts)/float(counterGenBoson) );
-  dEffIDCuts = sqrt( EffIDCuts*(1-EffIDCuts)/float(counterGenBoson) );
-  dEffIsoCuts = sqrt( EffIsoCuts*(1-EffIsoCuts)/float(counterGenBoson) );
-  dEffTrigCuts = sqrt( EffTrigCuts*(1-EffTrigCuts)/float(counterGenBoson) );
-  dEffJetSel = sqrt( EffJetSel*(1-EffJetSel)/float(counterGenBoson) );
-  dEffBDTvbfCut = sqrt( EffBDTvbfCut*(1-EffBDTvbfCut)/float(counterGenBoson) );
-  dEffNonJetSel = sqrt( EffNonJetSel*(1-EffNonJetSel)/float(counterGenBoson) );
-  dEffDiPt10GeV = sqrt( EffDiPt10GeV*(1-EffDiPt10GeV)/float(counterGenBoson) );
-  std::cout << " ########################################## \n";
-  std::cout << " Efficiency after selection: \n\n";
-  cout.unsetf(ios::floatfield);            // floatfield not set
-  cout.precision(3);
-  std::cout << " Opposit charge, M_RECO = 110-150 GeV  = " << EffMinimCuts <<" +/- ";
-  cout.precision(1);
-  std::cout << dEffMinimCuts << std::endl;
-  cout.precision(3);
-  std::cout << " + pT > 25 GeV,|eta| < 2.1         Cut = " << EffAccCuts   <<" +/- ";
-  cout.precision(1);
-  std::cout << dEffAccCuts   << std::endl;
-  cout.precision(3);
-  std::cout << " + Tight Muon ID                   Cut = " << EffIDCuts    <<" +/- " ;
-  cout.precision(1);
-  std::cout <<  dEffIDCuts    << std::endl;
-  cout.precision(3);
-  std::cout << " + Muon Relative PF Isolation      Cut = " << EffIsoCuts   <<" +/- " ;
-  cout.precision(1);
-  std::cout << dEffIsoCuts   << std::endl;
-  cout.precision(3);
-  std::cout << " + Trigger HLT_Mu24Iso_eta2p1      Cut = " << EffTrigCuts  <<" +/- " ;
-  cout.precision(1);
-  std::cout << dEffTrigCuts  << std::endl;
-  cout.precision(3);
-  std::cout << " + VBF Jet preselection            Cut = " << EffJetSel    <<" +/- " ;
-  cout.precision(1);
-  std::cout << dEffJetSel << std::endl;
-  cout.precision(3);
-  std::cout << " + VBF BDT                         Cut = " << EffBDTvbfCut    <<" +/- " ;
-  cout.precision(1);
-  std::cout << dEffBDTvbfCut << std::endl;
-  cout.precision(3);
-  std::cout << " + non VBF Jet preselection         Cut = " << EffNonJetSel    <<" +/- " ;
-  cout.precision(1);
-  std::cout << dEffNonJetSel << std::endl;
-  cout.precision(3);
-  std::cout << " + pt(mumu)> 10 GeV/c, no VBF pres. and no BDT  Cut = " << EffDiPt10GeV    <<" +/- " ;
-  cout.precision(1);
-  std::cout << dEffDiPt10GeV << std::endl;
+     std::cout << " ########################################## \n";
+     std::cout << " ########################################## \n";
+     std::cout << " For subcategory = " << iS << " Events after: \n\n";
+     //counterGenBoson = counterGenBoson - 40000;
+     std::cout << " Gen Mass   Cuts = " << counterGenBoson[iS] << std::endl;
+     std::cout << " Minimal    Cuts = " << counterMinimCuts[iS] << std::endl;
+     std::cout << " pT/eta     Cuts = " << counterAccCuts[iS]   << std::endl;
+     std::cout << " Muon ID    Cuts = " << counterIDCuts[iS]    << std::endl;
+     std::cout << " Muon Iso   Cuts = " << counterIsoCuts[iS]   << std::endl;
+     std::cout << " Trigger    Cuts = " << counterTrigCuts[iS]  << std::endl;
+     if(Flag_BDT == 1){
+        counterBDTvbfCut[iS] = 2*counterBDTvbfCut[iS];     
+     } 
+     std::cout << " VBF pres.  Cuts = " << counterJetSel[iS]  << std::endl;
+     std::cout << " VBF BDT    Cuts = " << counterBDTvbfCut[iS]  << std::endl;
+     std::cout << " non VBF pres.  Cuts = " << counterNonJetSel[iS]  << std::endl;
+     std::cout << " pt(mumu)>10 GeV = " << counterDiPt10GeV[iS]  << std::endl;
+     // calculate efficiency and binom. error:
+     // calculate efficiency and binom. error:
+     EffMinimCuts[iS] = float(counterMinimCuts[iS])/float(counterGenBoson[iS]);
+     EffAccCuts[iS] = float(counterAccCuts[iS])/float(counterGenBoson[iS]);
+     EffIDCuts[iS] = float(counterIDCuts[iS])/float(counterGenBoson[iS]);
+     EffIsoCuts[iS] = float(counterIsoCuts[iS])/float(counterGenBoson[iS]);
+     EffTrigCuts[iS] = float(counterTrigCuts[iS])/float(counterGenBoson[iS]);
+     EffJetSel[iS] = float(counterJetSel[iS])/float(counterGenBoson[iS]);
+     EffBDTvbfCut[iS] = float(counterBDTvbfCut[iS])/float(counterGenBoson[iS]);
+     EffNonJetSel[iS] = float(counterNonJetSel[iS])/float(counterGenBoson[iS]);
+     EffDiPt10GeV[iS] = float(counterDiPt10GeV[iS])/float(counterGenBoson[iS]);
+
+     int iTypeDEff = 1;// 1 - TEfficiency, 2 - Benomial  
+     if(iTypeDEff == 2){
+      dEffMinimCuts[iS] = sqrt( EffMinimCuts[iS]*(1-EffMinimCuts[iS])/float(counterGenBoson[iS]) );
+      dEffAccCuts[iS] = sqrt( EffAccCuts[iS]*(1-EffAccCuts[iS])/float(counterGenBoson[iS]) );
+      dEffIDCuts[iS] = sqrt( EffIDCuts[iS]*(1-EffIDCuts[iS])/float(counterGenBoson[iS]) );
+      dEffIsoCuts[iS] = sqrt( EffIsoCuts[iS]*(1-EffIsoCuts[iS])/float(counterGenBoson[iS]) );
+      dEffTrigCuts[iS] = sqrt( EffTrigCuts[iS]*(1-EffTrigCuts[iS])/float(counterGenBoson[iS]) );
+      dEffJetSel[iS] = sqrt( EffJetSel[iS]*(1-EffJetSel[iS])/float(counterGenBoson[iS]) );
+      dEffBDTvbfCut[iS] = sqrt( EffBDTvbfCut[iS]*(1-EffBDTvbfCut[iS])/float(counterGenBoson[iS]) );
+      dEffNonJetSel[iS] = sqrt( EffNonJetSel[iS]*(1-EffNonJetSel[iS])/float(counterGenBoson[iS]) );
+      dEffDiPt10GeV[iS] = sqrt( EffDiPt10GeV[iS]*(1-EffDiPt10GeV[iS])/float(counterGenBoson[iS]) );
+     }
+     if(iTypeDEff == 1){
+      //0.683 - 1 sigma, true - upper, false - lower boundary
+      bool upper = true;
+      dEffMinimCuts[iS] = TEfficiency::ClopperPearson( counterGenBoson[iS], counterMinimCuts[iS], 0.683, upper ) - EffMinimCuts[iS]; 
+      dEffAccCuts[iS]   = TEfficiency::ClopperPearson( counterGenBoson[iS], counterAccCuts[iS],   0.683, upper ) - EffAccCuts[iS]; 
+      dEffIDCuts[iS]    = TEfficiency::ClopperPearson( counterGenBoson[iS], counterIDCuts[iS],    0.683, upper ) - EffIDCuts[iS]; 
+      dEffIsoCuts[iS]   = TEfficiency::ClopperPearson( counterGenBoson[iS], counterIsoCuts[iS],   0.683, upper ) - EffIsoCuts[iS]; 
+      dEffTrigCuts[iS]  = TEfficiency::ClopperPearson( counterGenBoson[iS], counterTrigCuts[iS],  0.683, upper ) - EffTrigCuts[iS]; 
+      dEffJetSel[iS]    = TEfficiency::ClopperPearson( counterGenBoson[iS], counterJetSel[iS],    0.683, upper ) - EffJetSel[iS]; 
+      dEffBDTvbfCut[iS] = TEfficiency::ClopperPearson( counterGenBoson[iS], counterBDTvbfCut[iS], 0.683, upper ) - EffBDTvbfCut[iS]; 
+      dEffNonJetSel[iS] = TEfficiency::ClopperPearson( counterGenBoson[iS], counterNonJetSel[iS], 0.683, upper ) - EffNonJetSel[iS]; 
+      dEffDiPt10GeV[iS] = TEfficiency::ClopperPearson( counterGenBoson[iS], counterDiPt10GeV[iS], 0.683, upper ) - EffDiPt10GeV[iS]; 
+     }
+     std::cout << " ########################################## \n";
+     std::cout << " Efficiency after selection: \n\n";
+     cout.unsetf(ios::floatfield);            // floatfield not set
+     cout.precision(3);
+     std::cout << " Opposit charge, M_RECO = 110-150 GeV  = " << EffMinimCuts[iS] <<" +/- ";
+     cout.precision(1);
+     std::cout << dEffMinimCuts[iS] << std::endl;
+     cout.precision(3);
+     std::cout << " + pT > 25 GeV,|eta| < 2.1         Cut = " << EffAccCuts[iS]   <<" +/- ";
+     cout.precision(1);
+     std::cout << dEffAccCuts[iS]   << std::endl;
+     cout.precision(3);
+     std::cout << " + Tight Muon ID                   Cut = " << EffIDCuts[iS]    <<" +/- " ;
+     cout.precision(1);
+     std::cout <<  dEffIDCuts[iS]    << std::endl;
+     cout.precision(3);
+     std::cout << " + Muon Relative PF Isolation      Cut = " << EffIsoCuts[iS]   <<" +/- " ;
+     cout.precision(1);
+     std::cout << dEffIsoCuts[iS]   << std::endl;
+     cout.precision(3);
+     std::cout << " + Trigger HLT_Mu24Iso_eta2p1      Cut = " << EffTrigCuts[iS]  <<" +/- " ;
+     cout.precision(1);
+     std::cout << dEffTrigCuts[iS]  << std::endl;
+     cout.precision(3);
+     std::cout << " + VBF Jet preselection            Cut = " << EffJetSel[iS]    <<" +/- " ;
+     cout.precision(1);
+     std::cout << dEffJetSel[iS] << std::endl;
+     cout.precision(3);
+     std::cout << " + VBF BDT                         Cut = " << EffBDTvbfCut[iS]    <<" +/- " ;
+     cout.precision(1);
+     std::cout << dEffBDTvbfCut[iS] << std::endl;
+     cout.precision(3);
+     std::cout << " + non VBF Jet preselection         Cut = " << EffNonJetSel[iS]    <<" +/- " ;
+     cout.precision(1);
+     std::cout << dEffNonJetSel[iS] << std::endl;
+     cout.precision(3);
+     std::cout << " + pt(mumu)> 10 GeV/c, no VBF pres. and no BDT  Cut = " << EffDiPt10GeV[iS]    <<" +/- " ;
+     cout.precision(1);
+     std::cout << dEffDiPt10GeV[iS] << std::endl;
+
+  } // end for 
+
+
+  // write BDT cut efficiency to myfile
+  myfile << "EffBDT{}  = {";
+  myfile.precision(3); 
+  for(unsigned iS = 0; iS<Nsample ;iS++){
+     myfile << EffBDTvbfCut[iS] << ", "; 
+  }
+  myfile << "};\n\n";
+
+  myfile << "dEffBDT{} = {";
+  myfile.precision(1); 
+  for(unsigned iS = 0; iS<Nsample ;iS++){
+     myfile << dEffBDTvbfCut[iS] << ", "; 
+  }
+  myfile << "};\n\n";
+
+
+  myfile.close();
+
 //////////////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////
 
