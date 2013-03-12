@@ -39,24 +39,24 @@
 #include "./DataFormat.h"
 using namespace std;
 
-  int MuCorr = 0; // 0 - no mu correction
+  int MuCorr = 2; // 0 - no mu correction
                   // 1 - Rochester correction
                   // 2 - MuscleFit correcton in data
 
-  int Ismear = 1; // 0 - take pt reco from MC
+  int Ismear = 0; // 0 - take pt reco from MC
                   // 1 - smear pt with own tools using pt gen post FSR  
                   // 2 - smear pt with PT_smear = PT_gen + (PT_reco-PT_gen)*SF
 
-  TString RunYear = "2012"; // 2011A, 2011B, 2012ABCsmall, 2012
+  TString RunYear = "2011"; // 2011A, 2011B, 2012ABCsmall, 2012
   TString ExtraInfo = "Zmumu";
   //TString ExtraInfo = "ggHiggs";
   //TString ExtraInfo = "ZmumuTEST";
 
-  //TString Small = ""; // for default binning 
-  TString Small = "Small"; // for small binning 
+  TString Small = ""; // for default binning 
+  //TString Small = "Small"; // for small binning 
 
-  //const float PTbin[] = {25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 80., 100., 150., 300.}; //default
-  const float PTbin[] = {25., 35., 45., 55., 65., 80., 300.}; //small binning
+  const float PTbin[] = {25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 80., 100., 150., 300.}; //default
+  //const float PTbin[] = {25., 35., 45., 55., 65., 80., 300.}; //Small binning
   const float ETAbin[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);
   const int NETAhist = (sizeof(ETAbin)/sizeof(float)-1);
@@ -141,8 +141,8 @@ void createFuncSmearingFit(){
 	userStyle();
 	//modifiedStyle();
   	// ---- open the MC files ----
-        //TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+Small+RunYear+"PtCorr%dIsmear%dGood.root", MuCorr, Ismear), "READ");
-        TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+Small+RunYear+"PtCorr%dIsmear%dSF1Good.root", MuCorr, Ismear), "READ");
+        TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+Small+RunYear+"PtCorr%dIsmear%dGood.root", MuCorr, Ismear), "READ");
+        //TFile *theFile= new TFile(Form("NtupleCreateFuncSmearing_"+ExtraInfo+Small+RunYear+"PtCorr%dIsmear%dSF1Good.root", MuCorr, Ismear), "READ");
         theFile -> cd();
 
      hDiMuonPt  = (TH1F*)theFile -> Get("hDiMuonPt");

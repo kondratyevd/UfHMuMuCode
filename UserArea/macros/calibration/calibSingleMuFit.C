@@ -58,7 +58,7 @@ using namespace std;
 */
 
   int FitReq = 1; // 0: fit from 60 to 120 GeV; 1: fit from 80to 100 GeV:
-  int MuCorr = 2; // 0 - no mu correction
+  int MuCorr = 0; // 0 - no mu correction
                   // 1 - Rochester correction
                   // 2 - MuscleFit correcton in data
   int Ismear = 0; // 1 - make smear by own 
@@ -68,7 +68,8 @@ using namespace std;
   //TString ExtaInfo = "2011AV00_01_01"; 
   //TString ExtaInfo = "2011BV00_01_01"; 
   //TString ExtaInfo = "2012ABCV00_01_01"; 
-  TString ExtaInfo = "2012V00_01_10"; 
+  //TString ExtaInfo = "2012V00_01_10"; 
+  TString ExtaInfo = "2011V00_01_10"; 
 
   //TString ExtaInfo = "2012AV00_01_01"; 
   //TString ExtaInfo = "2012ABCHighPtV00_01_01"; 

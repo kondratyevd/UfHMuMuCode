@@ -47,22 +47,22 @@
 #include "./DataFormat.h"
 using namespace std;
 
-  int MuCorr = 0; // 0 - no muon correction, 
+  int MuCorr = 2; // 0 - no muon correction, 
                   // 1 - Rochester Correction,
                   // 2 - MuscleFit correcton 
-  int Ismear = 1; // 0 - take pt reco from MC
+  int Ismear = 0; // 0 - take pt reco from MC
                   // 1 - smear pt with own tools using pt gen post FSR  
                   // 2 - smear pt with PT_smear = PT_gen + (PT_reco-PT_gen)*SF
    
-  TString RunYear = "2012"; // 2012; 2011; 2011A; 2011B;  
+  TString RunYear = "2011"; // 2012; 2011; 2011A; 2011B;  
 
   TString ExtraInfo = "Zmumu";
   //TString ExtraInfo = "ggHiggs";
 
 
   //int RunYear = 2012; // 2011 or 2012
-  //const float PTbin[] = {25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 80., 100., 150., 300.}; //default
-  const float PTbin[] = {25., 35., 45., 55., 65., 80., 300.}; //small binning 
+  const float PTbin[] = {25., 30., 35., 40., 45., 50., 55., 60., 65., 70., 80., 100., 150., 300.}; //default
+  //const float PTbin[] = {25., 35., 45., 55., 65., 80., 300.}; //small binning 
   const float ETAbin[] = {-2.1, -1.6, -1.2, -0.8, 0., 0.8, 1.2, 1.6, 2.1};
   const int NPThist = (sizeof(PTbin)/sizeof(float)-1);
   const int NETAhist = (sizeof(ETAbin)/sizeof(float)-1);
@@ -150,7 +150,8 @@ void createFuncSmearing::main(){
            if(ExtraInfo == "Zmumu" && (RunYear == "2012" || RunYear == "2012ABCsmall") ) treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2star_v2_8TeV-powheg-pythia6_Summer12_DR53X-PU_S10_START53_V7A-v1/minimal/DYToMuMu_minimal.root");
            // 2012 ggHiggs V00-01-10
            if(ExtraInfo == "ggHiggs" && (RunYear == "2012" || RunYear == "2012ABCsmall") ) treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_5/V00-01-10/NtuplesMCPrivateSignal/ggHmumu8TeV125.root");
-           if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011")treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia_Fall11-PU_S6_START44_V9B-v1/minimal/DYToMuMu_minimal.root");
+           //if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011")treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-01/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia_Fall11-PU_S6_START44_V9B-v1/minimal/DYToMuMu_minimal.root");
+           if(RunYear == "2011A" || RunYear == "2011B" || RunYear == "2011")treeMC -> AddFile("/data/uftrig01b/digiovan/root/higgs/CMSSW_4_4_5/V00-01-10/NtuplesMCDYToMuMu_M-20_CT10_TuneZ2_7TeV-powheg-pythia_Fall11-PU_S6_START44_V9B-v1/minimal/DYToMuMu_minimal.root");
 
         TFile *theFile    = new TFile(Form("NtupleCreateFuncSmearing.root"), "RECREATE");
 
@@ -206,8 +207,8 @@ void createFuncSmearing::main(){
         cout << "Nevent to process = " << treeMC->GetEntries() << endl;
         int nbad_tpt = 0;
         int nbad_tMass = 0;
-        for( int k=0; k<1000000; k++)
-        //for( int k=0; k<treeMC->GetEntries(); k++)
+        //for( int k=0; k<1000000; k++)
+        for( int k=0; k<treeMC->GetEntries(); k++)
         {
                 //process progress
                 if(k!=0 && (k%10000)==0)
