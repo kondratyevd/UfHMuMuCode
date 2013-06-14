@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.13 2012/12/05 21:20:20 jhugon Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.15 2013/06/14 14:23:35 digiovan Exp $
 //
 //
 
@@ -138,7 +138,7 @@ Implementation:
 
 // patEle
 // helper to apply standard cuts
-#include "EGamma/EGammaAnalysisTools/interface/EGammaCutBasedEleId.h"
+//#include "EGamma/EGammaAnalysisTools/interface/EGammaCutBasedEleId.h"
 #include "RecoEcal/EgammaCoreTools/interface/EcalClusterLazyTools.h"
 #include "RecoEgamma/EgammaTools/interface/ConversionTools.h"
 #include "TrackingTools/IPTools/interface/IPTools.h"
@@ -151,6 +151,9 @@ Implementation:
 #include "DataFormats/PatCandidates/interface/MET.h"
 
 #include "DataFormats/Common/interface/View.h"
+
+
+#include "CMGTools/External/interface/PileupJetIdentifier.h"
 
 bool sortGenJetFunc(reco::GenJet i, reco::GenJet j){ return (i.pt()>j.pt()); }
 
@@ -1336,15 +1339,22 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   std::vector<int> puIdSimpleId = getPUJetID(jetsForPUId,iEvent,puJetMvaSimpleIdTag);
   std::vector<int> puIdCutId = getPUJetID(jetsForPUId,iEvent,puJetMvaCutIdTag);
 
+  std::cout << "puIdFullId.size()=" << puIdFullId.size() << std::endl;
+
   for(unsigned i=0; i<10;i++)
     {
-      if(i<puIdFullDisc.size())
+
+      if(i<puIdFullDisc.size()){
+        //std::cout << "puIdFullDisc[" << i << "]=" << puIdFullDisc[i] << std::endl;
  	_puJetFullDisc[i] = puIdFullDisc[i];
+      }
       else
  	_puJetFullDisc[i] = -1000.0;
 
-      if(i<puIdFullId.size())
- 	_puJetFullId[i] = puIdFullId[i];
+      if(i<puIdFullId.size()){
+        //std::cout << "puIdFullId[" << i << "]=" << puIdFullId[i] << std::endl;
+       	_puJetFullId[i] = puIdFullId[i];
+      }
       else
  	_puJetFullId[i] = -1000.0;
 
@@ -1368,6 +1378,34 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       else
  	_puJetCutId[i] = -1000.0;
     }
+
+//   edm::Handle<edm::View<pat::Jet> > myjets;
+//   iEvent.getByLabel(pfJetsTag,myjets);
+
+//   edm::Handle<edm::ValueMap<float> > puJetIdMVA;
+//   iEvent.getByLabel("fullDiscriminant",puJetIdMVA);
+
+//   edm::Handle<edm::ValueMap<int> > puJetIdFlag;
+//   iEvent.getByLabel("fullId",puJetIdFlag);
+
+//   for ( unsigned int i=0; i<myjets->size(); ++i ) {
+//     const pat::Jet & patjet = myjets->at(i);
+//     float mva   = (*puJetIdMVA)[myjets->refAt(i)];
+//     int    idflag = (*puJetIdFlag)[myjets->refAt(i)];
+//     std::cout << "jet " << i << " pt " << patjet.pt() << " eta " << patjet.eta() << " PU JetID MVA " << mva; 
+//     if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kLoose ) ) {
+//       std::cout << " pass loose wp";
+//     }
+//     if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kMedium ) ) {
+//       std::cout << " pass medium wp";
+//     }
+//     if( PileupJetIdentifier::passJetId( idflag, PileupJetIdentifier::kTight ) ) {
+//       std::cout << " pass tight wp";
+//     }
+//     std::cout << std::endl;
+//   }
+
+
 
   edm::Handle < reco::GenJetCollection > genJets;
   if( genJetsTag.label() != "null" ) iEvent.getByLabel(genJetsTag, genJets);
@@ -3632,10 +3670,12 @@ std::vector<float> UFDiMuonsAnalyzer::getPUJetIDDisc(edm::Handle<edm::View<pat::
   std::vector<float> result(nJets,-99999999.0);
   if(tag.label()=="null")
     return result;
+
   edm::Handle<edm::ValueMap<float> > puJetId;
   event.getByLabel(tag,puJetId);
   if (!puJetId.isValid())
     return result;
+
   for(unsigned i=0; i<nJets;++i)
   {
     float id = (*puJetId)[jets->refAt(i)];

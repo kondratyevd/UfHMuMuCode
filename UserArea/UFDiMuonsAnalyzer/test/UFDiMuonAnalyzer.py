@@ -11,15 +11,17 @@ else:
     print 'Running over MC sample'
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 1
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 
 process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 
 ## Geometry and Detector Conditions (needed for a few patTuple production steps)
 
 if thisIs2011:
+    print "Analyzing a 7 TeV dataset"
     process.load("Configuration.StandardSequences.GeometryExtended_cff")
 else:
+    print "Analyzing a 8 TeV dataset"
     process.load("Configuration.Geometry.GeometryIdeal_cff")
 
 process.load('Configuration.EventContent.EventContent_cff')
@@ -29,19 +31,19 @@ from Configuration.AlCa.autoCond import autoCond
 
 
 # global tag
-print 'Loading Global Tag: FT_R_53_V6'
-process.GlobalTag.globaltag = "FT_R_53_V6::All"
+print 'Loading Global Tag: FT_53_V21_AN4'
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+process.GlobalTag.globaltag = "FT_53_V21_AN4::All"
 
-
-#===============================================================================
 
 # ------------ PoolSource -------------
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
-process.source = cms.Source("PoolSource",
-                            fileNames = cms.untracked.vstring())
-process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(True) )
+process.source = cms.Source("PoolSource",fileNames = cms.untracked.vstring('file:SingleMuRun2012A-22Jan2013-v1_1_3_W7l.root'))
+process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
 process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange()
 # -------- PoolSource END -------------
+
+#===============================================================================
 
 ## Test JEC from test instances of the global DB
 #process.load("PhysicsTools.PatAlgos.patTestJEC_cfi")
@@ -76,11 +78,6 @@ process.load("PhysicsTools.PatAlgos.patSequences_cff")
 # this function will modify the PAT sequences.
 from PhysicsTools.PatAlgos.tools.pfTools import *
 
-
-
-#PF2PAT
-from PhysicsTools.PatAlgos.tools.pfTools import *
-
 # An empty postfix means that only PF2PAT is run,
 # otherwise both standard PAT and PF2PAT are run. In the latter case PF2PAT
 # collections have standard names + postfix (e.g. patElectronPFlow)
@@ -92,19 +89,20 @@ from PhysicsTools.PatAlgos.tools.pfTools import *
 ###from PhysicsTools.PatAlgos.tools.coreTools import *
 ##from PhysicsTools.PatAlgos.tools.pfTools import *
 
-
 postfix = "PFlow"
 jetAlgo="AK5"
+
+# this is to fix a problem with the standard PAT which was using L1Offset
+# which is not anymore available for gt FT_53_V21_AN4
+process.patJetCorrFactors.levels =  ['L1FastJet','L2Relative','L3Absolute']
+process.patJetCorrFactors.useRho = True
 
 jetCorrections = ('AK5PF', ['L1FastJet','L2Relative','L3Absolute'])
 if thisIsData:
   jetCorrections = ('AK5PF', ['L1FastJet','L2Relative','L3Absolute','L2L3Residual'])
 
 usePF2PAT(process,runPF2PAT=True, jetAlgo=jetAlgo, runOnMC=(not thisIsData), postfix=postfix, jetCorrections=jetCorrections, typeIMetCorrections=True)
-usePFIso( process ) # GP
-
-from PhysicsTools.PatAlgos.tools.trigTools import *
-switchOnTrigger( process )
+usePFIso( process ) 
 
 if thisIsData:
     # removing MC matching for standard PAT sequence
@@ -210,7 +208,7 @@ else:
   process.dimuons.isMonteCarlo   = cms.bool(True) 
 process.dimuons.checkTrigger   = cms.bool(False)
 process.dimuons.processName    = cms.string("HLT")
-process.dimuons.triggerNames   = cms.vstring("HLT_IsoMu24","HLT_Mu17_Mu8","HLT_Mu17_TkMu8")
+process.dimuons.triggerNames   = cms.vstring("HLT_IsoMu24_eta2p1","HLT_Mu40_eta2p1")
 process.dimuons.triggerResults = cms.InputTag("TriggerResults","","HLT")
 process.dimuons.triggerEvent   = cms.InputTag("hltTriggerSummaryAOD","","HLT")
 
@@ -221,8 +219,8 @@ process.dimuons.metTag         = cms.InputTag("patMETsPFlow")
 process.dimuons.pfJetsTag      = cms.InputTag("cleanPatJetsPFlow")
 process.dimuons.genJetsTag     = cms.InputTag("null")
 
-process.dimuons.puJetMvaFullDiscTag = cms.InputTag("puJetMva","fullDiscriminant")
-process.dimuons.puJetMvaFullIdTag = cms.InputTag("puJetMva","fullId")
+process.dimuons.puJetMvaFullDiscTag = cms.InputTag("puJetMva","full53xDiscriminant")
+process.dimuons.puJetMvaFullIdTag = cms.InputTag("puJetMva","full53xId")
 process.dimuons.puJetMvaSimpleDiscTag = cms.InputTag("puJetMva","simpleDiscriminant")
 process.dimuons.puJetMvaSimpleIdTag = cms.InputTag("puJetMva","simpleId")
 process.dimuons.puJetMvaCutDiscTag = cms.InputTag("puJetMva","cutbasedDiscriminant")
@@ -253,7 +251,8 @@ process.kt6PFJets25asHtoZZto4l = process.kt6PFJets.clone(rParam = cms.double(0.6
 # Electron Selection
 
 #Electron ID
-process.load('EGamma.EGammaAnalysisTools.electronIdMVAProducer_cfi')
+#process.load('EGamma.EGammaAnalysisTools.electronIdMVAProducer_cfi')
+process.load('EgammaAnalysis.ElectronTools.electronIdMVAProducer_cfi')
 process.mvaID = cms.Sequence(  process.mvaTrigV0 + process.mvaNonTrigV0 )
 
 # try
@@ -281,33 +280,32 @@ process.patElectronsPFlow.isolationValuesNoPFId = cms.PSet(
 
 #===============================================================================
 
-
 process.p = cms.Path(#
                      process.mvaID*                  
                      process.patDefaultSequence*
                      getattr(process,"patPF2PATSequence"+postfix)*
                      #process.patPF2PATSequencePFlow *
                      process.cleanPatJetsPFlow*
-                     process.puJetId*
-                     process.puJetMva*
+                     process.puJetIdSqeuence*#process.puJetId*
+                     #process.puJetMva*
                      process.kt6PFJets25*
                      process.kt6PFJets25asHtoZZto4l*
                      process.dimuons
                      )
 
-process.outpath = cms.EndPath()
+#process.outpath = cms.EndPath()
 
-#Test to dump file content
+## #Test to dump file content
 ## process.output = cms.OutputModule("PoolOutputModule",
 ##                                   outputCommands = cms.untracked.vstring("keep *"),
-##                                   fileName = cms.untracked.string('DYJetsToLL.root')
+##                                   fileName = cms.untracked.string('dump.root')
 ##                                   )
 ## 
 ## process.out_step = cms.EndPath(process.output)
 
 #===============================================================================
 
-process.dimuons.getFilename    = cms.untracked.string("yourNtuple.root")
+process.dimuons.getFilename    = cms.untracked.string("SingleMuRun2012A-22Jan2013-v1.root")
 
 process.source.fileNames.extend(
 [
@@ -320,4 +318,5 @@ process.source.fileNames.extend(
 #process.out.outputCommands = cms.untracked.vstring("keep *")
 #process.outpath = cms.EndPath(process.out)
 #process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20) )
+
 
