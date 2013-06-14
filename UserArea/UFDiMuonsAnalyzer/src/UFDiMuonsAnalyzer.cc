@@ -13,7 +13,7 @@ Implementation:
 //
 // Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
 //         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.14 2012/12/13 17:30:26 digiovan Exp $
+// $Id: UFDiMuonsAnalyzer.cc,v 1.15 2013/06/14 14:23:35 digiovan Exp $
 //
 //
 
@@ -3668,15 +3668,14 @@ std::vector<float> UFDiMuonsAnalyzer::getPUJetIDDisc(edm::Handle<edm::View<pat::
   }
   unsigned nJets = jets->size();
   std::vector<float> result(nJets,-99999999.0);
-  std::cout << "the label is " << tag.label() << std::endl;
   if(tag.label()=="null")
     return result;
+
   edm::Handle<edm::ValueMap<float> > puJetId;
   event.getByLabel(tag,puJetId);
-  std::cout << "is this tag valid? " << puJetId.isValid() << std::endl;
   if (!puJetId.isValid())
     return result;
-  std::cout << "loop over the jets..." << std::endl;
+
   for(unsigned i=0; i<nJets;++i)
   {
     float id = (*puJetId)[jets->refAt(i)];
