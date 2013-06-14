@@ -219,8 +219,12 @@ process.dimuons.metTag         = cms.InputTag("patMETsPFlow")
 process.dimuons.pfJetsTag      = cms.InputTag("cleanPatJetsPFlow")
 process.dimuons.genJetsTag     = cms.InputTag("null")
 
-process.dimuons.puJetMvaFullDiscTag = cms.InputTag("puJetMva","fullDiscriminant")
-process.dimuons.puJetMvaFullIdTag = cms.InputTag("puJetMva","fullId")
+# for 53X < 22 Jan 2013 ReReco 
+#process.dimuons.puJetMvaFullDiscTag = cms.InputTag("puJetMva","fullDiscriminant")
+process.dimuons.puJetMvaFullDiscTag = cms.InputTag("puJetMva","full53xDiscriminant")
+# for 53X < 22 Jan 2013 ReReco
+#process.dimuons.puJetMvaFullIdTag = cms.InputTag("puJetMva","fullId")
+process.dimuons.puJetMvaFullIdTag = cms.InputTag("puJetMva","full53xId")
 process.dimuons.puJetMvaSimpleDiscTag = cms.InputTag("puJetMva","simpleDiscriminant")
 process.dimuons.puJetMvaSimpleIdTag = cms.InputTag("puJetMva","simpleId")
 process.dimuons.puJetMvaCutDiscTag = cms.InputTag("puJetMva","cutbasedDiscriminant")
