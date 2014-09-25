@@ -1,8 +1,0 @@
-
-cmsMkdir /store/user/$USER/higgs/
-cmsMkdir /store/user/$USER/higgs/$CMSSW_VERSION/
-cmsMkdir /store/user/$USER/higgs/$CMSSW_VERSION/V00-01-10/
-cmsMkdir /store/user/$USER/higgs/$CMSSW_VERSION/V00-01-10/Ntuples/
-cmsMkdir /store/user/$USER/higgs/$CMSSW_VERSION/V00-01-10/Ntuples/MC/
-cmsMkdir /store/user/$USER/higgs/$CMSSW_VERSION/V00-01-10/Ntuples/Data/
-
