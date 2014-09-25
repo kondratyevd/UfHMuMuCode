@@ -182,6 +182,8 @@ typedef struct {
   float genInvF[10];
   // Auxiliary Fraction (Undecayed Sigmas, etc.)
   float genAuxF[10];
+  // PUID
+  float puid[10];
 } _PFJetInfo;
 
 // generator level jets

@@ -145,9 +145,6 @@ Implementation:
 
 #include "DataFormats/Common/interface/View.h"
 
-
-#include "CMGTools/External/interface/PileupJetIdentifier.h"
-
 bool sortGenJetFunc(reco::GenJet i, reco::GenJet j){ return (i.pt()>j.pt()); }
 
 // Add the data formats
@@ -156,6 +153,7 @@ bool sortGenJetFunc(reco::GenJet i, reco::GenJet j){ return (i.pt()>j.pt()); }
 // general 
 double const PDG_MASS_Z  = 91.1876;//GeV/c2
 double const PDG_WIDTH_Z = 2.4952; //GeV/c2
+double const MASS_MUON = 0.105658367;    //GeV/c2
 
 //
 // class declaration
@@ -182,7 +180,6 @@ public:
     bool operator() (MuonPair pair1, 
   		     MuonPair pair2) {
 
-      double const MASS_MUON = 0.105658367;    //GeV/c2
       TLorentzVector muon11, muon12, dimuon1;
 
       //reco::TrackRef const muon11Track = pair1.first . innerTrack();
@@ -238,8 +235,6 @@ public:
 
   // combined muon-muon info
   float _recoCandMass;
-  float _recoCandMassRes;
-  float _recoCandMassResCov;
   float _recoCandPt;
   float _recoCandEta; // pseudo rapidity
   float _recoCandY;   // rapidity
@@ -316,13 +311,6 @@ public:
   _MetInfo     _metInfo;
   _PFJetInfo   _pfJetInfo;
   _GenJetInfo  _genJetInfo;
-
-  float _puJetFullDisc[10];
-  float _puJetFullId[10];
-  float _puJetSimpleDisc[10];
-  float _puJetSimpleId[10];
-  float _puJetCutDisc[10];
-  float _puJetCutId[10];
 
   int _nPU;
 
@@ -446,9 +434,6 @@ private:
 
   TLorentzVector const GetLorentzVector(UFDiMuonsAnalyzer::MuonPair  const* pair) ;//const; 
   TLorentzVector const GetLorentzVector(UFDiMuonsAnalyzer::TrackPair const* pair) ;//const; 
-
-  double const GetMassRes(UFDiMuonsAnalyzer::MuonPair  const* pair);
-  double const GetMassRes(UFDiMuonsAnalyzer::TrackPair const* pair);
 
   TransientVertex const GetVertexFromPair(UFDiMuonsAnalyzer::TrackPair const* muPair) const;
   TransientVertex const GetVertexFromTracks(reco::TrackRef trackref1, reco::TrackRef trackref2) const;
@@ -655,8 +640,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   vertexInfo.nVertices   = 0;
   
   // primary vertex
-  bool foundPriVertex = !true;
-  int  privtxId = 0;
 
   // init (vertices)
   if (vertices.isValid()) {
@@ -670,12 +653,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
         continue;
       }
     
-      // assign the first valid primary vertex
-      if (!foundPriVertex) {
-        privtxId = iVertex; 
-        foundPriVertex = true;
-      }
-
       vertexInfo.isValid[iVertex] = 1;
       
       vertexInfo.x[iVertex]        = vtx->position().X();	
@@ -694,9 +671,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   }
   else std::cout << "VertexCollection is NOT valid -> vertex Info NOT filled!\n";
   
-  // assign the first valid primary vertex
-  const reco::Vertex &privertex = (*vertices)[privtxId];  //used in muon and ele id 
-
   // Get MC Truth Pileup
   _nPU = -1;
   if (_isMonteCarlo) {
@@ -745,19 +719,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     reco::GenParticleCollection HPostFSR;
     reco::GenParticleCollection WPreFSR;
     reco::GenParticleCollection WPostFSR;
-
-    // FSR
-    gammaEta      . clear();
-    gammaPhi      . clear();
-    gammaPt       . clear();
-    gammaMomCharge. clear();
-    gammaMomEta   . clear();
-    gammaMomPhi   . clear();
-    gammaMomPt    . clear();
-    gammaMomFromZ . clear();
-    gammaMomFromH . clear();
-    gammaMomFromW . clear();
-
 
     //std::cout << "\n====================================\n"; 
     for (reco::GenParticleCollection::const_iterator gen = allGenParticles->begin(), genEnd = allGenParticles->end(); 
@@ -818,31 +779,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
         
         } // muon 
       
-        // fsr muon (check the mother is a muon
-        if (gen->status() == 1 && abs(id) == 22 && abs(gen->mother()->pdgId()) == 13) {
-          gammaEta  . push_back( gen->eta() );
-          gammaPhi  . push_back( gen->phi() );
-          gammaPt   . push_back( gen->pt()  );
-        
-          (gen->mother()->pdgId()>0) ? gammaMomCharge.push_back(1) : gammaMomCharge.push_back(-1);
-          gammaMomEta . push_back( gen->mother()->eta());
-          gammaMomPhi . push_back( gen->mother()->phi());
-          gammaMomPt  . push_back( gen->mother()->pt() );
-        
-          bool isFsrMuonFromZ = false;
-          bool isFsrMuonFromH = false;
-          bool isFsrMuonFromW = false;
-        
-          // check where the FSR muon is coming from
-          isFsrMuonFromZ = checkMother(*(gen->mother()),23);
-          isFsrMuonFromW = checkMother(*(gen->mother()),24);
-          isFsrMuonFromH = checkMother(*(gen->mother()),25);
-        
-          (isFsrMuonFromZ) ? gammaMomFromZ.push_back(isFsrMuonFromZ) : gammaMomFromZ.push_back(-999);
-          (isFsrMuonFromW) ? gammaMomFromW.push_back(isFsrMuonFromW) : gammaMomFromW.push_back(-999);
-          (isFsrMuonFromH) ? gammaMomFromH.push_back(isFsrMuonFromH) : gammaMomFromH.push_back(-999);
-                 
-        } // fsr muon
       } // loop over gen level
   
   
@@ -892,12 +828,11 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
   // Get JEC Uncertainty Calculator
   edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
-  iSetup.get<JetCorrectionsRecord>().get("AK5PF",JetCorParColl); 
+  iSetup.get<JetCorrectionsRecord>().get("AK4PF",JetCorParColl); 
   JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
   JetCorrectionUncertainty *jecUncCalculator = new JetCorrectionUncertainty(JetCorPar);
 
   if( jets.isValid() ){
-    //First Get PU Id's
 
     for(unsigned int i=0; i<jets->size(); i++){
       _pfJetInfo.nJets++;
@@ -936,6 +871,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
         _pfJetInfo.jecFactor[i]  = jet.jecFactor("Uncorrected");
         // b-Tag
         _pfJetInfo.csv[i]  = jet.bDiscriminator("combinedSecondaryVertexBJetTags");
+        _pfJetInfo.puid[i]  = jet.userFloat("pileupJetId:fullDiscriminant");
         //PAT matched Generator Jet
         const reco::GenJet* genJet = jet.genJet();
         if (genJet != NULL)
@@ -979,58 +915,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   
   delete jecUncCalculator;
 
-
-  edm::Handle < edm::View<pat::Jet> > jetsForPUId;
-  if( pfJetsTag.label() != "null" ) iEvent.getByLabel(pfJetsTag, jetsForPUId);
-
-  std::vector<float> puIdFullDisc = getPUJetIDDisc(jetsForPUId,iEvent,puJetMvaFullDiscTag);
-  std::vector<float> puIdSimpleDisc = getPUJetIDDisc(jetsForPUId,iEvent,puJetMvaSimpleDiscTag);
-  std::vector<float> puIdCutDisc = getPUJetIDDisc(jetsForPUId,iEvent,puJetMvaCutDiscTag);
-  std::vector<int> puIdFullId = getPUJetID(jetsForPUId,iEvent,puJetMvaFullIdTag);
-  std::vector<int> puIdSimpleId = getPUJetID(jetsForPUId,iEvent,puJetMvaSimpleIdTag);
-  std::vector<int> puIdCutId = getPUJetID(jetsForPUId,iEvent,puJetMvaCutIdTag);
-
-  std::cout << "puIdFullId.size()=" << puIdFullId.size() << std::endl;
-
-  for(unsigned i=0; i<10;i++)
-    {
-
-      if(i<puIdFullDisc.size()){
-        //std::cout << "puIdFullDisc[" << i << "]=" << puIdFullDisc[i] << std::endl;
- 	_puJetFullDisc[i] = puIdFullDisc[i];
-      }
-      else
- 	_puJetFullDisc[i] = -1000.0;
-
-      if(i<puIdFullId.size()){
-        //std::cout << "puIdFullId[" << i << "]=" << puIdFullId[i] << std::endl;
-       	_puJetFullId[i] = puIdFullId[i];
-      }
-      else
- 	_puJetFullId[i] = -1000.0;
-
-      if(i<puIdSimpleDisc.size())
- 	_puJetSimpleDisc[i] = puIdSimpleDisc[i];
-      else
- 	_puJetSimpleDisc[i] = -1000.0;
-
-      if(i<puIdSimpleId.size())
- 	_puJetSimpleId[i] = puIdSimpleId[i];
-      else
- 	_puJetSimpleId[i] = -1000.0;
-
-      if(i<puIdCutDisc.size())
- 	_puJetCutDisc[i] = puIdCutDisc[i];
-      else
- 	_puJetCutDisc[i] = -1000.0;
-
-      if(i<puIdCutId.size())
- 	_puJetCutId[i] = puIdCutId[i];
-      else
- 	_puJetCutId[i] = -1000.0;
-    }
-
-
   edm::Handle < reco::GenJetCollection > genJets;
   if( genJetsTag.label() != "null" ) iEvent.getByLabel(genJetsTag, genJets);
   bzero(&_genJetInfo,sizeof(_GenJetInfo));
@@ -1051,7 +935,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       }
     }
   }
-
 
   // ===========================================================================
   // M U O N S
@@ -1105,8 +988,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   initTrack(_muon2pvc);
 
   _recoCandMass = -999;
-  _recoCandMassRes    = -999;
-  _recoCandMassResCov = -999;
   _recoCandPt   = -999;
   _recoCandEta  = -999;
   _recoCandY    = -999;
@@ -1524,8 +1405,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
     _recoCandMass = mother.M();
     _recoCandPt   = mother.Pt();
-    _recoCandMassRes    = GetMassRes(&*pair);
-    _recoCandMassResCov = GetMassResCov(&*pair);
     _recoCandEta  = mother.PseudoRapidity();
     _recoCandY    = mother.Rapidity();
     _recoCandPhi  = mother.Phi();
@@ -1699,8 +1578,6 @@ void UFDiMuonsAnalyzer::beginJob()
 
   // mass and pt for the fit
   _outTree->Branch("recoCandMass", &_recoCandMass, "recoCandMass/F");
-  _outTree->Branch("recoCandMassRes",   &_recoCandMassRes,   "recoCandMassRes/F");
-  _outTree->Branch("recoCandMassResCov",&_recoCandMassResCov,"recoCandMassResCov/F");
   _outTree->Branch("recoCandPt"  , &_recoCandPt  , "recoCandPt/F");
   _outTree->Branch("recoCandEta" , &_recoCandEta , "recoCandEta/F");
   _outTree->Branch("recoCandY"   , &_recoCandY   , "recoCandY/F");
@@ -1739,13 +1616,6 @@ void UFDiMuonsAnalyzer::beginJob()
 
   _outTree->Branch("met",    &_metInfo,   "px/F:py/F:pt/F:phi/F:sumEt/F");
   _outTree->Branch("pfJets", &_pfJetInfo, "nJets/I:px[10]/F:py[10]/F:pz[10]/F:pt[10]/F:eta[10]/F:phi[10]/F:mass[10]/F:charge[10]/I:partonFlavour[10]:chf[10]/F:nhf[10]/F:cef[10]/F:nef[10]/F:muf[10]/F:hfhf[10]/F:hfef[10]/F:cm[10]/I:chm[10]/I:nhm[10]/I:cem[10]/I:nem[10]/I:mum[10]/I:hfhm[10]/I:hfem[10]/I:jecFactor[10]/F:jecUnc[10]/F:csv[10]/F:genPx[10]/F:genPy[10]/F:genPz[10]/F:genPt[10]/F:genEta[10]/F:genPhi[10]/F:genMass[10]/F:genEMF[10]/F:genHadF[10]/F:genInvF[10]/F:genAux[10]/F");
-
-  _outTree->Branch("puJetFullDisc", 	&_puJetFullDisc 	 ,"puJetFullDisc[10]/F");              
-  _outTree->Branch("puJetFullId", 	&_puJetFullId   	,"puJetFullId[10]/F");              
-  _outTree->Branch("puJetSimpleDisc", 	&_puJetSimpleDisc 	 ,"puJetSimpleDisc[10]/F");              
-  _outTree->Branch("puJetSimpleId", 	&_puJetSimpleId   	,"puJetSimpleId[10]/F");              
-  _outTree->Branch("puJetCutDisc", 	&_puJetCutDisc 	 ,"puJetCutDisc[10]/F");              
-  _outTree->Branch("puJetCutId", 	&_puJetCutId   	,"puJetCutId[10]/F");              
 
   // MC information
   if (_isMonteCarlo) {
@@ -1831,72 +1701,6 @@ TLorentzVector const UFDiMuonsAnalyzer::GetLorentzVector(UFDiMuonsAnalyzer::Trac
   return sum;
   
 }
-
-double const UFDiMuonsAnalyzer::GetMassRes(UFDiMuonsAnalyzer::MuonPair const* pair) {
-
-  double const MASS_MUON = 0.105658367;    //GeV/c2
-
-  // get the dimuon candidate
-  TLorentzVector dimuon = GetLorentzVector(pair);
-
-  // get the dimuon mass
-  double dimuonMass = dimuon.M();
-
-  // get the reference to the 2 single muons
-  reco::Track const track1 = *(pair->first .innerTrack());
-  reco::Track const track2 = *(pair->second.innerTrack());
-
-
-  TLorentzVector muon1withError, muon2, dimuon_var1; 
-  muon1withError.SetPtEtaPhiM(track1.pt()+track1.ptError(), 
-                              track1.eta(), track1.phi(), MASS_MUON);
-  muon2.SetPtEtaPhiM(track2.pt(), track2.eta(), track2.phi(), MASS_MUON);
-  dimuon_var1 = muon1withError+muon2;
-  double deltaM1 = fabs(dimuon_var1.M() - dimuonMass );
-
-  TLorentzVector muon1, muon2withError, dimuon_var2; 
-  muon1.SetPtEtaPhiM(track1.pt(), track1.eta(), track1.phi(), MASS_MUON);
-  muon2withError.SetPtEtaPhiM(track2.pt()+track2.ptError(), 
-                              track2.eta(), track2.phi(), MASS_MUON);
-  dimuon_var2 = muon1+muon2withError;
-  double deltaM2 = fabs(dimuon_var2.M() - dimuonMass );
-
-  return std::sqrt( (deltaM1*deltaM1) + (deltaM2*deltaM2) );
-
-}
-
-double const UFDiMuonsAnalyzer::GetMassRes(UFDiMuonsAnalyzer::TrackPair const* pair) {
-
-  double const MASS_MUON = 0.105658367;    //GeV/c2
-
-  // get the dimuon candidate
-  TLorentzVector dimuon = GetLorentzVector(pair);
-
-  // get the dimuon mass
-  double dimuonMass = dimuon.M();
-
-  // get the reference to the 2 single muons
-  reco::Track const track1 = pair->first ;
-  reco::Track const track2 = pair->second;
-
-
-  TLorentzVector muon1withError, muon2, dimuon_var1; 
-  muon1withError.SetPtEtaPhiM(track1.pt()+track1.ptError(), 
-                              track1.eta(), track1.phi(), MASS_MUON);
-  muon2.SetPtEtaPhiM(track2.pt(), track2.eta(), track2.phi(), MASS_MUON);
-  dimuon_var1 = muon1withError+muon2;
-  double deltaM1 = fabs(dimuon_var1.M() - dimuonMass );
-
-  TLorentzVector muon1, muon2withError, dimuon_var2; 
-  muon1.SetPtEtaPhiM(track1.pt(), track1.eta(), track1.phi(), MASS_MUON);
-  muon2withError.SetPtEtaPhiM(track2.pt()+track2.ptError(), 
-                              track2.eta(), track2.phi(), MASS_MUON);
-  dimuon_var2 = muon1+muon2withError;
-  double deltaM2 = fabs(dimuon_var2.M() - dimuonMass );
-
-  return sqrt( (deltaM1*deltaM1) + (deltaM2*deltaM2) );
-
-}
  
 // check the HLT configuration for each run. It may change you know ;-)
 void UFDiMuonsAnalyzer::beginRun(edm::Run const& iRun, 
@@ -1941,26 +1745,6 @@ void UFDiMuonsAnalyzer::beginRun(edm::Run const& iRun,
 	}
         else filterNames_[iTrigger] = findFilterName ( hltConfig_, triggerNames_[iTrigger] ) ;
         
-      }
-
-      //elec trigger
-      addVersion(hltConfig_, 
-                 eleTriggerBaseName_, 
-                 eleTriggerName_);
-      
-      if (_isVerbose)
-        std::cout << "The ele trigger is" << eleTriggerName_ << std::endl;
-      
-      const unsigned int triggerIndex(hltConfig_.triggerIndex(eleTriggerName_));
-      if (triggerIndex>=n) {
-        std::cout << "\n\nHLTEventAnalyzerAOD::analyze:"
-                  << " TriggerName \"" << eleTriggerName_ 
-                  << "\" is NOT available in (new) config!" << std::endl << std::endl;
-        std::cout << " The available TriggerNames are: " << std::endl;
-        hltConfig_.dump("Triggers");
-          
-        throw cms::Exception("UFDiMuonsAnalyzer")<< "Throwing an exception because "
-                                                 << "the trigger path name you want to check DOES NOT EXIST";
       }
 
       // dear god you do not want to uncomment them... but one day you could be
