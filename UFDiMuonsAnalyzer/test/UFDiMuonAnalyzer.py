@@ -38,7 +38,7 @@ process.GlobalTag.globaltag = "FT_53_V21_AN4::All"
 
 # ------------ PoolSource -------------
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
-process.source = cms.Source("PoolSource",fileNames = cms.untracked.vstring('file:SingleMuRun2012A-22Jan2013-v1_1_3_W7l.root'))
+process.source = cms.Source("PoolSource",fileNames = cms.untracked.vstring('file:DYJetsToLL_M-50_13TeV-madgraph-pythia8-tauola_v2-Spring14miniaod-PU20bx25_POSTLS170_V5-v1.root'))
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
 process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange()
 # -------- PoolSource END -------------
