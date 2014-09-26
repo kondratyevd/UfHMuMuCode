@@ -13,8 +13,7 @@ In your CMSSW "src/" directory, run:
 
 ::
 
-  git clone https://github.com/jhugon/UfHMuMuCode.git UserArea
+  git clone -b CMSSW709_miniAOD https://github.com/jhugon/UfHMuMuCode.git UserArea
   cd UserArea
-  git checkout CMSSW709_miniAOD
   nice scram b -j8
 
