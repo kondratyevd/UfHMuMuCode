@@ -1,13 +1,10 @@
 import FWCore.ParameterSet.Config as cms
 
-##from RecoMuon.TrackingTools.MuonServiceProxy_cff import *
-#
-# yay! the analyzer!
-#
+## Assumes you are looking at miniAOD
+
 DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
-                         #ServiceParameters = cms.PSet(MuonServiceProxy),
                          getFilename = cms.untracked.string("tmpName.root"),
-                         muonColl = cms.InputTag("muons"),
+                         muonColl = cms.InputTag("slimmedMuons"),
                          
                          isVerbose = cms.untracked.bool(False),
                          isMonteCarlo = cms.bool(False),
@@ -36,7 +33,8 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
     
                          # if beamSpot is not specified
                          # assumes you are using "offlineBeamSpot"
-                         beamSpot = cms.untracked.InputTag("offlineBeamSpot"),
+                         primaryVertexTag = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
+                         beamSpotTag = cms.untracked.InputTag("offlineBeamSpot"),
                          d0Max = cms.double(0.2), 
                          
                          #track isolation
@@ -47,15 +45,13 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          # HLT trigger info
                          checkTrigger = cms.bool(True),
 
-                         selectLowestSingleMuTrigger = cms.untracked.bool(False),
                          processName = cms.string("HLT"),
-                         triggerNames = cms.vstring("HLT_Mu15"),
-                         #triggerName = cms.string("I want to crash"),
+                         triggerNames = cms.vstring("HLT_IsoMu24_eta2p1"),
                          triggerResults = cms.InputTag("TriggerResults","","HLT"),
-                         triggerEvent   = cms.InputTag("hltTriggerSummaryAOD","","HLT"),
+                         triggerObjs = cms.InputTag("selectedPatTrigger"),
                          
-                         metTag         = cms.InputTag("null"),
-                         pfJetsTag      = cms.InputTag("null"),
-                         genJetsTag     = cms.InputTag("null")
+                         metTag         = cms.InputTag("slimmedMETs"),
+                         pfJetsTag      = cms.InputTag("slimmedJets"),
+                         genJetsTag     = cms.InputTag("slimmedGenJets")
                          
                          )

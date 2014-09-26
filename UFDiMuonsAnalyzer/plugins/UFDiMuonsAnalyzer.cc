@@ -84,31 +84,20 @@ Implementation:
 //
 // math classes
 //
-#include "DataFormats/Math/interface/deltaPhi.h"
+#include "DataFormats/Math/interface/deltaR.h"
 //
 // trigger
 // 
+#include "FWCore/Common/interface/TriggerNames.h"
 #include "DataFormats/Common/interface/TriggerResults.h"
-#include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerReadoutSetupFwd.h"
-#include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerReadoutSetup.h"
-#include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerReadoutRecord.h"
-#include "DataFormats/L1GlobalTrigger/interface/L1GlobalTriggerObjectMapRecord.h"
-#include "DataFormats/Common/interface/TriggerResults.h" 
-#include "FWCore/Common/interface/TriggerNames.h" 
-#include "DataFormats/HLTReco/interface/TriggerEvent.h"
-#include "HLTrigger/HLTcore/interface/HLTConfigProvider.h"
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
 
 //
 // vertexing
 //
 #include "DataFormats/VertexReco/interface/Vertex.h"
 #include "DataFormats/VertexReco/interface/VertexFwd.h"
-#include "RecoVertex/KalmanVertexFit/interface/KalmanVertexFitter.h"
-#include "RecoVertex/VertexPrimitives/interface/TransientVertex.h"
-#include "TrackingTools/TransientTrack/interface/TransientTrackBuilder.h"
-#include "TrackingTools/Records/interface/TransientTrackRecord.h"
-#include "TrackingTools/TransientTrack/interface/TransientTrack.h"
-#include "RecoVertex/KalmanVertexFit/interface/SingleTrackVertexConstraint.h"
 
 //
 // gen particles
@@ -334,25 +323,17 @@ private:
                          _TrackInfo&  muon1,
                          _TrackInfo&  muon2); 
 
-  virtual void beginRun(edm::Run const &, edm::EventSetup const&);
-
   // method to select the muons
-  bool isHltPassed (const edm::Event&, const edm::EventSetup&, const std::string& triggerName);
-  bool isHltMatched(const edm::Event&, const edm::EventSetup&, 
-                    const std::string& triggerName, const std::string& filterName,
-                    const pat::Muon&,
-                    float& hltPt, float& hltEta, float& hltPhi);
+  bool isHltPassed (const edm::Event&, const edm::EventSetup&, const std::vector<std::string> triggerName);
   bool isHltMatched(const edm::Event&, const edm::EventSetup&, 
                     const std::vector < std::string>& triggerNames, 
-                    const pat::Muon&, const pat::Muon&);
-  bool isDoubleMu(const std::string& triggerName);    
+                    const pat::TriggerObjectStandAloneCollection& triggerObjects,
+                    const pat::Muon&);
+
   void addVersion(const HLTConfigProvider hltConfig_,
                   std::string& triggerBaseName,
                   std::string& triggerName);    
-  void findLowestSingleMu(const HLTConfigProvider hltConfig_,
-                          const edm::Event&, const edm::EventSetup&);
   std::string findFilterName(const HLTConfigProvider hltConfig_, const std::string& triggerName);
-  double DR(double eta1, double eta2, double phi1, double phi2);
 
   bool isPreselected(const pat::Muon& muon,
                      edm::Handle<reco::BeamSpot> beamSpotHandle);
@@ -365,7 +346,8 @@ private:
 
   // muons
   edm::InputTag _muonColl;
-  edm::InputTag _beamSpot;		
+  edm::InputTag _beamSpotTag;		
+  edm::InputTag _primaryVertexTag;		
   std::string _getFilename;	
 
   // variable to cuts over
@@ -407,9 +389,7 @@ private:
   std::vector < int > hltPrescale_;
 
   edm::InputTag triggerResultsTag_;
-  edm::InputTag triggerEventTag_;
-
-  bool _selectLowestSingleMuTrigger;
+  edm::InputTag triggerObjsTag_;
 
   edm::InputTag metTag;
   edm::InputTag pfJetsTag;
@@ -425,9 +405,7 @@ private:
   // additional class data memebers
   bool _checkTrigger; // activate or not the trigger checking   
   edm::Handle<edm::TriggerResults>   triggerResultsHandle_;
-  edm::Handle<trigger::TriggerEvent> triggerEventHandle_;
-  HLTConfigProvider hltConfig_;
-
+  edm::Handle<pat::TriggerObjectStandAloneCollection>   triggerObjsHandle_;
 
   MuonPairs  const GetMuonPairs (pat::MuonCollection  const* muons ) const;
   TrackPairs const GetTrackPairs(reco::TrackCollection const* tracks) const;
@@ -460,8 +438,10 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _getFilename  = iConfig.getUntrackedParameter<std::string>("getFilename", "badger.root");
   _muonColl	= iConfig.getParameter<edm::InputTag>("muonColl");
 
-  _beamSpot	= iConfig.getUntrackedParameter<edm::InputTag>("beamSpotTag",
+  _beamSpotTag	= iConfig.getUntrackedParameter<edm::InputTag>("beamSpotTag",
                                                                edm::InputTag("offlineBeamSpot") );
+  _primaryVertexTag	= iConfig.getUntrackedParameter<edm::InputTag>("primaryVertexTag",
+                                                               edm::InputTag("offlineSlimmedPrimaryVertices") );
 
   _isVerbose	= iConfig.getUntrackedParameter<bool>("isVerbose",   false);
   _isMonteCarlo	= iConfig.getParameter<bool>("isMonteCarlo");
@@ -501,53 +481,19 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
 
   _nMuons                 = iConfig.getParameter<int>("nMuons");
 
-  //HLT trigger initialization
-  _checkTrigger	     = iConfig.getParameter<bool>("checkTrigger");
-
-  processName_       = iConfig.getParameter<std::string>("processName");
-  triggerBaseNames_  = iConfig.getParameter<std::vector <std::string> >("triggerNames");
-  _selectLowestSingleMuTrigger = iConfig.getUntrackedParameter<bool>("selectLowestSingleMuTrigger", false);
-
-  if (triggerBaseNames_[0]=="") {
-    triggerBaseNames_.clear();
-    triggerNames_.clear();
-    l1Prescale_.clear();
-    hltPrescale_.clear();
-  }
-
-  if (_selectLowestSingleMuTrigger) triggerBaseNames_.push_back("trigPlaceHolder");
-
-  for (unsigned int i=0; i<triggerBaseNames_.size();i++) {
-    triggerNames_.push_back("HLT_placeHolder");
-    filterNames_.push_back("filter_placeHolder");
-    l1Prescale_.push_back(-999);
-    hltPrescale_.push_back(-999);
-  }
-
-  if (triggerNames_.size() > 3){
-    std::cout << "ERROR: triggerNames has its maximum size to 3! -> change the code in case\n";
-    assert(0);
-  }
-
-  if (triggerNames_.size() == 0){
-    std::cout << "ERROR: You need to pass at least one valid HLT trigger\n";
-    assert(0);
-  }
-
-  triggerResultsTag_ = iConfig.getParameter<edm::InputTag>("triggerResults");
-  triggerEventTag_   = iConfig.getParameter<edm::InputTag>("triggerEvent");
 
   metTag     = iConfig.getParameter<edm::InputTag>("metTag");
   pfJetsTag  = iConfig.getParameter<edm::InputTag>("pfJetsTag");
   genJetsTag = iConfig.getParameter<edm::InputTag>("genJetsTag");
 
-  puJetMvaFullDiscTag 	 = iConfig.getParameter<edm::InputTag>("puJetMvaFullDiscTag");
-  puJetMvaFullIdTag 	 = iConfig.getParameter<edm::InputTag>("puJetMvaFullIdTag");
-  puJetMvaSimpleDiscTag	 = iConfig.getParameter<edm::InputTag>("puJetMvaSimpleDiscTag");
-  puJetMvaSimpleIdTag 	 = iConfig.getParameter<edm::InputTag>("puJetMvaSimpleIdTag");
-  puJetMvaCutDiscTag 	 = iConfig.getParameter<edm::InputTag>("puJetMvaCutDiscTag");
-  puJetMvaCutIdTag 	 = iConfig.getParameter<edm::InputTag>("puJetMvaCutIdTag");
+  //HLT trigger initialization
+  _checkTrigger	     = iConfig.getParameter<bool>("checkTrigger");
 
+  processName_       = iConfig.getParameter<std::string>("processName");
+  triggerBaseNames_  = iConfig.getParameter<std::vector <std::string> >("triggerNames");
+
+  triggerResultsTag_ = iConfig.getParameter<edm::InputTag>("triggerResults");
+  triggerObjsTag_ = iConfig.getParameter<edm::InputTag>("triggerObjs");
 }
 
 
@@ -564,7 +510,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     std::cout << "\n\n A N A LI Z I N G   E V E N T = " 
 	      << _numEvents << std::endl << std::endl;
  
-
   // -----------------------------------------
   // H L T   H A N D L E S
   iEvent.getByLabel(triggerResultsTag_,triggerResultsHandle_);
@@ -572,41 +517,30 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting TriggerResults product from Event!" << std::endl;
     return;
   }
-  iEvent.getByLabel(triggerEventTag_,triggerEventHandle_);
-  if (!triggerEventHandle_.isValid()) {
-    std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting TriggerEvent product from Event!" << std::endl;
+  iEvent.getByLabel(triggerObjsTag_,triggerObjsHandle_);
+  if (!triggerObjsHandle_.isValid()) {
+    std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting TriggerObjects product from Event!" << std::endl;
     return;
   }
-  // sanity check
-  assert(triggerResultsHandle_->size()==hltConfig_.size());
-  
-  if (_selectLowestSingleMuTrigger)
-    findLowestSingleMu(hltConfig_,iEvent,iSetup);
 
   // if all the HLT paths are not fired, will discard the event immediately
-  if (_checkTrigger) {
-    bool isPassed=false;
-     
-    for (unsigned int iTrigger=0; iTrigger<triggerNames_.size(); iTrigger++) 
-      if ( isHltPassed(iEvent,iSetup,triggerNames_[iTrigger]) ) isPassed=true;
-     
-    if (!isPassed) {
+  if (_checkTrigger) 
+  {
+    if ( !isHltPassed(iEvent,iSetup,triggerNames_) )
+    {
       if (_isVerbose) std::cout << "None of the HLT paths fired -> discard the event\n";
       return;
     }
      
   }
 
+  //// once the triggernames are cleared add the prescales
+  //for (unsigned int iTrigger=0; iTrigger<triggerNames_.size(); iTrigger++) {
+  //  std::pair<int,int> prescaleValues = hltConfig_.prescaleValues(iEvent, iSetup,triggerNames_[iTrigger]);
+  //  l1Prescale_[iTrigger]  = prescaleValues.first;
+  //  hltPrescale_[iTrigger] = prescaleValues.second;
 
-  // once the triggernames are cleared add the prescales
-  for (unsigned int iTrigger=0; iTrigger<triggerNames_.size(); iTrigger++) {
-    std::pair<int,int> prescaleValues = hltConfig_.prescaleValues(iEvent, iSetup,triggerNames_[iTrigger]);
-    l1Prescale_[iTrigger]  = prescaleValues.first;
-    hltPrescale_[iTrigger] = prescaleValues.second;
-
-  }
-
-
+  //}
 
   int theRun   = iEvent.id().run();
   int theLumi  = iEvent.luminosityBlock();
@@ -623,7 +557,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
   //vertices
   edm::Handle<reco::VertexCollection> vertices;
-  iEvent.getByLabel("offlinePrimaryVertices", vertices);
+  iEvent.getByLabel(_primaryVertexTag, vertices);
  
   for (int i=0;i<20;i++) {
     vertexInfo.isValid[i]  = 0;
@@ -692,7 +626,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   
   // B E A M S P O T
   edm::Handle<reco::BeamSpot> beamSpotHandle;
-  iEvent.getByLabel(_beamSpot, beamSpotHandle);
+  iEvent.getByLabel(_beamSpotTag, beamSpotHandle);
 
   //
   // get the sim mass if it exists
@@ -1131,8 +1065,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
     // save trigger informations
     for (unsigned int iTrigger=0;iTrigger<triggerNames_.size();iTrigger++) 
-      _muon1.isHltMatched[iTrigger] = ( isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], filterNames_[iTrigger], mu,
-                                                     _muon1.hltPt[iTrigger], _muon1.hltEta[iTrigger], _muon1.hltPhi[iTrigger]) );
+      _muon1.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], *triggerObjsHandle_, mu);
     
     _outTree->Fill();
     
@@ -1252,18 +1185,18 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     if ( passKinCuts(mu1, beamSpotHandle) && 
          passKinCuts(mu2, beamSpotHandle)  ) passSelection=true; 
 
-    // chek the trigger
-    if (_checkTrigger && passSelection) {
-        
-      // set the event as not passed  
-      // and then check it passes the trigger
-      passSelection=!true;
+    //// chek the trigger
+    //if (passSelection) {
+    //    
+    //  // set the event as not passed  
+    //  // and then check it passes the trigger
+    //  passSelection=!true;
 
-      if ( isHltMatched(iEvent,iSetup,triggerNames_, mu1, mu2) ) {
-        if (_isVerbose) std::cout << "Both Muons TIGHT and At Least One Matches the Trigger\n";
-        passSelection=true;
-      }
-    }
+    //  if ( isHltMatched(iEvent,iSetup,triggerNames_, mu1, mu2) ) {
+    //    if (_isVerbose) std::cout << "Both Muons TIGHT and At Least One Matches the Trigger\n";
+    //    passSelection=true;
+    //  }
+    //}
     // ===== END Requirements ====
     
     // do we pass the selection? Yes -> store the event
@@ -1333,8 +1266,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
     // save trigger informations
     for (unsigned int iTrigger=0;iTrigger<triggerNames_.size();iTrigger++) 
-      _muon1.isHltMatched[iTrigger] = ( isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], filterNames_[iTrigger], mu1,
-                                                     _muon1.hltPt[iTrigger], _muon1.hltEta[iTrigger], _muon1.hltPhi[iTrigger]) );
+      _muon1.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], *triggerObjsHandle_, mu1);
     
     // muon 2
     _muon2.isGlobal     = mu2.isGlobalMuon(); 
@@ -1396,8 +1328,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
     // save trigger informations
     for (unsigned int iTrigger=0;iTrigger<triggerNames_.size();iTrigger++) 
-      _muon2.isHltMatched[iTrigger] = ( isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], filterNames_[iTrigger], mu2,
-                                                     _muon2.hltPt[iTrigger], _muon2.hltEta[iTrigger], _muon2.hltPhi[iTrigger]) );
+      _muon2.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], *triggerObjsHandle_, mu2);
     
     // combine the info
     // muons collection
@@ -1571,7 +1502,6 @@ void UFDiMuonsAnalyzer::beginJob()
   _outTree->Branch("reco2pvc", &_muon2pvc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
 
   _outTree->Branch("hltPaths",    &triggerNames_);
-  _outTree->Branch("filterNames", &filterNames_ );
   _outTree->Branch("l1Prescale",  &l1Prescale_  );
   _outTree->Branch("hltPrescale", &hltPrescale_ );
  
@@ -1701,72 +1631,6 @@ TLorentzVector const UFDiMuonsAnalyzer::GetLorentzVector(UFDiMuonsAnalyzer::Trac
   return sum;
   
 }
- 
-// check the HLT configuration for each run. It may change you know ;-)
-void UFDiMuonsAnalyzer::beginRun(edm::Run const& iRun, 
-                                 edm::EventSetup const& iSetup)
-{
-
-  if (_isVerbose)
-    std::cout << "\n UFDiMuonsAnalyzer::beginRun \n";
- 
-  using namespace std;
-  using namespace edm;
-
-  bool changed(true);
-  if (hltConfig_.init(iRun,iSetup,processName_,changed)) {
-    
-    // if you set the trigger to look for the lowest unprescaled single mu trigger 
-    // only there is no need to check its existence as it automatically will be
-    // found later in the code
-    if (changed) {
-      
-      // check if trigger name in (new) config
-      const unsigned int n(hltConfig_.size());
-      
-      // loop over all the trigger names provided
-      unsigned int triggerSize = _selectLowestSingleMuTrigger ? triggerNames_.size()-1 : triggerNames_.size();
-      for (unsigned int iTrigger=0; iTrigger<triggerSize; iTrigger++) {
-
-        addVersion(hltConfig_, triggerBaseNames_[iTrigger], triggerNames_[iTrigger]);
-        if (_isVerbose)
-          std::cout << "The trigger after is " << triggerNames_[iTrigger]  << std::endl;
-
-	const unsigned int triggerIndex(hltConfig_.triggerIndex(triggerNames_[iTrigger]));
-	if (triggerIndex>=n) {
-          std::cout << "\n\nHLTEventAnalyzerAOD::analyze:"
-                    << " TriggerName \"" << triggerNames_[iTrigger] 
-                    << "\" is NOT available in (new) config!" << std::endl << std::endl;
-          std::cout << " The available TriggerNames are: " << std::endl;
-	  hltConfig_.dump("Triggers");
-          
-          throw cms::Exception("UFDiMuonsAnalyzer")<< "Throwing an exception because "
-                                                   << "the trigger path name you want to check DOES NOT EXIST";
-	}
-        else filterNames_[iTrigger] = findFilterName ( hltConfig_, triggerNames_[iTrigger] ) ;
-        
-      }
-
-      // dear god you do not want to uncomment them... but one day you could be
-      // interested so I leave them there as a potential reference.
-      //hltConfig_.dump("Streams");
-      //hltConfig_.dump("Datasets");
-      //hltConfig_.dump("PrescaleTable");
-      //hltConfig_.dump("ProcessPSet");
-    }
-  } else {
-    cout << "HLTEventAnalyzerAOD::analyze:"
-	 << " config extraction failure with process name "
-	 << processName_ << endl;
-    
-    throw cms::Exception("UFDiMuonsAnalyzer")<<"Wrong processName_(\""<<processName_
-                                             <<"\"): please double check what you passed "
-                                             <<"in the python file... ";
-    
-  }
-
-}
-
 
 // this method will simply check is the selected HLT path (via triggerName)
 // is run and accepted and no error are found
@@ -1775,237 +1639,76 @@ void UFDiMuonsAnalyzer::beginRun(edm::Run const& iRun,
 //      false if any other combination
 bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent, 
                                     const edm::EventSetup& iSetup, 
-                                    const std::string& triggerName) {
+                                    const std::vector<std::string> desiredTriggerNames) {
   
   using namespace std;
   using namespace edm;
   using namespace reco;
   using namespace trigger;
 
-  if (_isVerbose)
-    std::cout << "\nisHltPassed::Analyzing The Trigger "<< triggerName << "...\n";
-      
-  const unsigned int n(hltConfig_.size());
-  const unsigned int triggerIndex(hltConfig_.triggerIndex(triggerName));
-  assert(triggerIndex==iEvent.triggerNames(*triggerResultsHandle_).triggerIndex(triggerName));
+  const boost::regex re("_v[0-9]+");
 
-  // abort on invalid trigger name
-  if (triggerIndex>=n) {
-    cout << "UFDiMuonsAnalyzer::isHltPassed: path "
-	 << triggerName << " - not found!" << endl;
-    return false;
+  const TriggerNames &triggerNames = iEvent.triggerNames(*triggerResultsHandle_);
+
+  const unsigned nTriggers = triggerResultsHandle_->size();
+  for (unsigned iTrigger = 0; iTrigger < nTriggers; ++iTrigger)
+  {
+    string triggerName = triggerNames[iTrigger];
+    string triggerNameStripped = boost::regex_replace(triggerName,re,"",boost::match_default | boost::format_sed);
+    bool desiredTrigger = false;
+    for(std::vector<std::string>::const_iterator desiredTriggerName=desiredTriggerNames.begin();
+            desiredTriggerName!=desiredTriggerNames.end();desiredTriggerName++)
+    {
+      if (*desiredTriggerName == triggerNameStripped && triggerResultsHandle_->accept(iTrigger))
+      {
+        return true
+      }
+    }
   }
+  return false;
 
-  // Results from TriggerResults product
-  if (_isVerbose) {
-    std::cout << " Trigger path status:"
-              << " WasRun=" << triggerResultsHandle_->wasrun(triggerIndex)
-              << " Accept=" << triggerResultsHandle_->accept(triggerIndex)
-              << " Error =" << triggerResultsHandle_->error(triggerIndex)
-              << std::endl;
-  }
-
-  bool wasRun = triggerResultsHandle_->wasrun(triggerIndex);
-  bool accept = triggerResultsHandle_->accept(triggerIndex);
-  bool error  = triggerResultsHandle_->error (triggerIndex);
-
-  bool isPassed=true;  
-
-  if (!wasRun) isPassed=false;
-  if (!accept) isPassed=false;
-  if ( error ) isPassed=false;
-
-  return isPassed;
 }
 
 // same check for isHltPassed +
 // check if the muon is the one firing the HLT path
 bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent, 
                                      const edm::EventSetup& iSetup, 
-                                     const std::string& triggerName, 
-                                     const std::string& filterName, 
-                                     const pat::Muon& muon,
-                                     float& hltPt, float& hltEta, float& hltPhi){
-
-  double DRmin = 999;
-
-  if (_isVerbose)  std::cout << "isHltMatched::analyzing hlt matching" << std::endl;
-
-  bool isMatched=false;
-
+                                     const std::string& desiredTriggerName, 
+                                     const pat::TriggerObjectStandAloneCollection& triggerObjects,
+                                     const pat::Muon& mu)
+{
   using namespace std;
   using namespace edm;
+  using namespace pat;
   using namespace reco;
   using namespace trigger;
 
-  if (_isVerbose) std::cout << "ANALYZING THE TRIGGER "<< triggerName << "..."<<std::endl;
+  const boost::regex re("_v[0-9]+");
 
-  const unsigned int n(hltConfig_.size());
-  const unsigned int triggerIndex(hltConfig_.triggerIndex(triggerName));
-  assert(triggerIndex==iEvent.triggerNames(*triggerResultsHandle_).triggerIndex(triggerName));
+  const TriggerNames &triggerNames = iEvent.triggerNames(*triggerResultsHandle_);
 
-  // abort on invalid trigger name
-  if (triggerIndex>=n) {
-    cout << "UFDiMuonsAnalyzer::isHltMatched: path "
-	 << triggerName << " - not found!" << endl;
-    return isMatched;
-  }
-
-  // Results from TriggerResults product
-  //std::cout << " Trigger path status:"
-  //          << " WasRun=" << triggerResultsHandle_->wasrun(triggerIndex)
-  //          << " Accept=" << triggerResultsHandle_->accept(triggerIndex)
-  //          << " Error =" << triggerResultsHandle_->error(triggerIndex)
-  //          << std::endl;
-  
-  bool wasRun = triggerResultsHandle_->wasrun(triggerIndex);
-  bool accept = triggerResultsHandle_->accept(triggerIndex);
-  bool error  = triggerResultsHandle_->error (triggerIndex);
-
-  // Results from TriggerResults product
-  if (_isVerbose)
-    std::cout << " Trigger path status:"
-              << " WasRun=" << triggerResultsHandle_->wasrun(triggerIndex)
-              << " Accept=" << triggerResultsHandle_->accept(triggerIndex)
-              << " Error =" << triggerResultsHandle_->error(triggerIndex)
-              << std::endl;
-
-  if (!wasRun) return isMatched;
-  if (!accept) return isMatched;
-  if ( error ) return isMatched;
-  
-  // modules on this trigger path
-  const unsigned int m(hltConfig_.size(triggerIndex));
-  const vector<string>& moduleLabels(hltConfig_.moduleLabels(triggerIndex));
-
-  
-  const unsigned int moduleIndex(triggerResultsHandle_->index(triggerIndex));
-  if (_isVerbose)
-    std::cout << " Last active module - label/type: "
-              << moduleLabels[moduleIndex] << "/" << hltConfig_.moduleType(moduleLabels[moduleIndex])
-              << " [" << moduleIndex << " out of 0-" << (m-1) << " on this path]"
-              << std::endl;
-  assert (moduleIndex<m);
-
-  // Results from TriggerEvent product - Attention: must look only for
-  // modules actually run in this path for this event!
-  for (unsigned int j=0; j<=moduleIndex; ++j) {
-    
-    const string& moduleLabel(moduleLabels[j]);
-    const string  moduleType(hltConfig_.moduleType(moduleLabel));
-  
-    // check only the last module
-    if (moduleLabel != filterName) continue;
-
-    // check whether the module is packed up in TriggerEvent product
-    const unsigned int filterIndex(triggerEventHandle_->filterIndex(InputTag(moduleLabel,"",processName_)));
-  
-    if (filterIndex<triggerEventHandle_->sizeFilters()) {
-      if (_isVerbose)
-        std::cout << " 'L3' filter in slot " << j 
-                  << " - label/type "        << moduleLabel 
-                  << "/" << moduleType << std::endl;
-      
-      const Vids& VIDS (triggerEventHandle_->filterIds (filterIndex));
-      const Keys& KEYS (triggerEventHandle_->filterKeys(filterIndex));
-      const size_type nI(VIDS.size());
-      const size_type nK(KEYS.size());
-      assert(nI==nK);
-
-      const size_type n(max(nI,nK));
-      if (_isVerbose)
-        std::cout << "   " << n  << " accepted 'L3' objects found: " << std::endl;
-
-      const TriggerObjectCollection& TOC(triggerEventHandle_->getObjects());
-    
-      for (size_type i=0; i!=n; ++i) {
-        const TriggerObject& TO(TOC[KEYS[i]]);
-        
-   
-        //double DPT=fabs(TO.pt()-muon.pt());
-
-        if (_isVerbose) {
-          std::cout << "   " << i << " " << VIDS[i] << "/" << KEYS[i] << ": "
-                    << TO.id()  << " " << TO.pt() << " " << TO.eta() << " " 
-                    << TO.phi() << " " << TO.mass()
-                    << std::endl;
-
-          std::cout << " muon: eta=" << muon.eta()
-                    << ", phi=" << muon.phi()
-                    << std::endl;
-
-          std::cout << " DR=" << DR( TO.eta(),muon.eta(), TO.phi(),muon.phi() )
-                    << " [max is 0.2]"
-                    << std::endl;
-        }
-        
-        if (_isTriggerEmulated && TO.pt() < _emulatedPt) continue;
-
-        if ( DR( TO.eta(),muon.eta(), TO.phi(),muon.phi() ) < DRmin ) {
-          hltPt=TO.pt();
-          hltEta=TO.eta();
-          hltPhi=TO.phi();
-          DRmin=DR( TO.eta(),muon.eta(), TO.phi(),muon.phi() );
-          if ( DRmin < 0.2 ) isMatched=true;      
+  const unsigned nTriggers = triggerResultsHandle_->size();
+  for (unsigned iTrigger = 0; iTrigger < nTriggers; ++iTrigger)
+  {
+    string triggerName = triggerNames[iTrigger];
+    string triggerNameStripped = boost::regex_replace(triggerName,re,"",boost::match_default | boost::format_sed);
+    if (desiredTriggerName == triggerNameStripped && triggerResultsHandle_->accept(iTrigger))
+    {
+      for(TriggerObjectStandAloneCollection::const_iterator trigObj=triggerObjects.begin(); 
+          trigObj!=triggerObjects.end();trigObj++)
+      {
+        trigObj.unpackPathNames(triggerNames);
+        bool isRightObj = trigObj.hasPathName(triggerName,true,true); // name, check that is l3 filter accepted, check that is last filter
+        if (isRightObj)
+        {
+          bool isMatched = (deltaR(trigObj,mu) < 0.2);
+          if (isMatched) return true;
         }
       }
-    }
-    
-  }
-  
-  return isMatched;
-}
+    }// trigObj loop
+  }// iTrigger loop
 
-
-// same check for isHltPassed +
-// check if the muon is the one firing the HLT path
-bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent, 
-                                     const edm::EventSetup& iSetup, 
-                                     const std::vector<std::string>& triggerNames, 
-                                     const pat::Muon& muon1,
-                                     const pat::Muon& muon2){
-  bool isMatched = false;
-
-  for (unsigned int iTrigger=0; iTrigger<triggerNames.size(); iTrigger++) {
-
-    bool isDoubleMuTrigger=isDoubleMu(triggerNames[iTrigger]);
-    
-    float hltPtTmp=-999;
-    float hltEtaTmp=-999;
-    float hltPhiTmp=-999;
-
-    if ( isDoubleMuTrigger ) {
-      if( isHltMatched(iEvent, iSetup, triggerNames[iTrigger], filterNames_[iTrigger], muon1, hltPtTmp,hltEtaTmp,hltPhiTmp) && 
-          isHltMatched(iEvent, iSetup, triggerNames[iTrigger], filterNames_[iTrigger], muon2, hltPtTmp,hltEtaTmp,hltPhiTmp)  ) {
-        isMatched=true;
-        break;
-      }
-    }
-
-    else{
-      if( isHltMatched(iEvent, iSetup, triggerNames[iTrigger], filterNames_[iTrigger], muon1, hltPtTmp,hltEtaTmp,hltPhiTmp) || 
-          isHltMatched(iEvent, iSetup, triggerNames[iTrigger], filterNames_[iTrigger], muon2, hltPtTmp,hltEtaTmp,hltPhiTmp)  ) {
-        isMatched=true;
-        break;
-      }
-    }
-    
-  }
-  
-  return isMatched;
-}
-
-
-double 
-UFDiMuonsAnalyzer::DR(double eta1, double eta2,
-                      double phi1, double phi2){
-  
-  double diffEta = eta1 - eta2;
-  double diffPhi = phi1 - phi2;
-  double dr = sqrt(diffEta*diffEta + diffPhi*diffPhi);
-
-  return dr;
-  
+  return false;
 }
 
 bool UFDiMuonsAnalyzer::isPreselected(const pat::Muon& muon,
@@ -2367,108 +2070,14 @@ void UFDiMuonsAnalyzer::displaySelection() {
 
   // module config parameters
   std::cout << " - _checkTrigger: " << _checkTrigger << std::endl;
-  std::cout << " - _selectLowestSingleMuTrigger: " << _selectLowestSingleMuTrigger << std::endl;
   std::cout << " - Additional Triggers To Probe:\n";
-  unsigned int triggerSize = _selectLowestSingleMuTrigger ? triggerNames_.size()-1 : triggerNames_.size();
+  unsigned int triggerSize = triggerNames_.size();
   for (unsigned int i=0; i < triggerSize; i++) 
     std::cout << "    * triggerBaseNames["<<i<<"]: " << triggerBaseNames_[i] << std::endl;
   
   std::cout << std::endl << std::endl;
 
 }
-
-void UFDiMuonsAnalyzer::findLowestSingleMu(const HLTConfigProvider hltConfig_,
-                                           const edm::Event& iEvent,    
-                                           const edm::EventSetup& iSetup) {
-
-  // originally from Michele's code at DQM/Physics/src/EwkMuLumiMonitorDQM.cc
-  
-  // Check the prescales
-  // see the trigger single muon which are present
-  std::string lowestMuonUnprescaledTrig = "";
-  bool lowestMuonUnprescaledTrigFound = false;
-  const std::vector<std::string>& triggerNames = hltConfig_.triggerNames();
-  
-  for (size_t ts = 0; ts< triggerNames.size() ; ts++){
-    std::string trig = triggerNames[ts];
-    size_t f = trig.find("HLT_Mu");
-
-    size_t fmr = trig.find("MR");
-
-    size_t weirdName = trig.find("L1Mu10erJetC12WdEtaPhi1DiJetsC");
-
-    if ( (f != std::string::npos) && 
-         (fmr == std::string::npos) && 
-         (weirdName == std::string::npos) ) {
-
-      //std::cout << "single muon trigger present: " << trig << std::endl; 
-
-      int prescaleSet = hltConfig_.prescaleSet(iEvent, iSetup);
-      //std::cout << "prescaleSet=" << prescaleSet << std::endl;
-
-      if (prescaleSet == -1) continue;
-      
-      std::pair<int,int> prescaleValues = hltConfig_.prescaleValues(iEvent, iSetup,trig);
-      int l1prescale  = prescaleValues.first;
-      int hltprescale = prescaleValues.second;
-
-      //std::cout << "L1 prescale="<< l1prescale //prescaleValues.first
-      //         << " HLT prescale=" << hltprescale << std::endl;//prescaleValues.second << std::endl;
-
-      if (l1prescale != 1 || hltprescale != 1) continue;
-
-      for (unsigned int n=9; n<100 ; n++ ){
-        std::string lowestTrig= "finalVersion";
-        std::string lowestTrigv0 = "HLT_Mu";
-        std::stringstream out;
-        out << n;
-        std::string s = out.str(); 
-        lowestTrigv0.append(s);
-        lowestTrig = lowestTrigv0;  
-        
-        //std::cout << " lowestTrig: " << lowestTrig << std::endl; 
-        if (trig==lowestTrig) lowestMuonUnprescaledTrig = trig ;
-        if (trig==lowestTrig) {std::cout << " before loop, lowestTrig lowest single muon trigger present unprescaled: " << lowestTrig << std::endl; }
-        if (trig==lowestTrig) lowestMuonUnprescaledTrigFound = true ;
-        if (trig==lowestTrig) break ;
-          
-        for (unsigned int v = 1; v<10 ; v++ ){
-          lowestTrig = lowestTrigv0;
-          
-          size_t eta2p1 = trig.find("eta2p1");
-          if (eta2p1 != std::string::npos) lowestTrig.append("_eta2p1");
-
-          lowestTrig.append("_v");
-          std::stringstream oout;
-          oout << v;
-          std::string ss = oout.str(); 
-          lowestTrig.append(ss);
-          if (trig==lowestTrig) lowestMuonUnprescaledTrig = trig ;
-          if (trig==lowestTrig) lowestMuonUnprescaledTrigFound = true ;
-          //std::cout << "lowestTrig=" << lowestTrig << "found?" << lowestMuonUnprescaledTrigFound << std::endl;
-          if (trig==lowestTrig) break ;
-        }	
-        if (lowestMuonUnprescaledTrigFound) break; 
-	
-      }
-      if (lowestMuonUnprescaledTrigFound) break; 
-    }
-  }
-
-  if (_isVerbose) {
-    std::cout << "after break, lowest single muon trigger present unprescaled: " << lowestMuonUnprescaledTrig << std::endl; 
-    if (lowestMuonUnprescaledTrig == "") 
-      edm::LogError("UFDiMuonsAnalyzer") << "Lowest Unprescaled Single Muon Trigger NOT FOUND!\n";
-    std::cout << "Filter Name is " << findFilterName ( hltConfig_, lowestMuonUnprescaledTrig ) << std::endl;
-  }
-  
-  // *********************************** //
-  triggerNames_.back() = lowestMuonUnprescaledTrig ;
-  filterNames_.back() = findFilterName ( hltConfig_, lowestMuonUnprescaledTrig );
-  // *********************************** //
-
-}
-
 
 void UFDiMuonsAnalyzer::addVersion(const HLTConfigProvider hltConfig_,
                                    std::string& triggerBaseName,
@@ -2543,18 +2152,6 @@ std::string UFDiMuonsAnalyzer::findFilterName(const HLTConfigProvider hltConfig_
   // *********************************** //
 }
 
-
-bool UFDiMuonsAnalyzer::isDoubleMu(const std::string& triggerName) {
-
-  bool isDoubleMuTrigger=false;
-  
-  size_t found;
-  found=triggerName.find("DoubleMu");
-
-  if (found!=std::string::npos) isDoubleMuTrigger=true;
-
-  return isDoubleMuTrigger;
-}
 
 std::vector<float> UFDiMuonsAnalyzer::getPUJetIDDisc(edm::Handle<edm::View<pat::Jet> >  jets, const edm::Event& event, edm::InputTag tag)
 {
