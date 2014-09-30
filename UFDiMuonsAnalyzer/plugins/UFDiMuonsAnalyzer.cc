@@ -24,6 +24,8 @@ Implementation:
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <algorithm>
+#include <boost/regex.hpp>
 
 #include "TLorentzVector.h"
 #include "TTree.h"
@@ -116,7 +118,6 @@ Implementation:
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
-#include <algorithm>
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
 #include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
@@ -324,16 +325,11 @@ private:
                          _TrackInfo&  muon2); 
 
   // method to select the muons
-  bool isHltPassed (const edm::Event&, const edm::EventSetup&, const std::vector<std::string> triggerName);
+  bool isHltPassed (const edm::Event&, const edm::EventSetup&, const std::vector<std::string> triggerNames);
   bool isHltMatched(const edm::Event&, const edm::EventSetup&, 
-                    const std::vector < std::string>& triggerNames, 
+                    const std::string& triggerName, 
                     const pat::TriggerObjectStandAloneCollection& triggerObjects,
                     const pat::Muon&);
-
-  void addVersion(const HLTConfigProvider hltConfig_,
-                  std::string& triggerBaseName,
-                  std::string& triggerName);    
-  std::string findFilterName(const HLTConfigProvider hltConfig_, const std::string& triggerName);
 
   bool isPreselected(const pat::Muon& muon,
                      edm::Handle<reco::BeamSpot> beamSpotHandle);
@@ -412,9 +408,6 @@ private:
 
   TLorentzVector const GetLorentzVector(UFDiMuonsAnalyzer::MuonPair  const* pair) ;//const; 
   TLorentzVector const GetLorentzVector(UFDiMuonsAnalyzer::TrackPair const* pair) ;//const; 
-
-  TransientVertex const GetVertexFromPair(UFDiMuonsAnalyzer::TrackPair const* muPair) const;
-  TransientVertex const GetVertexFromTracks(reco::TrackRef trackref1, reco::TrackRef trackref2) const;
 
   // useful switches
   bool _isVerbose;    // debug mode
@@ -1066,7 +1059,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     // save trigger informations
     for (unsigned int iTrigger=0;iTrigger<triggerNames_.size();iTrigger++) 
       _muon1.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], *triggerObjsHandle_, mu);
-    
+
     _outTree->Fill();
     
     // you can exit and pass to the new event
@@ -1653,20 +1646,18 @@ bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent,
   const unsigned nTriggers = triggerResultsHandle_->size();
   for (unsigned iTrigger = 0; iTrigger < nTriggers; ++iTrigger)
   {
-    string triggerName = triggerNames[iTrigger];
+    const string triggerName = triggerNames.triggerName(iTrigger);
     string triggerNameStripped = boost::regex_replace(triggerName,re,"",boost::match_default | boost::format_sed);
-    bool desiredTrigger = false;
     for(std::vector<std::string>::const_iterator desiredTriggerName=desiredTriggerNames.begin();
             desiredTriggerName!=desiredTriggerNames.end();desiredTriggerName++)
     {
       if (*desiredTriggerName == triggerNameStripped && triggerResultsHandle_->accept(iTrigger))
       {
-        return true
+        return true;
       }
     }
   }
   return false;
-
 }
 
 // same check for isHltPassed +
@@ -1690,18 +1681,19 @@ bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent,
   const unsigned nTriggers = triggerResultsHandle_->size();
   for (unsigned iTrigger = 0; iTrigger < nTriggers; ++iTrigger)
   {
-    string triggerName = triggerNames[iTrigger];
+    const string triggerName = triggerNames.triggerName(iTrigger);
     string triggerNameStripped = boost::regex_replace(triggerName,re,"",boost::match_default | boost::format_sed);
     if (desiredTriggerName == triggerNameStripped && triggerResultsHandle_->accept(iTrigger))
     {
       for(TriggerObjectStandAloneCollection::const_iterator trigObj=triggerObjects.begin(); 
           trigObj!=triggerObjects.end();trigObj++)
       {
-        trigObj.unpackPathNames(triggerNames);
-        bool isRightObj = trigObj.hasPathName(triggerName,true,true); // name, check that is l3 filter accepted, check that is last filter
+        TriggerObjectStandAlone tmpTrigObj(*trigObj); // Get rid of const which messes up unpackPathNames
+        tmpTrigObj.unpackPathNames(triggerNames);
+        bool isRightObj = tmpTrigObj.hasPathName(triggerName,true,true); // name, check that is l3 filter accepted, check that is last filter
         if (isRightObj)
         {
-          bool isMatched = (deltaR(trigObj,mu) < 0.2);
+          bool isMatched = (deltaR(tmpTrigObj,mu) < 0.2);
           if (isMatched) return true;
         }
       }
@@ -2078,80 +2070,6 @@ void UFDiMuonsAnalyzer::displaySelection() {
   std::cout << std::endl << std::endl;
 
 }
-
-void UFDiMuonsAnalyzer::addVersion(const HLTConfigProvider hltConfig_,
-                                   std::string& triggerBaseName,
-                                   std::string& triggerName) {
-
-  //std::cout << "The trigger is " << triggerBaseName  << std::endl;
-  
-  // This function looks gets a trigger name, e.g. HLT_Mu15 and add to it
-  // its version number, e.g. HLT_Mu15_v2, if the trigger is present in 
-  // the hltConfig  
-  const std::vector<std::string>& triggerNames = hltConfig_.triggerNames();
-    
-  for (size_t ts = 0; ts< triggerNames.size() ; ts++){
-    std::string trig = triggerNames[ts];
-    size_t f = trig.find(triggerBaseName);
-
-    if (f != std::string::npos)  {
-
-      //adding version extension
-      for (unsigned int iVersion = 1; iVersion<60; iVersion++ ){
-        std::string trigWithVersion= triggerBaseName;
-        trigWithVersion.append("_v");
-        std::stringstream ss;
-        ss << iVersion;
-        std::string version = ss.str(); 
-        trigWithVersion.append(version);
-        
-        if (trig==trigWithVersion) {
-          triggerName.replace(triggerName.begin(),    triggerName.end(),
-                              trigWithVersion.begin(),trigWithVersion.end());
-          return;
-        }
-        
-      }
-    }
-    
-  }
-  
-  std::cout << "TriggerBaseName \"" << triggerBaseName 
-            << "\" was already \"versionized\" OR "
-            << " the root is not found in the list of trigger which"
-            << " means cmssw is going to crash providing the list"
-            << " of available triggers\n";
-
-  triggerName.replace(triggerName.begin(),    triggerName.end(),
-                      triggerBaseName.begin(),triggerBaseName.end());
-
-  return;
-
-}
-
-
-std::string UFDiMuonsAnalyzer::findFilterName(const HLTConfigProvider hltConfig_, 
-                                              const std::string& triggerName){
-  
-  std::string L3FilterName_;
-  
-  const std::vector<std::string>& moduleLabs = hltConfig_.moduleLabels(triggerName); 
-    
-  // the l3 filter name is just the last module.... 
-  size_t moduleLabsSizeMinus2 = moduleLabs.size() - 2 ;
-  
- 
-  L3FilterName_ = moduleLabs[moduleLabsSizeMinus2];
-
-  if (_isVerbose) std::cout<<"triggerName="    << triggerName
-                           <<" -> filterName=" << L3FilterName_ << std::endl;        
-  
-  // *********************************** //
-  return L3FilterName_ ;
-  //return moduleLabs[moduleLabsSizeMinus2];
-  // *********************************** //
-}
-
 
 std::vector<float> UFDiMuonsAnalyzer::getPUJetIDDisc(edm::Handle<edm::View<pat::Jet> >  jets, const edm::Event& event, edm::InputTag tag)
 {

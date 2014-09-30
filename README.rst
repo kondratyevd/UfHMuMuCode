@@ -17,3 +17,7 @@ In your CMSSW "src/" directory, run:
   cd UserArea
   nice scram b -j8
 
+Notes
+-----
+
+Remember to check that one of the muons passes the trigger.  That may be the only trigger check.
