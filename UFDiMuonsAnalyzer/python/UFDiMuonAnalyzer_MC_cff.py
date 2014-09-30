@@ -31,10 +31,9 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          minStripLayers  = cms.int32(-999),
                          validFracTrackerMin= cms.int32(-999),   
     
-                         # if beamSpot is not specified
-                         # assumes you are using "offlineBeamSpot"
-                         primaryVertexTag = cms.untracked.InputTag("offlineSlimmedPrimaryVertices"),
-                         beamSpotTag = cms.untracked.InputTag("offlineBeamSpot"),
+                         primaryVertexTag = cms.InputTag("offlineSlimmedPrimaryVertices"),
+                         beamSpotTag = cms.InputTag("offlineBeamSpot"),
+                         genParticleTag = cms.InputTag("prunedGenParticles"),
                          d0Max = cms.double(0.2), 
                          
                          #track isolation

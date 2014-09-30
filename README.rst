@@ -20,4 +20,6 @@ In your CMSSW "src/" directory, run:
 Notes
 -----
 
-Remember to check that one of the muons passes the trigger.  That may be the only trigger check.
+- Remember to check that one of the muons passes the trigger.  That may be the only trigger check.
+- JEC uncertainty commented out.  Couldn't get the appropriate data out of DB (remember delete statement when you put it back in)
+

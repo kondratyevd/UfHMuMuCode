@@ -343,6 +343,7 @@ private:
   // muons
   edm::InputTag _muonColl;
   edm::InputTag _beamSpotTag;		
+  edm::InputTag _genParticleTag;		
   edm::InputTag _primaryVertexTag;		
   std::string _getFilename;	
 
@@ -431,10 +432,9 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _getFilename  = iConfig.getUntrackedParameter<std::string>("getFilename", "badger.root");
   _muonColl	= iConfig.getParameter<edm::InputTag>("muonColl");
 
-  _beamSpotTag	= iConfig.getUntrackedParameter<edm::InputTag>("beamSpotTag",
-                                                               edm::InputTag("offlineBeamSpot") );
-  _primaryVertexTag	= iConfig.getUntrackedParameter<edm::InputTag>("primaryVertexTag",
-                                                               edm::InputTag("offlineSlimmedPrimaryVertices") );
+  _beamSpotTag	= iConfig.getParameter<edm::InputTag>("beamSpotTag");
+  _genParticleTag	= iConfig.getParameter<edm::InputTag>("genParticleTag" );
+  _primaryVertexTag	= iConfig.getParameter<edm::InputTag>("primaryVertexTag");
 
   _isVerbose	= iConfig.getUntrackedParameter<bool>("isVerbose",   false);
   _isMonteCarlo	= iConfig.getParameter<bool>("isMonteCarlo");
@@ -627,7 +627,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   if (_isMonteCarlo) {
 
     edm::Handle<reco::GenParticleCollection> allGenParticles;
-    iEvent.getByLabel("genParticles", allGenParticles);
+    iEvent.getByLabel(_genParticleTag, allGenParticles);
   
     // initialize Z to default values
     initGenPart(_genZpreFSR); initTrack(_genM1ZpreFSR); initTrack(_genM2ZpreFSR);
@@ -753,11 +753,11 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   if( pfJetsTag.label() != "null" ) iEvent.getByLabel(pfJetsTag, jets);
   bzero(&_pfJetInfo,sizeof(_PFJetInfo));
 
-  // Get JEC Uncertainty Calculator
-  edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
-  iSetup.get<JetCorrectionsRecord>().get("AK4PF",JetCorParColl); 
-  JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
-  JetCorrectionUncertainty *jecUncCalculator = new JetCorrectionUncertainty(JetCorPar);
+  //// Get JEC Uncertainty Calculator
+  //edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
+  //iSetup.get<JetCorrectionsRecord>().get("AK4PF",JetCorParColl); 
+  //JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
+  //JetCorrectionUncertainty *jecUncCalculator = new JetCorrectionUncertainty(JetCorPar);
 
   if( jets.isValid() ){
 
@@ -792,9 +792,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
         _pfJetInfo.hfem[i]  = jet.HFEMMultiplicity();
         //               _pfJetInfo.pfJetCh[i] = jet.jetCharge();
         // Get JEC Uncertainty
-        jecUncCalculator->setJetEta(jet.eta());
-        jecUncCalculator->setJetPt(jet.pt()); // here you must use the CORRECTED jet pt
-        _pfJetInfo.jecUnc[i] = jecUncCalculator->getUncertainty(true);
+        //jecUncCalculator->setJetEta(jet.eta());
+        //jecUncCalculator->setJetPt(jet.pt()); // here you must use the CORRECTED jet pt
+        //_pfJetInfo.jecUnc[i] = jecUncCalculator->getUncertainty(true);
+        _pfJetInfo.jecUnc[i] = -1.0;
         _pfJetInfo.jecFactor[i]  = jet.jecFactor("Uncorrected");
         // b-Tag
         _pfJetInfo.csv[i]  = jet.bDiscriminator("combinedSecondaryVertexBJetTags");
@@ -840,7 +841,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     }
   }
   
-  delete jecUncCalculator;
+//  delete jecUncCalculator;
 
   edm::Handle < reco::GenJetCollection > genJets;
   if( genJetsTag.label() != "null" ) iEvent.getByLabel(genJetsTag, genJets);
