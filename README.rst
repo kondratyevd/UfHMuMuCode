@@ -20,6 +20,8 @@ In your CMSSW "src/" directory, run:
 Notes
 -----
 
+- Not sure if trigger or gen-particle matching works
+- Probably should validate that jet selection and cross-cleaning with muons works
 - Remember to check that one of the muons passes the trigger.  That may be the only trigger check.
 - JEC uncertainty commented out.  Couldn't get the appropriate data out of DB (remember delete statement when you put it back in)
 
