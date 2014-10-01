@@ -11,12 +11,11 @@ else:
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
 #process.MessageLogger.cerr.FwkReport.reportEvery = 1000
-process.MessageLogger.destinations.append("detailedInfo")
-#process.MessageLogger.categories = cms.untracked.vstring("UFHLTTests")
-process.MessageLogger.detailedInfo = cms.untracked.PSet(
-    threshold = cms.untracked.string("INFO"),
-    categories = cms.untracked.vstring("UFHLTTests")
-)
+##process.MessageLogger.destinations.append("detailedInfo")
+##process.MessageLogger.detailedInfo = cms.untracked.PSet(
+##    threshold = cms.untracked.string("INFO"),
+##    categories = cms.untracked.vstring("UFHLTTests")
+##)
 
 process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 
