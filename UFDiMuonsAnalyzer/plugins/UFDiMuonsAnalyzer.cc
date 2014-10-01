@@ -22,6 +22,7 @@ Implementation:
 #include <memory>
 #include <vector>
 #include <iostream>
+#include <sstream>
 #include <fstream>
 #include <string>
 #include <algorithm>
@@ -35,6 +36,7 @@ Implementation:
 #include "TBranch.h"
 
 // user include files
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 
@@ -380,8 +382,6 @@ private:
   // module config parameters
   std::string   processName_;
   std::vector < std::string > triggerNames_;
-  std::vector < std::string > triggerBaseNames_;
-  std::vector < std::string > filterNames_;
 
   std::vector < int > l1Prescale_;
   std::vector < int > hltPrescale_;
@@ -484,7 +484,7 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _checkTrigger	     = iConfig.getParameter<bool>("checkTrigger");
 
   processName_       = iConfig.getParameter<std::string>("processName");
-  triggerBaseNames_  = iConfig.getParameter<std::vector <std::string> >("triggerNames");
+  triggerNames_  = iConfig.getParameter<std::vector <std::string> >("triggerNames");
 
   triggerResultsTag_ = iConfig.getParameter<edm::InputTag>("triggerResults");
   triggerObjsTag_ = iConfig.getParameter<edm::InputTag>("triggerObjs");
@@ -1398,11 +1398,6 @@ void UFDiMuonsAnalyzer::beginJob()
   _outTree->Branch("rho25",            &_rho25,            "rho25/F"           );
   _outTree->Branch("rho25asHtoZZto4l", &_rho25asHtoZZto4l, "rho25asHtoZZto4l/F");
 
-
-  //std::cout << "beginJob" << std::endl;
-  //std::cout << "triggerBaseNames_.size()= " << triggerBaseNames_.size() << std::endl;
-
-
   _outTree->Branch("vertexInfo", &vertexInfo, "nVertices/I:isValid[20]/I:"
 		   "x[20]/F:y[20]/F:z[20]/F:xErr[20]/F:yErr[20]/F:zErr[20]/F:"
 		   "chi2[20]/F:ndf[20]/I:normChi2[20]/F");
@@ -1649,6 +1644,7 @@ bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent,
   using namespace reco;
   using namespace trigger;
 
+
   const boost::regex re("_v[0-9]+");
 
   const TriggerNames &triggerNames = iEvent.triggerNames(*triggerResultsHandle_);
@@ -1663,6 +1659,13 @@ bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent,
     {
       if (*desiredTriggerName == triggerNameStripped && triggerResultsHandle_->accept(iTrigger))
       {
+        stringstream debugString;
+        debugString << "isHltPassed:" <<endl;
+        debugString << "  Trigger "<<iTrigger<<": "<< triggerName << "("<<triggerNameStripped<<") passed: "<<triggerResultsHandle_->accept(iTrigger)<<endl;
+        debugString << "    Desired Trigger Names: ";
+        debugString <<"'"<< *desiredTriggerName<<"' ";
+        debugString << endl << "    Accept Trigger" << endl;
+        LogVerbatim("UFHLTTests") << debugString.str();
         return true;
       }
     }
@@ -1684,6 +1687,7 @@ bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent,
   using namespace reco;
   using namespace trigger;
 
+
   const boost::regex re("_v[0-9]+");
 
   const TriggerNames &triggerNames = iEvent.triggerNames(*triggerResultsHandle_);
@@ -1695,6 +1699,10 @@ bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent,
     string triggerNameStripped = boost::regex_replace(triggerName,re,"",boost::match_default | boost::format_sed);
     if (desiredTriggerName == triggerNameStripped && triggerResultsHandle_->accept(iTrigger))
     {
+      stringstream debugString;
+      debugString << "isHltMatched: ";
+      debugString << "'" << desiredTriggerName<<"'\n";
+      debugString << "  Trigger "<<iTrigger<<": "<< triggerName << "("<<triggerNameStripped<<") passed: "<<triggerResultsHandle_->accept(iTrigger)<<endl;
       for(TriggerObjectStandAloneCollection::const_iterator trigObj=triggerObjects.begin(); 
           trigObj!=triggerObjects.end();trigObj++)
       {
@@ -1703,11 +1711,18 @@ bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent,
         bool isRightObj = tmpTrigObj.hasPathName(triggerName,true,true); // name, check that is l3 filter accepted, check that is last filter
         if (isRightObj)
         {
+          debugString << "    TriggerObject:  "<<tmpTrigObj.collection() << endl;
           bool isMatched = (deltaR(tmpTrigObj,mu) < 0.2);
-          if (isMatched) return true;
-        }
-      }
-    }// trigObj loop
+          if (isMatched) 
+          {
+            debugString << "      is Matched*****"  <<endl;
+            LogVerbatim("UFHLTTests") << debugString.str();
+            return true;
+          }
+        } // if isRightObj
+      } // trigObj lookp
+      LogVerbatim("UFHLTTests") << debugString.str();
+    }// if desiredTrigger
   }// iTrigger loop
 
   return false;
@@ -2075,7 +2090,7 @@ void UFDiMuonsAnalyzer::displaySelection() {
   std::cout << " - Additional Triggers To Probe:\n";
   unsigned int triggerSize = triggerNames_.size();
   for (unsigned int i=0; i < triggerSize; i++) 
-    std::cout << "    * triggerBaseNames["<<i<<"]: " << triggerBaseNames_[i] << std::endl;
+    std::cout << "    * triggerNames["<<i<<"]: " << triggerNames_[i] << std::endl;
   
   std::cout << std::endl << std::endl;
 

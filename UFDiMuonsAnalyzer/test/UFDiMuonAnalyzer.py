@@ -10,7 +10,13 @@ else:
     print 'Running over MC sample'
 
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+#process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.MessageLogger.destinations.append("detailedInfo")
+#process.MessageLogger.categories = cms.untracked.vstring("UFHLTTests")
+process.MessageLogger.detailedInfo = cms.untracked.PSet(
+    threshold = cms.untracked.string("INFO"),
+    categories = cms.untracked.vstring("UFHLTTests")
+)
 
 process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 
@@ -39,28 +45,6 @@ process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange()
 # -------- PoolSource END -------------
 
 #===============================================================================
-
-## Standard PAT Configuration File
-process.load("PhysicsTools.PatAlgos.patSequences_cff")
-
-## Output Module Configuration (expects a path 'p')
-from PhysicsTools.PatAlgos.patEventContent_cff import patEventContent
-process.out = cms.OutputModule("PoolOutputModule",
-                               fileName = cms.untracked.string('patTuple.root'),
-                               # save only events passing the full path
-			       dropMetaData = cms.untracked.string('ALL'),
-	                       splitLevel = cms.untracked.int32(99),
-                               SelectEvents = cms.untracked.PSet(      SelectEvents = cms.vstring('p')     ),
-                               # save PAT Layer 1 output; you need a '*' to
-                               # unpack the list of commands 'patEventContent'
-                               outputCommands = cms.untracked.vstring('drop *' )
-                               )
-
-process.outpath = cms.EndPath(process.out)
-
-
-# load the PAT config
-#process.load("PhysicsTools.PatAlgos.patSequences_cff")
 
 # Clean the Jets from good muons, apply loose jet Id
 ccMuPreSel = "pt > 15. && isGlobalMuon "
