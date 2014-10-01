@@ -35,6 +35,7 @@ Implementation:
 #include "TBranch.h"
 
 // user include files
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
 #include "FWCore/Framework/interface/EDAnalyzer.h"
 
@@ -1640,6 +1641,8 @@ bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent,
   using namespace reco;
   using namespace trigger;
 
+  LogVerbatim("UFHLTTests") << "isHltPassed:" <<endl;
+
   const boost::regex re("_v[0-9]+");
 
   const TriggerNames &triggerNames = iEvent.triggerNames(*triggerResultsHandle_);
@@ -1649,13 +1652,18 @@ bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent,
   {
     const string triggerName = triggerNames.triggerName(iTrigger);
     string triggerNameStripped = boost::regex_replace(triggerName,re,"",boost::match_default | boost::format_sed);
+    LogVerbatim("UFHLTTests") << "  Trigger "<<iTrigger<<": "<< triggerName << "("<<triggerNameStripped<<") passed: "<<triggerResultsHandle_->accept(iTrigger)<<endl;
+    LogVerbatim("UFHLTTests") << "    Desired Trigger Names: ";
     for(std::vector<std::string>::const_iterator desiredTriggerName=desiredTriggerNames.begin();
             desiredTriggerName!=desiredTriggerNames.end();desiredTriggerName++)
     {
+      LogVerbatim("UFHLTTests") << *desiredTriggerName<<" ";
       if (*desiredTriggerName == triggerNameStripped && triggerResultsHandle_->accept(iTrigger))
       {
+        LogVerbatim("UFHLTTests") << endl << "    Accept Trigger" << endl;
         return true;
       }
+      LogVerbatim("UFHLTTests") << endl;
     }
   }
   return false;
