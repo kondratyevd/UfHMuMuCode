@@ -307,6 +307,7 @@ public:
   // where to save all the info  
   TFile* _outFile;	
   TTree* _outTree;
+  TTree* _outTreeMetadata;
 
 
 private:
@@ -1389,7 +1390,6 @@ void UFDiMuonsAnalyzer::beginJob()
   // create the tree
   _outTree	= new TTree("tree", "myTree");
 
-
   // eventInfo;
   _outTree->Branch( "eventInfo",  &eventInfo, "run/I:lumi/I:event/I:bx/I:orbit/I");
   
@@ -1583,6 +1583,15 @@ void UFDiMuonsAnalyzer::endJob() {
            <<_outTree->GetEntries()<<std::endl;
   _outFile->cd();
   _outTree->Write();
+
+  // create the metadata tree
+  _outTreeMetadata	= new TTree("metadata", "Metadata Tree");
+  _outTreeMetadata->Branch("originalNumEvents"  ,            &_numEvents,              "originalNumEvents/I"             );
+  _outTreeMetadata->Branch("isMonteCarlo"  ,            &_isMonteCarlo,              "isMonteCarlo/O"             );
+  std::vector <std::string> * triggerBaseNamesPointer = &triggerBaseNames_;
+  _outTreeMetadata->Branch("triggerNames"  ,"std::vector< std::string > >", &triggerBaseNamesPointer);
+  _outTreeMetadata->Fill();
+  _outTreeMetadata->Write();
 
 }
 
