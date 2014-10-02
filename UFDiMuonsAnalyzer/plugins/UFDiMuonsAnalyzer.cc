@@ -1583,8 +1583,8 @@ void UFDiMuonsAnalyzer::endJob() {
   _outTreeMetadata	= new TTree("metadata", "Metadata Tree");
   _outTreeMetadata->Branch("originalNumEvents"  ,            &_numEvents,              "originalNumEvents/I"             );
   _outTreeMetadata->Branch("isMonteCarlo"  ,            &_isMonteCarlo,              "isMonteCarlo/O"             );
-  std::vector <std::string> * triggerBaseNamesPointer = &triggerBaseNames_;
-  _outTreeMetadata->Branch("triggerNames"  ,"std::vector< std::string > >", &triggerBaseNamesPointer);
+  std::vector <std::string> * triggerNamesPointer = &triggerNames_;
+  _outTreeMetadata->Branch("triggerNames"  ,"std::vector< std::string > >", &triggerNamesPointer);
   _outTreeMetadata->Fill();
   _outTreeMetadata->Write();
 
