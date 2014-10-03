@@ -33,7 +33,8 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
     
                          primaryVertexTag = cms.InputTag("offlineSlimmedPrimaryVertices"),
                          beamSpotTag = cms.InputTag("offlineBeamSpot"),
-                         genParticleTag = cms.InputTag("prunedGenParticles"),
+                         prunedGenParticleTag = cms.InputTag("prunedGenParticles"),
+                         packedGenParticleTag = cms.InputTag("packedGenParticles"),
                          d0Max = cms.double(0.2), 
                          
                          #track isolation

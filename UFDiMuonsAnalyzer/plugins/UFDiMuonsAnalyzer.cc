@@ -110,6 +110,7 @@ Implementation:
 #include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
 #include "DataFormats/Candidate/interface/CompositePtrCandidate.h"
 #include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
 
 // 2010.11.21 Adding the Muon Cocktail
 #include "DataFormats/MuonReco/interface/MuonCocktails.h"
@@ -346,7 +347,8 @@ private:
   // muons
   edm::InputTag _muonColl;
   edm::InputTag _beamSpotTag;		
-  edm::InputTag _genParticleTag;		
+  edm::InputTag _prunedGenParticleTag;		
+  edm::InputTag _packedGenParticleTag;		
   edm::InputTag _primaryVertexTag;		
   std::string _getFilename;	
 
@@ -434,7 +436,8 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _muonColl	= iConfig.getParameter<edm::InputTag>("muonColl");
 
   _beamSpotTag	= iConfig.getParameter<edm::InputTag>("beamSpotTag");
-  _genParticleTag	= iConfig.getParameter<edm::InputTag>("genParticleTag" );
+  _prunedGenParticleTag	= iConfig.getParameter<edm::InputTag>("prunedGenParticleTag" );
+  _packedGenParticleTag	= iConfig.getParameter<edm::InputTag>("packedGenParticleTag" );
   _primaryVertexTag	= iConfig.getParameter<edm::InputTag>("primaryVertexTag");
 
   _isVerbose	= iConfig.getUntrackedParameter<bool>("isVerbose",   false);
@@ -627,9 +630,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   //
   if (_isMonteCarlo) {
 
-    edm::Handle<reco::GenParticleCollection> allGenParticles;
-    iEvent.getByLabel(_genParticleTag, allGenParticles);
-  
     // initialize Z to default values
     initGenPart(_genZpreFSR); initTrack(_genM1ZpreFSR); initTrack(_genM2ZpreFSR);
     initGenPart(_genZpostFSR);initTrack(_genM1ZpostFSR);initTrack(_genM2ZpostFSR);
@@ -641,98 +641,147 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     // initialize W to default values
     initGenPart(_genWpreFSR); initTrack(_genMWpreFSR); initTrack(_genMWpostFSR);
 
-    reco::GenParticleCollection ZPreFSR;
-    reco::GenParticleCollection ZPostFSR;
-    reco::GenParticleCollection HPreFSR;
-    reco::GenParticleCollection HPostFSR;
-    reco::GenParticleCollection WPreFSR;
-    reco::GenParticleCollection WPostFSR;
+    edm::Handle<reco::GenParticleCollection> prunedGenParticles;
+    iEvent.getByLabel(_prunedGenParticleTag, prunedGenParticles);
 
+    reco::GenParticleCollection hardProcessMuons;
+
+    bool foundW = false;
+    bool foundZ = false;
+    bool foundH = false;
     //std::cout << "\n====================================\n"; 
-    for (reco::GenParticleCollection::const_iterator gen = allGenParticles->begin(), genEnd = allGenParticles->end(); 
+    for (reco::GenParticleCollection::const_iterator gen = prunedGenParticles->begin(), genEnd = prunedGenParticles->end(); 
          gen != genEnd; ++gen) 
-      {
+    {
       
         int id = gen->pdgId();
       
-        // if it is a W we do not have the two muon to reconstruct 
-        // the particle, hence just go directly to use the gen iterator
-        if (abs(id) == 24) {
+        // Status code 22 means hard process intermediate particle in Pythia 8
+        if (abs(id) == 23 && gen->status() == 22) {
+          foundZ = true;
+          _genZpreFSR.mass = gen->mass(); 
+          _genZpreFSR.pt   = gen->pt();   
+          _genZpreFSR.eta  = gen->eta();  
+          _genZpreFSR.y    = gen->rapidity();    
+          _genZpreFSR.phi  = gen->phi();  
+        }
+        if (abs(id) == 24 && gen->status() == 22) {
+          foundW = true;
           _genWpreFSR.mass = gen->mass(); 
           _genWpreFSR.pt   = gen->pt();   
           _genWpreFSR.eta  = gen->eta();  
           _genWpreFSR.y    = gen->rapidity();    
           _genWpreFSR.phi  = gen->phi();  
         }
+        if (abs(id) == 25 && gen->status() == 22) {
+          foundH = true;
+          _genHpreFSR.mass = gen->mass(); 
+          _genHpreFSR.pt   = gen->pt();   
+          _genHpreFSR.eta  = gen->eta();  
+          _genHpreFSR.y    = gen->rapidity();    
+          _genHpreFSR.phi  = gen->phi();  
+        }
      
-        //if (abs(id) == 25/*or 24 or 25*/) {
-        //  //std::cout << "Z candidate (status=" << gen->status() 
-        //   //std::cout << "W candidate (status=" << gen->status() 
-        //  std::cout << "H candidate (status=" << gen->status() 
-        //            << ", mass=" << gen->mass() 
-        //            << ", pt="   << gen->pt()  
-        //            << ", id="   << gen->pdgId()  
-        //            << ", motherId="<< gen->mother()->pdgId()
-        //            << ", nDau=" << gen->numberOfDaughters() 
-        //            << ")\n\n";
-        //}
-      
-        if (abs(id) == 13)  {
-          //std::cout << "muon candidate (status=" << gen->status() 
-          //          << ", mass=" << gen->mass() 
-          //          << ", pt="   << gen->pt() 
-          //          << ", id="   << gen->pdgId()  
-          //          << ", motherId="<< gen->mother()->pdgId()
-          //          << ")\n";
-
-          int parentId = gen->mother()->pdgId();
-        
-          bool isMuonFromZ = false;
-          bool isMuonFromH = false;
-          bool isMuonFromW = false;
-         
-          // check where the muon is coming from
-          isMuonFromZ = checkMother(*gen,23);
-          isMuonFromW = checkMother(*gen,24);
-          isMuonFromH = checkMother(*gen,25);
-        
-          if (gen->status() == 3 && abs(id) == 13 && abs(parentId) == 23) ZPreFSR .push_back(*gen);
-          if (gen->status() == 1 && abs(id) == 13 && isMuonFromZ        ) ZPostFSR.push_back(*gen);
-        
-          if (gen->status() == 3 && abs(id) == 13 && abs(parentId) == 24) WPreFSR .push_back(*gen);
-          if (gen->status() == 1 && abs(id) == 13 && isMuonFromW        ) WPostFSR.push_back(*gen);
-        
-          if (gen->status() == 3 && abs(id) == 13 && abs(parentId) == 25) HPreFSR .push_back(*gen);
-          if (gen->status() == 1 && abs(id) == 13 && isMuonFromH        ) HPostFSR.push_back(*gen);
-        
+        // Status code 23 means hard process outgoing particle in Pythia 8
+        if (abs(id) == 13 && gen->status() == 23)  {
+          hardProcessMuons.push_back(*gen);
         } // muon 
+
+        // Status code 62 means after ISR,FSR, and primoridial pt from UE
+        if (abs(id) == 23 && gen->status() == 62) {
+          _genZpostFSR.mass = gen->mass(); 
+          _genZpostFSR.pt   = gen->pt();   
+          _genZpostFSR.eta  = gen->eta();  
+          _genZpostFSR.y    = gen->rapidity();    
+          _genZpostFSR.phi  = gen->phi();  
+        }
+        if (abs(id) == 25 && gen->status() == 62) {
+          _genHpostFSR.mass = gen->mass(); 
+          _genHpostFSR.pt   = gen->pt();   
+          _genHpostFSR.eta  = gen->eta();  
+          _genHpostFSR.y    = gen->rapidity();    
+          _genHpostFSR.phi  = gen->phi();  
+        }
       
-      } // loop over gen level
-  
-  
-    // fill
-    // Z block
-    fillDiMuonGenPart (ZPreFSR, _genZpreFSR, _genM1ZpreFSR, _genM2ZpreFSR );
-    fillDiMuonGenPart (ZPostFSR,_genZpostFSR,_genM1ZpostFSR,_genM2ZpostFSR);
-                     
-    // W block
-    if (WPreFSR.size() == 1) {
-      _genMWpreFSR.charge = WPreFSR[0].charge(); 
-      _genMWpreFSR.pt     = WPreFSR[0].pt(); 
-      _genMWpreFSR.eta    = WPreFSR[0].eta(); 
-      _genMWpreFSR.phi    = WPreFSR[0].phi();	
+    } // loop over gen level
+
+    if (foundZ && hardProcessMuons.size()==2){
+      reco::GenParticle& gen1 = hardProcessMuons[0];
+      reco::GenParticle& gen2 = hardProcessMuons[1];
+      _genM1ZpreFSR.pt = gen1.pt();
+      _genM1ZpreFSR.eta = gen1.eta();
+      _genM1ZpreFSR.phi = gen1.phi();
+      _genM1ZpreFSR.charge = gen1.charge();
+      _genM2ZpreFSR.pt = gen2.pt();
+      _genM2ZpreFSR.eta = gen2.eta();
+      _genM2ZpreFSR.phi = gen2.phi();
+      _genM2ZpreFSR.charge = gen2.charge();
     }
-  
-    if (WPostFSR.size() == 1) {
-      _genMWpostFSR.charge = WPostFSR[0].charge(); 
-      _genMWpostFSR.pt     = WPostFSR[0].pt(); 
-      _genMWpostFSR.eta    = WPostFSR[0].eta(); 
-      _genMWpostFSR.phi    = WPostFSR[0].phi();	
+    if (foundW && hardProcessMuons.size()==1){
+      reco::GenParticle& gen1 = hardProcessMuons[0];
+      _genMWpreFSR.pt = gen1.pt();
+      _genMWpreFSR.eta = gen1.eta();
+      _genMWpreFSR.phi = gen1.phi();
+      _genMWpreFSR.charge = gen1.charge();
+    }
+    if (foundH && hardProcessMuons.size()==2){
+      reco::GenParticle& gen1 = hardProcessMuons[0];
+      reco::GenParticle& gen2 = hardProcessMuons[1];
+      _genM1HpreFSR.pt = gen1.pt();
+      _genM1HpreFSR.eta = gen1.eta();
+      _genM1HpreFSR.phi = gen1.phi();
+      _genM1HpreFSR.charge = gen1.charge();
+      _genM2HpreFSR.pt = gen2.pt();
+      _genM2HpreFSR.eta = gen2.eta();
+      _genM2HpreFSR.phi = gen2.phi();
+      _genM2HpreFSR.charge = gen2.charge();
     }
 
-    // H block         
-    fillDiMuonGenPart (HPreFSR, _genHpreFSR, _genM1HpreFSR, _genM2HpreFSR );
-    fillDiMuonGenPart (HPostFSR,_genHpostFSR,_genM1HpostFSR,_genM2HpostFSR);
+    edm::Handle<pat::PackedGenParticleCollection> packedGenParticles;
+    iEvent.getByLabel(_packedGenParticleTag, packedGenParticles);
+    pat::PackedGenParticleCollection finalStateGenMuons;
+  
+    for (pat::PackedGenParticleCollection::const_iterator gen = packedGenParticles->begin(), 
+            genEnd = packedGenParticles->end(); 
+         gen != genEnd; ++gen) 
+    {
+        if (abs(gen->pdgId()) == 13)  {
+          finalStateGenMuons.push_back(*gen);
+        } // muon 
+    }
+
+    if (foundZ && finalStateGenMuons.size()==2){
+      pat::PackedGenParticle& gen1 = finalStateGenMuons[0];
+      pat::PackedGenParticle& gen2 = finalStateGenMuons[1];
+      _genM1ZpostFSR.pt = gen1.pt();
+      _genM1ZpostFSR.eta = gen1.eta();
+      _genM1ZpostFSR.phi = gen1.phi();
+      _genM1ZpostFSR.charge = gen1.charge();
+      _genM2ZpostFSR.pt = gen2.pt();
+      _genM2ZpostFSR.eta = gen2.eta();
+      _genM2ZpostFSR.phi = gen2.phi();
+      _genM2ZpostFSR.charge = gen2.charge();
+    }
+    if (foundW && finalStateGenMuons.size()==1){
+      pat::PackedGenParticle& gen1 = finalStateGenMuons[0];
+      _genMWpostFSR.pt = gen1.pt();
+      _genMWpostFSR.eta = gen1.eta();
+      _genMWpostFSR.phi = gen1.phi();
+      _genMWpostFSR.charge = gen1.charge();
+    }
+    if (foundH && finalStateGenMuons.size()==2){
+      pat::PackedGenParticle& gen1 = finalStateGenMuons[0];
+      pat::PackedGenParticle& gen2 = finalStateGenMuons[1];
+      _genM1HpostFSR.pt = gen1.pt();
+      _genM1HpostFSR.eta = gen1.eta();
+      _genM1HpostFSR.phi = gen1.phi();
+      _genM1HpostFSR.charge = gen1.charge();
+      _genM2HpostFSR.pt = gen2.pt();
+      _genM2HpostFSR.eta = gen2.eta();
+      _genM2HpostFSR.phi = gen2.phi();
+      _genM2HpostFSR.charge = gen2.charge();
+    }
+
   
   }// end _isMonteCarlo
 
