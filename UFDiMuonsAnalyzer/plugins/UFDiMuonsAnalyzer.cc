@@ -289,6 +289,7 @@ public:
   _TrackInfo   _genMWpreFSR;
 
   // generator level info W post-FSR
+  _genPartInfo _genWpostFSR;
   _TrackInfo   _genMWpostFSR;
 
 
@@ -639,7 +640,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     initGenPart(_genHpostFSR);initTrack(_genM1HpostFSR);initTrack(_genM2HpostFSR);
 
     // initialize W to default values
-    initGenPart(_genWpreFSR); initTrack(_genMWpreFSR); initTrack(_genMWpostFSR);
+    initGenPart(_genWpreFSR); initTrack(_genMWpreFSR);
+    initGenPart(_genWpostFSR); initTrack(_genMWpostFSR);
 
     edm::Handle<reco::GenParticleCollection> prunedGenParticles;
     iEvent.getByLabel(_prunedGenParticleTag, prunedGenParticles);
@@ -655,54 +657,74 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     {
       
         int id = gen->pdgId();
-      
+        int genstatus = gen->status();
+
+        // In Pythia 6, take status code 3 to mean hard process particle
+        // and status code 2 to mean later in the process
+
         // Status code 22 means hard process intermediate particle in Pythia 8
-        if (abs(id) == 23 && gen->status() == 22) {
+        if (abs(id) == 23 && (genstatus == 22 || genstatus == 3)) {
           foundZ = true;
           _genZpreFSR.mass = gen->mass(); 
           _genZpreFSR.pt   = gen->pt();   
           _genZpreFSR.eta  = gen->eta();  
           _genZpreFSR.y    = gen->rapidity();    
           _genZpreFSR.phi  = gen->phi();  
+          continue;
         }
-        if (abs(id) == 24 && gen->status() == 22) {
+        if (abs(id) == 24 && (genstatus == 22 || genstatus == 3)) {
           foundW = true;
           _genWpreFSR.mass = gen->mass(); 
           _genWpreFSR.pt   = gen->pt();   
           _genWpreFSR.eta  = gen->eta();  
           _genWpreFSR.y    = gen->rapidity();    
           _genWpreFSR.phi  = gen->phi();  
+          continue;
         }
-        if (abs(id) == 25 && gen->status() == 22) {
+        if (abs(id) == 25 && (genstatus == 22 || genstatus == 3)) {
           foundH = true;
           _genHpreFSR.mass = gen->mass(); 
           _genHpreFSR.pt   = gen->pt();   
           _genHpreFSR.eta  = gen->eta();  
           _genHpreFSR.y    = gen->rapidity();    
           _genHpreFSR.phi  = gen->phi();  
+          continue;
         }
      
         // Status code 23 means hard process outgoing particle in Pythia 8
-        if (abs(id) == 13 && gen->status() == 23)  {
+        if (abs(id) == 13 && (genstatus == 23 || genstatus == 3))  {
           hardProcessMuons.push_back(*gen);
+          continue;
         } // muon 
 
         // Status code 62 means after ISR,FSR, and primoridial pt from UE
-        if (abs(id) == 23 && gen->status() == 62) {
+        if (abs(id) == 23 && (genstatus == 62 || genstatus == 2)) {
           _genZpostFSR.mass = gen->mass(); 
           _genZpostFSR.pt   = gen->pt();   
           _genZpostFSR.eta  = gen->eta();  
           _genZpostFSR.y    = gen->rapidity();    
           _genZpostFSR.phi  = gen->phi();  
+          continue;
         }
-        if (abs(id) == 25 && gen->status() == 62) {
+        if (abs(id) == 25 && (genstatus == 62 || genstatus == 2)) {
           _genHpostFSR.mass = gen->mass(); 
           _genHpostFSR.pt   = gen->pt();   
           _genHpostFSR.eta  = gen->eta();  
           _genHpostFSR.y    = gen->rapidity();    
           _genHpostFSR.phi  = gen->phi();  
+          continue;
         }
-      
+
+        if (abs(id) == 24 && (genstatus == 62 || genstatus == 2)) {
+          foundW = true;
+          _genWpostFSR.mass = gen->mass(); 
+          _genWpostFSR.pt   = gen->pt();   
+          _genWpostFSR.eta  = gen->eta();  
+          _genWpostFSR.y    = gen->rapidity();    
+          _genWpostFSR.phi  = gen->phi();  
+          continue;
+        }
+
     } // loop over gen level
 
     if (foundZ && hardProcessMuons.size()==2){
@@ -1599,6 +1621,7 @@ void UFDiMuonsAnalyzer::beginJob()
     // W block
     _outTree->Branch("genWpreFSR",  &_genWpreFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
     _outTree->Branch("genMWpreFSR", &_genMWpreFSR ,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genWpostFSR",  &_genWpostFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
     _outTree->Branch("genMWpostFSR",&_genMWpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
 
     // H block
