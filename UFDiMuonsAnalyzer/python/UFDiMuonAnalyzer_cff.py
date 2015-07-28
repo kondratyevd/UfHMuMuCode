@@ -13,21 +13,21 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          # muon kinematic cuts
                          isGlobal    =cms.int32(0),
                          isStandAlone=cms.int32(0),
-                         isTracker   =cms.int32(0),
-                         ptMin       = cms.double(20),
+                         isTracker   =cms.int32(1),
+                         ptMin       = cms.double(10),
                          etaMax      = cms.double(2.4),
                          normChiSquareMax= cms.double(999),
 
                          # number of hits cuts
-                         minMuonHits	  = cms.int32(1),
-                         minPixelHits	  = cms.int32(1),
+                         minMuonHits	  = cms.int32(-999),
+                         minPixelHits	  = cms.int32(-999),
                          minStripHits	  = cms.int32(-999),
                          minTrackerHits	  = cms.int32(-999),
-                         minSegmentMatches= cms.int32(2),
+                         minSegmentMatches= cms.int32(-999),
                          minNumOfMatchedStations = cms.int32(-999),
 
                          minPixelLayers  = cms.int32(-999),
-                         minTrackerLayers= cms.int32(8),
+                         minTrackerLayers= cms.int32(-999),
                          minStripLayers  = cms.int32(-999),
                          validFracTrackerMin= cms.int32(-999),   
     
@@ -35,18 +35,18 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          beamSpotTag = cms.InputTag("offlineBeamSpot"),
                          prunedGenParticleTag = cms.InputTag("prunedGenParticles"),
                          packedGenParticleTag = cms.InputTag("packedGenParticles"),
-                         d0Max = cms.double(0.2), 
+                         d0Max = cms.double(999), 
                          
                          #track isolation
-                         trackIsoMaxSumPt = cms.double(9999),
-                         relCombIsoMax    = cms.double(0.1),
+                         trackIsoMaxSumPt = cms.double(999),
+                         relCombIsoMax    = cms.double(999),
                          
                          #triggerName = cms.string("@"),#wild card: all triggers
                          # HLT trigger info
                          checkTrigger = cms.bool(True),
 
                          processName = cms.string("HLT"),
-                         triggerNames = cms.vstring("HLT_IsoMu24_eta2p1"), # up to 3 trigger names
+                         triggerNames = cms.vstring("HLT_IsoMu24_eta2p1","HLT_Mu17_TrkIsoVVL_Mu8_TrkIsoVVL_DZ","HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ"), # up to 3 trigger names
                          triggerResults = cms.InputTag("TriggerResults","","HLT"),
                          triggerObjs = cms.InputTag("selectedPatTrigger"),
                          
