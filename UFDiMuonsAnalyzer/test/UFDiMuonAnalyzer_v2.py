@@ -1,59 +1,94 @@
+# =============================================================#
+# UFDiMuonAnalyzer                                             #
+# =============================================================#
+# Makes stage1 trees.                                          #
+# Adds a cleaner vector of jets to each event.                 #
+# Originally Made by Justin Hugon. Edited by Andrew Carnes.    #
+#                                                              #
+################################################################ 
+
+# /////////////////////////////////////////////////////////////
+# Load some things
+# /////////////////////////////////////////////////////////////
+
 import FWCore.ParameterSet.Config as cms
 
 process = cms.Process("UFDiMuonAnalyzer")
 
-thisIsData = False
-
-if thisIsData:
-    print 'Running over data sample'
-else:
-    print 'Running over MC sample'
-
+process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 process.load("FWCore.MessageService.MessageLogger_cfi")
-#process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 ##process.MessageLogger.destinations.append("detailedInfo")
 ##process.MessageLogger.detailedInfo = cms.untracked.PSet(
 ##    threshold = cms.untracked.string("INFO"),
 ##    categories = cms.untracked.vstring("UFHLTTests")
 ##)
 
-process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 
 ## Geometry and Detector Conditions (needed for a few patTuple production steps)
-
 process.load("Configuration.Geometry.GeometryIdeal_cff")
-
 process.load('Configuration.EventContent.EventContent_cff')
-
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 from Configuration.AlCa.autoCond import autoCond
 
+# /////////////////////////////////////////////////////////////
 # Get a sample from our collection of samples
-from Samples_v2 import ggToHToMuMu_PU40bx50 as s
+# /////////////////////////////////////////////////////////////
 
-# global tag, should get this automatically from the sample data structure
-globalTag = "PLS170_V6AN2"
-print 'Loading Global Tag: '+globalTag
-process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-process.GlobalTag.globaltag = globalTag+"::All"
+#from Samples_v2 import doubleMuon_RunB_MINIAOD as s
+from Samples_v2 import dy_jetsToLL_PU40bx50 as s
 
+thisIsData = s.isData
+
+print ""
+print ""
+if thisIsData:
+    print 'Running over data sample'
+else:
+    print 'Running over MC sample'
+
+print "Sample Name:    " +  s.name
+print "Sample DAS DIR: " +  s.dir
+print ""
+print ""
+
+# /////////////////////////////////////////////////////////////
+# global tag, automatically retrieved from the imported sample
+# /////////////////////////////////////////////////////////////
+
+globalTag = s.globaltag
+
+# The updated FrontierConditions_GlobalTag load needed for 2015 13TeV data does not like the ::All at the end of the tag
+if not thisIsData:
+    process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+    globalTag+="::All"
+else:
+    process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
+
+print 'Loading Global Tag: ' + globalTag
+process.GlobalTag.globaltag = globalTag
+
+# /////////////////////////////////////////////////////////////
 # ------------ PoolSource -------------
+# /////////////////////////////////////////////////////////////
 readFiles = cms.untracked.vstring();
 # Get list of files from the sample we loaded
 readFiles.extend(s.files);
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
 process.source = cms.Source("PoolSource",fileNames = readFiles)
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
 process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange()
 
-# use a JSON file locally
-#import FWCore.PythonUtilities.LumiList as LumiList
-#process.source.lumisToProcess = LumiList.LumiList(filename = 'goodList.json').getVLuminosityBlockRange()
+# use a JSON file when locally executing cmsRun
+if thisIsData:
+    import FWCore.PythonUtilities.LumiList as LumiList
+    process.source.lumisToProcess = LumiList.LumiList(filename = s.jsonfiles[1]).getVLuminosityBlockRange()
 
-# -------- PoolSource END -------------
 
-#===============================================================================
+# /////////////////////////////////////////////////////////////
+# -------- Add a cleaner vector jets to each event -----------
+# /////////////////////////////////////////////////////////////
 
 # Clean the Jets from good muons, apply loose jet Id
 ccMuPreSel = "pt > 15. && isGlobalMuon "
@@ -98,10 +133,15 @@ process.cleanJets = cms.EDProducer("PATJetCleaner",
          finalCut = cms.string('')
 )
 
+# /////////////////////////////////////////////////////////////
+# Save output with TFileService
+# /////////////////////////////////////////////////////////////
+
 process.TFileService = cms.Service("TFileService", fileName = cms.string("stage_1_"+s.name+".root") )
 
-#===============================================================================
-# UFDiMuonAnalyzer
+# /////////////////////////////////////////////////////////////
+# Load UFDiMuonAnalyzer
+# /////////////////////////////////////////////////////////////
 
 if thisIsData:
   process.load("UserArea.UFDiMuonsAnalyzer.UFDiMuonAnalyzer_cff")
@@ -111,37 +151,12 @@ else:
 process.dimuons = process.DiMuons.clone()
 process.dimuons.pfJetsTag = cms.InputTag("cleanJets")
 
-#===============================================================================
 
-process.p = cms.Path(#
+# /////////////////////////////////////////////////////////////
+# Set the order of operations
+# /////////////////////////////////////////////////////////////
+
+process.p = cms.Path(
                      process.cleanJets*
                      process.dimuons
                      )
-
-
-
-#process.outpath = cms.EndPath()
-
-## #Test to dump file content
-## process.output = cms.OutputModule("PoolOutputModule",
-##                                   outputCommands = cms.untracked.vstring("keep *"),
-##                                   fileName = cms.untracked.string('dump.root')
-##                                   )
-## 
-## process.out_step = cms.EndPath(process.output)
-
-#===============================================================================
-
-#process.source.fileNames.extend(
-#[
-##'file:/data/0b/digiovan/code/higgs/dev/addEle/CMSSW_5_3_3_patch3/src/UserArea/test/DYJetsToLL.root'
-##"file:/data/uftrig01b/jhugon/hmumu/devNtupler/testFiles/VBFHToMM_M125_8TeV-powheg-pythia6-tauola-RECO_1.root"
-##"file:/data/uftrig01b/digiovan/root/higgs/CMSSW_5_3_3_patch3/testPriVtxConstr/TTJetsSkims/TTJets_10_1_crI.root"
-##"file:/home/jhugon/scratchRaid7/hmumu/recoData/VBFHToMM_M125_8TeV-powheg-pythia6-tauola-RECO_1.root"
-#]
-#)
-#process.out.outputCommands = cms.untracked.vstring("keep *")
-#process.outpath = cms.EndPath(process.out)
-#process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(20) )
-
-

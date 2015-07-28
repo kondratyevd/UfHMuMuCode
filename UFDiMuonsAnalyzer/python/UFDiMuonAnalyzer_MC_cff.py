@@ -3,7 +3,6 @@ import FWCore.ParameterSet.Config as cms
 ## Assumes you are looking at miniAOD
 
 DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
-                         getFilename = cms.untracked.string("tmpName.root"),
                          muonColl = cms.InputTag("slimmedMuons"),
                          
                          isVerbose = cms.untracked.bool(False),

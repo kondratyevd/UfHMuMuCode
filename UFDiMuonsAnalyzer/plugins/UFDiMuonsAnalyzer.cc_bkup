@@ -35,9 +35,6 @@ Implementation:
 #include "TH2F.h"
 #include "TBranch.h"
 
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
-
 // user include files
 #include "FWCore/MessageLogger/interface/MessageLogger.h"
 #include "FWCore/Framework/interface/Frameworkfwd.h"
@@ -312,6 +309,7 @@ public:
   int _nPU;
 
   // where to save all the info  
+  TFile* _outFile;	
   TTree* _outTree;
   TTree* _outTreeMetadata;
 
@@ -320,8 +318,6 @@ private:
   virtual void beginJob() ;
   virtual void analyze(const edm::Event&, const edm::EventSetup&);
   virtual void endJob() ;
-
-  edm::Service<TFileService> fs;
 
   void initMuon(_MuonInfo& muon);
   void initTrack(_TrackInfo& track);
@@ -355,6 +351,7 @@ private:
   edm::InputTag _prunedGenParticleTag;		
   edm::InputTag _packedGenParticleTag;		
   edm::InputTag _primaryVertexTag;		
+  std::string _getFilename;	
 
   // variable to cuts over
   double _isGlobal;
@@ -435,10 +432,8 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _numEvents(0)
 {
 
-  _outTree = fs->make<TTree>("tree", "myTree");
-  _outTreeMetadata = fs->make<TTree>("metadata", "Metadata Tree");
-
   //now do what ever initialization is needed
+  _getFilename  = iConfig.getUntrackedParameter<std::string>("getFilename", "badger.root");
   _muonColl	= iConfig.getParameter<edm::InputTag>("muonColl");
 
   _beamSpotTag	= iConfig.getParameter<edm::InputTag>("beamSpotTag");
@@ -1459,8 +1454,14 @@ void UFDiMuonsAnalyzer::beginJob()
 {
   displaySelection();
 
+  // create the file
+  _outFile	= new TFile(_getFilename.c_str(), "recreate");	
+  _outFile->cd();
+
+  // create the tree
+  _outTree	= new TTree("tree", "myTree");
+
   // eventInfo;
-  // set up the _outTree branches
   _outTree->Branch( "eventInfo",  &eventInfo, "run/I:lumi/I:event/I:bx/I:orbit/I");
   
   // rho
@@ -1647,13 +1648,17 @@ void UFDiMuonsAnalyzer::endJob() {
 
   std::cout<<"number of candidate dimuons candidates: "
            <<_outTree->GetEntries()<<std::endl;
+  _outFile->cd();
+  _outTree->Write();
 
-  // create the metadata tree branches
+  // create the metadata tree
+  _outTreeMetadata	= new TTree("metadata", "Metadata Tree");
   _outTreeMetadata->Branch("originalNumEvents"  ,            &_numEvents,              "originalNumEvents/I"             );
   _outTreeMetadata->Branch("isMonteCarlo"  ,            &_isMonteCarlo,              "isMonteCarlo/O"             );
   std::vector <std::string> * triggerNamesPointer = &triggerNames_;
   _outTreeMetadata->Branch("triggerNames"  ,"std::vector< std::string > >", &triggerNamesPointer);
   _outTreeMetadata->Fill();
+  _outTreeMetadata->Write();
 
 }
 
@@ -2128,6 +2133,7 @@ void UFDiMuonsAnalyzer::fillDiMuonGenPart(const reco::GenParticleCollection &gen
 void UFDiMuonsAnalyzer::displaySelection() {
 
   std::cout << "\n\n*** UFDiMuonsAnalyzer Configuration ***\n";
+  std::cout << " - Events saved in file: " << _getFilename << std::endl;	
 
   // variable to cuts over
   std::cout << " - _ptMin:            " << _ptMin << std::endl;
