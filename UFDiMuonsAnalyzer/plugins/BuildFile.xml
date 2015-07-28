@@ -1,3 +1,5 @@
+<use name="PhysicsTools/UtilAlgos"/>
+<use name="FWCore/ServiceRegistry"/>
 <use   name="FWCore/Framework"/>
 <use   name="FWCore/Common"/>
 <use   name="FWCore/PluginManager"/>
