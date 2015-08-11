@@ -29,7 +29,7 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 from Configuration.AlCa.autoCond import autoCond
 
 # Get a sample from our collection of samples
-from Samples_v2 import ggToHToMuMu_PU40bx50 as s
+from Samples_v3 import ggToHToMuMu_PU40bx50 as s
 
 # global tag, should get this automatically from the sample data structure
 globalTag = "PLS170_V6AN2"

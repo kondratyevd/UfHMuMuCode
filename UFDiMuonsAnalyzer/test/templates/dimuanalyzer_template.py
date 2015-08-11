@@ -35,9 +35,6 @@ from Configuration.AlCa.autoCond import autoCond
 # Get a sample from our collection of samples
 # /////////////////////////////////////////////////////////////
 
-#from Samples_v2 import doubleMuon_RunB_MINIAOD as s
-from Samples_v2 import dy_jetsToLL_PU40bx50 as s
-
 thisIsData = s.isData
 
 print ""
@@ -49,7 +46,8 @@ else:
 
 print "Sample Name:    " +  s.name
 print "Sample DAS DIR: " +  s.dir
-print ""
+if thisIsData:
+    print "Sample JSON:    " +  s.jsonfiles[1]
 print ""
 
 # /////////////////////////////////////////////////////////////

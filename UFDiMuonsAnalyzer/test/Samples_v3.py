@@ -128,7 +128,7 @@ dy_jetsToLL_asympt50 = sample(name="dy_jetsToLL_asympt50",
 
 dy_jetsToLL_asympt25 = sample(name="dy_jetsToLL_asympt25", 
                               dir="/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v3/MINIAODSIM",
-                              files = open('sample_file_lists/bg/dy_jetsToLL_asympt5.files').read().splitlines(),
+                              files = open('sample_file_lists/bg/dy_jetsToLL_asympt25.files').read().splitlines(),
                               numevents=28825132,
                               globaltag = 'MCRUN2_74_V9');
 

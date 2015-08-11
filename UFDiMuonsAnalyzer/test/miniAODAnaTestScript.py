@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 
 # import ROOT in batch mode
+from Samples_v3 import dy_jetsToLL_asympt50 as s
+
 import sys
 oldargv = sys.argv[:]
 sys.argv = [ '-b-' ]
@@ -29,7 +31,7 @@ prunedGenParts, prunedGenPartLabel = Handle("std::vector<reco::GenParticle>"), "
 
 # open file (you can use 'edmFileUtil -d /store/whatever.root' to get the physical file name)
 #events = Events("root://eoscms//eos/cms/store/cmst3/user/gpetrucc/miniAOD/v1/TT_Tune4C_13TeV-pythia8-tauola_PU_S14_PAT.root")
-events = Events("file:DYJetsToLL_M-50_13TeV-madgraph-pythia8-tauola_v2-Spring14miniaod-PU20bx25_POSTLS170_V5-v1.root")
+events = Events(['root://cms-xrd-global.cern.ch/'+s.files[0]])
 
 for iev,event in enumerate(events):
     if iev >= 10: break

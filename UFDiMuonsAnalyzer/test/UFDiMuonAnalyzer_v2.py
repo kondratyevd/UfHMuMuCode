@@ -36,7 +36,7 @@ from Configuration.AlCa.autoCond import autoCond
 # /////////////////////////////////////////////////////////////
 
 #from Samples_v2 import doubleMuon_RunB_MINIAOD as s
-from Samples_v2 import dy_jetsToLL_PU40bx50 as s
+from Samples_v3 import dy_jetsToLL_asympt50 as s
 
 thisIsData = s.isData
 
@@ -75,7 +75,7 @@ readFiles = cms.untracked.vstring();
 # Get list of files from the sample we loaded
 readFiles.extend(s.files);
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(-1) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(2000) )
 process.source = cms.Source("PoolSource",fileNames = readFiles)
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
 process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange()
