@@ -31,10 +31,24 @@ def hasMotherWithId(p, id):
     for i in xrange(0,p.numberOfMothers()):
             part = p.mother(i)
             if abs(part.pdgId()) == id:
-                if id != 13:
-                    print "    mother: pdg %5d, status: %3d, pt %4.1f, eta %+5.2f,  phi %+4.2f, mass %+5.2f," % (
-                        part.pdgId(), part.status(), part.pt(), part.eta(), part.phi(), part.mass())
+                print "****mother: pdg %5d, status: %3d, pt %4.1f, eta %+5.2f,  phi %+4.2f, mass %+5.2f," % (
+                    part.pdgId(), part.status(), part.pt(), part.eta(), part.phi(), part.mass())
                 return True
+    return False
+
+def printMothers(p):
+    for i in xrange(0,p.numberOfMothers()):
+            part = p.mother(i)
+            print "    mother: pdg %5d, status: %3d, pt %4.1f, eta %+5.2f,  phi %+4.2f, mass %+5.2f," % (
+                part.pdgId(), part.status(), part.pt(), part.eta(), part.phi(), part.mass())
+
+def isGammaFromMuFromZ(p):
+    for i in xrange(0, p.numberOfMothers()):
+        part = p.mother(i)
+        if abs(part.pdgId()) == 13:
+            print "****mother: pdg %5d, status: %3d, pt %4.1f, eta %+5.2f,  phi %+4.2f, mass %+5.2f," % (
+                part.pdgId(), part.status(), part.pt(), part.eta(), part.phi(), part.mass())
+            return hasMotherWithId(part, 23)
     return False
     
 
@@ -51,7 +65,7 @@ prunedGenParts, prunedGenPartLabel = Handle("std::vector<reco::GenParticle>"), "
 
 # open file (you can use 'edmFileUtil -d /store/whatever.root' to get the physical file name)
 #events = Events("root://eoscms//eos/cms/store/cmst3/user/gpetrucc/miniAOD/v1/TT_Tune4C_13TeV-pythia8-tauola_PU_S14_PAT.root")
-events = Events('00C4781D-6B08-E511-8A0A-0025905A6084.root')
+events = Events('dy_jetsToLL_asympt50.root')
 
 numZ22 = 0
 numZ62 = 0
@@ -67,8 +81,12 @@ numGammaFromMu = 0
 numMuFromZ = 0
 numMuFromMu = 0
 numGammaFromMuFromZ = 0
+numGammaFromZ = 0
+
+Z = []
 
 for iev,event in enumerate(events):
+
     if iev >= 2000: break
     event.getByLabel(packedGenPartLabel,packedGenParts)
     event.getByLabel(prunedGenPartLabel,prunedGenParts)
@@ -87,9 +105,11 @@ for iev,event in enumerate(events):
             if(part.status() == 62):
                 numZ62+=1
                 numZ+=1
+                Z.append(part)
         
         if(abs(part.pdgId()) == 13):
             if(part.status() == 23):
+                printMothers(part)
                 numMu23+=1
                 numMu+=1
                 if hasMotherWithId(part, 23):
@@ -106,6 +126,7 @@ for iev,event in enumerate(events):
 
         if(abs(part.pdgId()) == 13):
             if(part.status() == 1):
+                printMothers(part)
                 numMu1+=1
                 numMu+=1
                 if hasMotherWithId(part, 23):
@@ -114,11 +135,16 @@ for iev,event in enumerate(events):
                     numMuFromMu+=1
 
         if(abs(part.pdgId()) == 22):
+            print "packedPart %3d: pdg %5d, status: %3d, pt %4.1f, eta %+5.2f,  phi %+4.2f, mass %+5.2f," % (
+                i, part.pdgId(), part.status(), part.pt(), part.eta(), part.phi(), part.mass())
+            printMothers(part)
             if part.status() != 1:
                 print "!! photon status = ", part.status()
             numGamma+=1
-            if hasMotherWithId(part, 13):
-                numGammaFromMu+=1
+            if isGammaFromMuFromZ(part):
+                numGammaFromMuFromZ+=1
+            if hasMotherWithId(part, 23):
+                numGammaFromZ+=1
 
 print " "
 print "numZ:   ", numZ
@@ -133,5 +159,6 @@ print "numGamma: ", numGamma
 print " "
 
 print "numMuFromZ:  ", numMuFromZ
-print "numGammaFromMu: ", numGammaFromMu
+print "numGammaFromMuFromZ: ", numGammaFromMuFromZ
+print "numGammaFromZ: ", numGammaFromZ
 print " "

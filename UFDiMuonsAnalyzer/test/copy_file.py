@@ -52,7 +52,7 @@ process.source.fileNames.extend([
 ])
 
 
-process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(10))
+process.maxEvents = cms.untracked.PSet(input = cms.untracked.int32(2000))
 process.options = cms.untracked.PSet(wantSummary = cms.untracked.bool(True))
 process.output = cms.OutputModule("PoolOutputModule",
     #outputCommands = cms.untracked.vstring("drop *", "keep recoTracks_*_*_*"),

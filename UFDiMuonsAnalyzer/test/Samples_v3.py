@@ -22,11 +22,8 @@ sample_array = [];
 # =======================================================================================================
 
 # old json files
-jsonlist_v0 = ['sample_file_lists/data/json/Cert_246908-251642_13TeV_PromptReco_Collisions15_JSON_MuonPhys.txt',
-            'sample_file_lists/data/json/Cert_246908-251642_13TeV_PromptReco_Collisions15_JSON.txt'] 
-
-jsonlist = ['sample_file_lists/data/json/Cert_246908-251883_13TeV_PromptReco_Collisions15_JSON_MuonPhys_v2.txt',
-            'sample_file_lists/data/json/Cert_246908-251883_13TeV_PromptReco_Collisions15_JSON.txt'] 
+jsonlist = ['sample_file_lists/data/json/Cert_246908-251883_13TeV_PromptReco_Collisions15_JSON_MuonPhys_v4.txt',
+            'sample_file_lists/data/json/Cert_246908-251883_13TeV_PromptReco_Collisions15_JSON_v2.txt'] 
 
 # CERN, FL
 # CMSSW 7_4_7
@@ -120,6 +117,12 @@ sample_array.append(wh_zh_HToMuMu_PU20bx25)
 # ---- DRELL YANN ---------------------------------------------------------------------------------------
 # ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
+dy_ZToMuMu_asympt50 = sample(name="dy_ZToMuMu_asympt50", 
+                              dir="/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v1/MINIAODSIM",
+                              files = open('sample_file_lists/bg/dy_ZToMuMu_asympt50.files').read().splitlines(),
+                              numevents=2895638,
+                              globaltag = 'MCRUN2_74_V9A')
+
 dy_jetsToLL_asympt50 = sample(name="dy_jetsToLL_asympt50", 
                               dir="/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v2/MINIAODSIM",
                               files = open('sample_file_lists/bg/dy_jetsToLL_asympt50.files').read().splitlines(),
@@ -132,6 +135,7 @@ dy_jetsToLL_asympt25 = sample(name="dy_jetsToLL_asympt25",
                               numevents=28825132,
                               globaltag = 'MCRUN2_74_V9');
 
+sample_array.append(dy_ZToMuMu_asympt50)
 sample_array.append(dy_jetsToLL_asympt50)
 sample_array.append(dy_jetsToLL_asympt25)
 
