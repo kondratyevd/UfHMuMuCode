@@ -21,9 +21,14 @@ sample_array = [];
 # ------------------------------- DATA ------------------------------------------------------------------
 # =======================================================================================================
 
-# old json files
-jsonlist = ['sample_file_lists/data/json/Cert_246908-251883_13TeV_PromptReco_Collisions15_JSON_MuonPhys_v4.txt',
+# RunB jsonfiles
+jsonlistB = ['sample_file_lists/data/json/Cert_246908-251883_13TeV_PromptReco_Collisions15_JSON_MuonPhys_v4.txt',
             'sample_file_lists/data/json/Cert_246908-251883_13TeV_PromptReco_Collisions15_JSON_v2.txt'] 
+
+# RunC jsonfiles
+# 25 ns
+jsonlistC25 = ['sample_file_lists/data/json/Cert_246908-255031_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys.txt',
+            'sample_file_lists/data/json/Cert_246908-255031_13TeV_PromptReco_Collisions15_25ns_JSON_v2.txt'] 
 
 # CERN, FL
 # CMSSW 7_4_7
@@ -32,7 +37,7 @@ singleMuon_RunBPrompt_MINIAOD = sample(name="singleMuon_RunBPrompt_AOD",
                              files = open('sample_file_lists/data/singleMuon_RunBPrompt_MINIAOD.files').read().splitlines(),
                              numevents=504556,
                              globaltag = '74X_dataRun2_Prompt_v0',
-                             jsonfiles = jsonlist[:],
+                             jsonfiles = jsonlistB[:],
                              isData = True)
 
 doubleMuon_RunBPrompt_MINIAOD = sample(name="doubleMuon_RunBPrompt_MINIAOD", 
@@ -40,11 +45,20 @@ doubleMuon_RunBPrompt_MINIAOD = sample(name="doubleMuon_RunBPrompt_MINIAOD",
                                  files = open('sample_file_lists/data/doubleMuon_RunBPrompt_MINIAOD.files').read().splitlines(),
                                  numevents=1631653,
                                  globaltag = '74X_dataRun2_Prompt_v1',
-                                 jsonfiles = jsonlist[:],
+                                 jsonfiles = jsonlistB[:],
+                                 isData = True)
+
+doubleMuon_RunCPrompt_MINIAOD = sample(name="doubleMuon_RunCPrompt_MINIAOD", 
+                                 dir="/DoubleMuon/Run2015C-PromptReco-v1/MINIAOD", 
+                                 files = open('sample_file_lists/data/doubleMuon_RunCPrompt_MINIAOD.files').read().splitlines(),
+                                 numevents=12194649,
+                                 globaltag = '74X_dataRun2_Prompt_v1',
+                                 jsonfiles = jsonlistC25[:],
                                  isData = True)
 
 sample_array.append(singleMuon_RunBPrompt_MINIAOD)
 sample_array.append(doubleMuon_RunBPrompt_MINIAOD)
+sample_array.append(doubleMuon_RunCPrompt_MINIAOD)
 
 
 # =======================================================================================================
@@ -122,6 +136,12 @@ dy_ZToMuMu_asympt50 = sample(name="dy_ZToMuMu_asympt50",
                               files = open('sample_file_lists/bg/dy_ZToMuMu_asympt50.files').read().splitlines(),
                               numevents=2895638,
                               globaltag = 'MCRUN2_74_V9A')
+
+dy_ZToMuMu_asympt25 = sample(name="dy_ZToMuMu_asympt25", 
+                              dir="/ZToMuMu_NNPDF30_13TeV-powheg_M_50_120/RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1/MINIAODSIM",
+                              files = open('sample_file_lists/bg/dy_ZToMuMu_asympt25.files').read().splitlines(),
+                              numevents=2848076,
+                              globaltag = 'MCRUN2_74_V9')
 
 dy_jetsToLL_asympt50 = sample(name="dy_jetsToLL_asympt50", 
                               dir="/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring15DR74-Asympt50ns_MCRUN2_74_V9A-v2/MINIAODSIM",
