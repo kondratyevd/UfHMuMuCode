@@ -36,7 +36,7 @@ from Configuration.AlCa.autoCond import autoCond
 # /////////////////////////////////////////////////////////////
 
 #from Samples_v2 import doubleMuon_RunB_MINIAOD as s
-from Samples_v3 import dy_jetsToLL_asympt50 as s
+from Samples_v3 import dy_jetsToLL_asympt25 as s
 
 thisIsData = s.isData
 

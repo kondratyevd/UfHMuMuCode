@@ -1,11 +1,11 @@
 import Samples_v3
 
 # get the sample you want to make a crab config file for 
-s = Samples_v3.dy_ZToMuMu_asympt25
+#s = Samples_v3.dy_ZToMuMu_asympt25
 #s = Samples_v3.doubleMuon_RunBPrompt_MINIAOD
 #s = Samples_v3.dy_jetsToLL_asympt50
 #s = Samples_v3.dy_jetsToLL_asympt25
-#s = Samples_v3.doubleMuon_RunCPrompt_MINIAOD
+s = Samples_v3.doubleMuon_RunCPrompt_MINIAOD
 json_number = 1
 
 # open a file for writing
@@ -54,8 +54,9 @@ for line in file:
         line = line.replace('#', '')
         line = line.replace('s.jsonfiles[1]', s.jsonfiles[json_number])
     if 's.name' in line: 
-        if s.isData: s.name+="_JSON"+str(json_number)
-        line = line.replace('s.name', s.name)
+        name = s.name
+        if s.isData: name+="_JSON"+str(json_number)
+        line = line.replace('s.name', name)
     if 's.dir' in line: 
         line = line.replace('s.dir', s.dir)
 
