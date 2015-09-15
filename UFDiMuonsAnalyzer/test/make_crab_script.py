@@ -1,11 +1,11 @@
 import Samples_v3
 
 # get the sample you want to make a crab config file for 
-#s = Samples_v3.dy_ZToMuMu_asympt25
+s = Samples_v3.dy_ZToMuMu_asympt25
 #s = Samples_v3.doubleMuon_RunBPrompt_MINIAOD
 #s = Samples_v3.dy_jetsToLL_asympt50
 #s = Samples_v3.dy_jetsToLL_asympt25
-s = Samples_v3.doubleMuon_RunCPrompt_MINIAOD
+#s = Samples_v3.doubleMuon_RunCPrompt_MINIAOD
 json_number = 1
 
 # open a file for writing
