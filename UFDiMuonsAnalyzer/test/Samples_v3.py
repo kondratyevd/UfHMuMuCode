@@ -69,6 +69,14 @@ sample_array.append(doubleMuon_RunCPrompt_MINIAOD)
 #---- Gluon Gluon Fusion --------------------------------------------------------------------------------
 # ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
+gg_HToMuMu_asympt25 = sample( name="gg_HToMuMu_asympt25", 
+                               dir="/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1/MINIAODSIM", 
+                               files = open('sample_file_lists/signal/gg_HToMuMu_asympt25.files').read().splitlines(),
+                               numevents=250000,
+                               globaltag = 'MCRUN2_74_V9')
+
+
+# ////////// Old Samples /////////////////////////////////////////////////////////////////////////////////
 ggToHToMuMu_PU40bx50 = sample( name="ggToHToMuMu_PU40bx50", 
                                dir="/GluGluToHToMuMu_M-125_13TeV-powheg-pythia6/Spring14miniaod-141029_PU40bx50_PLS170_V6AN2-v1/MINIAODSIM", 
                                files = open('sample_file_lists/signal/ggToHToMuMu_PU40bx50.files').read().splitlines(),
@@ -82,6 +90,7 @@ ggToHToMuMu_PU20bx25 = sample( name="ggToHToMuMu_PU20bx25",
                                numevents=99994,
                                globaltag = 'POSTLS170_V5')
 
+sample_array.append(gg_HToMuMu_asympt25)
 sample_array.append(ggToHToMuMu_PU40bx50)
 sample_array.append(ggToHToMuMu_PU20bx25)
 
@@ -89,6 +98,15 @@ sample_array.append(ggToHToMuMu_PU20bx25)
 #---- Vector Boson Fusion --------------------------------------------------------------------------------
 # ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
+
+vbf_HToMuMu_asympt25 = sample(name="vbf_HToMuMu_asympt25", 
+                              dir="/VBF_HToMuMu_M125_13TeV_powheg_pythia8/RunIISpring15DR74-Asympt25ns_MCRUN2_74_V9-v1/MINIAODSIM",
+                              files = open('sample_file_lists/signal/vbf_HToMuMu_asympt25.files').read().splitlines(),
+                              numevents=249200,
+                              globaltag = 'MCRUN2_74_V9')
+
+
+# ////////// Old Samples /////////////////////////////////////////////////////////////////////////////////
 vbf_HToMuMu_PU40bx50 = sample(name="vbf_HToMuMu_PU40bx50", 
                               dir="/VBF_HToMuMu_M-125_13TeV-powheg-pythia6/Spring14miniaod-141029_PU40bx50_PLS170_V6AN2-v1/MINIAODSIM",
                               files = open('sample_file_lists/signal/vbf_HToMuMu_PU40bx50.files').read().splitlines(),
@@ -101,6 +119,7 @@ vbf_HToMuMu_PU20bx25 = sample(name="vbf_HToMuMu_PU20bx25",
                               numevents=95968,
                               globaltag = 'POSTLS170_V5')
 
+sample_array.append(vbf_HToMuMu_asympt25)
 sample_array.append(vbf_HToMuMu_PU40bx50)
 sample_array.append(vbf_HToMuMu_PU20bx25)
 
