@@ -7,7 +7,10 @@ import Samples_v3
 #s = Samples_v3.dy_jetsToLL_asympt25
 #s = Samples_v3.doubleMuon_RunCPrompt_MINIAOD
 #s = Samples_v3.gg_HToMuMu_asympt25
-s = Samples_v3.vbf_HToMuMu_asympt25
+#s = Samples_v3.vbf_HToMuMu_asympt25
+#s = Samples_v3.doubleMuon_RunDPrompt_v4_MINIAOD
+s = Samples_v3.singleMuon_RunCPrompt_MINIAOD
+
 json_number = 1
 
 # open a file for writing
