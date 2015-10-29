@@ -23,8 +23,8 @@ jsonlistB = ['sample_file_lists/data/json/Cert_246908-251883_13TeV_PromptReco_Co
             'sample_file_lists/data/json/Cert_246908-251883_13TeV_PromptReco_Collisions15_JSON_v2.txt'] 
 
 # 25 ns
-jsonlist25 = ['sample_file_lists/data/json/Cert_246908-257599_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys.txt',
-            'sample_file_lists/data/json/Cert_246908-258159_13TeV_PromptReco_Collisions15_25ns_JSON_v3.txt'] 
+jsonlist25 = ['sample_file_lists/data/json/Cert_246908-258750_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys.txt',
+            'sample_file_lists/data/json/Cert_246908-258750_13TeV_PromptReco_Collisions15_25ns_JSON.txt'] 
 
 
 #//////////////////////////// Double Muon /////////////////////////////////////////////////////////////////////////////////////////////
