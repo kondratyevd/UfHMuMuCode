@@ -18,6 +18,6 @@ config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 1
 config.Data.outLFNDirBase = '/store/user/acarnes/'
 config.Data.publication = False
-config.Data.publishDataName = 'ggToHToMuMu_PU40bx50'
+config.Data.outputDatasetTag = 'ggToHToMuMu_PU40bx50'
 
 config.Site.storageSite = 'T2_US_Florida'

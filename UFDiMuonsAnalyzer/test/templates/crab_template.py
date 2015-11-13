@@ -18,6 +18,6 @@ config.Data.splitting = 'FileBased'
 config.Data.unitsPerJob = 10
 config.Data.outLFNDirBase = '/store/user/acarnes/'
 config.Data.publication = False
-config.Data.publishDataName = 's.name'
+config.Data.outputDatasetTag = 's.name'
 
 config.Site.storageSite = 'T2_US_Florida'

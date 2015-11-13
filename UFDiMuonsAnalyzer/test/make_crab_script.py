@@ -15,11 +15,11 @@ samples.append(Samples_v3.singleMuon_RunDPrompt_v3_MINIAOD)
 samples.append(Samples_v3.singleMuon_RunDPrompt_v4_MINIAOD)
 samples.append(Samples_v3.singleMuon_RunCPrompt_MINIAOD)
 
-samples.append(Samples_v3.doubleMuon_RunDPrompt_v3_MINIAOD)
-samples.append(Samples_v3.doubleMuon_RunDPrompt_v4_MINIAOD)
-samples.append(Samples_v3.doubleMuon_RunCPrompt_MINIAOD)
+#samples.append(Samples_v3.doubleMuon_RunDPrompt_v3_MINIAOD)
+#samples.append(Samples_v3.doubleMuon_RunDPrompt_v4_MINIAOD)
+#samples.append(Samples_v3.doubleMuon_RunCPrompt_MINIAOD)
 
-json_number = 1
+json_number = 2
 
 for s in samples:
     # open a file for writing
@@ -55,7 +55,7 @@ for s in samples:
     file.close()
     
     file = open('templates/crab_template.py', 'r')
-    outfile = open('crab_auto_submit_'+s.name+'.py', 'w')
+    outfile = open('crab_auto_submit_'+s.name+'_JSON'+str(json_number)+'.py', 'w')
     
     # read in the template and replace the parameters to make a
     # crab submission file that uses the above cmssw script
