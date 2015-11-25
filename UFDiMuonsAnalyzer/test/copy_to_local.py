@@ -24,7 +24,7 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.maxE
 readFiles = cms.untracked.vstring()
 
 
-from Samples_v3 import sample_array as s
+from Samples_v3 import signal as s
 
 print ""
 print "Copying from " + s[options.whichSample].name + ", " + s[options.whichSample].dir

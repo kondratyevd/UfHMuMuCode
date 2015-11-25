@@ -57,11 +57,14 @@ print ""
 globalTag = s.globaltag
 
 # The updated FrontierConditions_GlobalTag load needed for 2015 13TeV data does not like the ::All at the end of the tag
-if not thisIsData:
-    process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-    globalTag+="::All"
-else:
-    process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
+#if not thisIsData:
+#    process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
+#    globalTag+="::All"
+#else:
+#    process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff") 
+
+# Newer MC global tags are consistent with data so we don't need the separate conditions
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
 
 print 'Loading Global Tag: ' + globalTag
 process.GlobalTag.globaltag = globalTag

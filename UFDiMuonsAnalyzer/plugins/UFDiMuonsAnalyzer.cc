@@ -609,10 +609,12 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   else std::cout << "VertexCollection is NOT valid -> vertex Info NOT filled!\n";
   
   // Get MC Truth Pileup
+  // addPileupInfo for miniAOD version 1 same for AOD
+  // slimmedAddPileupInfo for miniAOD version 2
   _nPU = -1;
   if (_isMonteCarlo) {
     edm::Handle<std::vector< PileupSummaryInfo > >  PupInfo;
-    iEvent.getByLabel(edm::InputTag("addPileupInfo"), PupInfo);
+    iEvent.getByLabel(edm::InputTag("slimmedAddPileupInfo"), PupInfo);
 
     std::vector<PileupSummaryInfo>::const_iterator PVI;
 

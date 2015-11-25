@@ -4,20 +4,12 @@ samples = []
 
 # get the sample you want to make a crab config file for 
 #s = Samples_v3.dy_ZToMuMu_asympt25
-#s = Samples_v3.doubleMuon_RunBPrompt_MINIAOD
-#s = Samples_v3.dy_jetsToLL_asympt50
-#s = Samples_v3.dy_jetsToLL_asympt25
-#s = Samples_v3.doubleMuon_RunCPrompt_MINIAOD
-#s = Samples_v3.gg_HToMuMu_asympt25
-#s = Samples_v3.vbf_HToMuMu_asympt25
+#s = Samples_v3.dy_jetsToLL
+#s = Samples_v3.gg_HToMuMu
+#s = Samples_v3.vbf_HToMuMu
+#s = Samples_v3.singleMuon_RunDPrompt_v4_MINIAOD
 
-samples.append(Samples_v3.singleMuon_RunDPrompt_v3_MINIAOD)
-samples.append(Samples_v3.singleMuon_RunDPrompt_v4_MINIAOD)
-samples.append(Samples_v3.singleMuon_RunCPrompt_MINIAOD)
-
-#samples.append(Samples_v3.doubleMuon_RunDPrompt_v3_MINIAOD)
-#samples.append(Samples_v3.doubleMuon_RunDPrompt_v4_MINIAOD)
-#samples.append(Samples_v3.doubleMuon_RunCPrompt_MINIAOD)
+samples.extend(Samples_v3.singleAndMC);
 
 json_number = 2
 
@@ -55,7 +47,12 @@ for s in samples:
     file.close()
     
     file = open('templates/crab_template.py', 'r')
-    outfile = open('crab_auto_submit_'+s.name+'_JSON'+str(json_number)+'.py', 'w')
+
+    if s.isData: 
+        outfile = open('crab_auto_submit_'+s.name+'_JSON'+str(json_number)+'.py', 'w')
+
+    else:
+        outfile = open('crab_auto_submit_'+s.name+'_JSON.py', 'w')
     
     # read in the template and replace the parameters to make a
     # crab submission file that uses the above cmssw script
