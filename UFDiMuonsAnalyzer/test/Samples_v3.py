@@ -1,8 +1,6 @@
 # root://xrootd-cms.infn.it/
 
 # This is my current collection of datasets for H->MuMu.
-# It currently does not contain all of the necessary datasets but has enough to play around with
-# and get started.
 
 class sample:
     def __init__(self, name="", dir="", files=[], numevents=0, globaltag="", jsonfiles=[], isData=False):
@@ -19,9 +17,10 @@ class sample:
 # =======================================================================================================
 
 # 25 ns
-jsonlist25 = ['sample_file_lists/data/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys.txt',
-            'sample_file_lists/data/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON.txt',
-            'sample_file_lists/data/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON_Silver.txt'] 
+# The jsonfiles detail which luminosity sections during data taking were good
+jsonlist25 = ['sample_file_lists/data/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON_MuonPhys_v2.txt',
+            'sample_file_lists/data/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON_v2.txt',
+            'sample_file_lists/data/json/Cert_246908-260627_13TeV_PromptReco_Collisions15_25ns_JSON_Silver_v2.txt'] 
 
 
 #//////////////////////////// Double Muon /////////////////////////////////////////////////////////////////////////////////////////////

@@ -310,6 +310,8 @@ public:
   _GenJetInfo  _genJetInfo;
 
   int _nPU;
+  int _genWeight;
+  int _sumEventWeights;
 
   // where to save all the info  
   TTree* _outTree;
@@ -434,6 +436,7 @@ private:
 UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _numEvents(0)
 {
+  _sumEventWeights = 0;
 
   _outTree = fs->make<TTree>("tree", "myTree");
   _outTreeMetadata = fs->make<TTree>("metadata", "Metadata Tree");
@@ -608,25 +611,38 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   }
   else std::cout << "VertexCollection is NOT valid -> vertex Info NOT filled!\n";
   
-  // Get MC Truth Pileup
+  // Get MC Truth Pileup and Generated Weights
   // addPileupInfo for miniAOD version 1 same for AOD
   // slimmedAddPileupInfo for miniAOD version 2
   _nPU = -1;
-  if (_isMonteCarlo) {
+  if (_isMonteCarlo) 
+  {
     edm::Handle<std::vector< PileupSummaryInfo > >  PupInfo;
     iEvent.getByLabel(edm::InputTag("slimmedAddPileupInfo"), PupInfo);
 
     std::vector<PileupSummaryInfo>::const_iterator PVI;
 
-    for(PVI = PupInfo->begin(); PVI != PupInfo->end(); ++PVI) {
-
+    for(PVI = PupInfo->begin(); PVI != PupInfo->end(); ++PVI) 
+    {
        int BX = PVI->getBunchCrossing();
 
-       if(BX == 0) { 
+       if(BX == 0) 
+       { 
           _nPU = PVI->getTrueNumInteractions();
           continue;
        }
     }
+
+    // The generated weight. Due to the interference of terms in QM in the NLO simulations
+    // there are negative weights that need to be accounted for. 
+    edm::Handle<GenEventInfoProduct> genEvtInfo;
+    iEvent.getByLabel( edm::InputTag("generator"), genEvtInfo );
+    _genWeight = (genEvtInfo->weight() > 0)? 1 : -1;
+    _sumEventWeights += _genWeight;
+  }
+  if (!_isMonteCarlo)
+  {
+      _sumEventWeights += 1;
   }
   
   // B E A M S P O T
@@ -1636,7 +1652,8 @@ void UFDiMuonsAnalyzer::beginJob()
 
     _outTree->Branch("genJets", &_genJetInfo, "nJets/I:px[10]/F:py[10]/F:pz[10]/F:pt[10]/F:eta[10]/F:phi[10]/F:mass[10]/F:charge[10]/I");
 
-    _outTree->Branch("nPU", 	&_nPU   	,"nPU/I");              
+    _outTree->Branch("nPU", 	  &_nPU   	,"nPU/I");              
+    _outTree->Branch("genWeight", &_genWeight   ,"genWeight/I");              
   }
 
 }
@@ -1646,12 +1663,14 @@ void UFDiMuonsAnalyzer::beginJob()
 void UFDiMuonsAnalyzer::endJob() {
 
   std::cout << "Total Number of Events Read: "<< _numEvents << std::endl <<std::endl;
+  std::cout << "Number of events weighted: "  << _sumEventWeights << std::endl <<std::endl;
 
   std::cout<<"number of candidate dimuons candidates: "
            <<_outTree->GetEntries()<<std::endl;
 
   // create the metadata tree branches
-  _outTreeMetadata->Branch("originalNumEvents"  ,            &_numEvents,              "originalNumEvents/I"             );
+  _outTreeMetadata->Branch("originalNumEvents"  ,            &_numEvents,            "originalNumEvents/I"             );
+  _outTreeMetadata->Branch("sumEventWeights"  ,            &_sumEventWeights,      "sumEventWeights/I"             );
   _outTreeMetadata->Branch("isMonteCarlo"  ,            &_isMonteCarlo,              "isMonteCarlo/O"             );
   std::vector <std::string> * triggerNamesPointer = &triggerNames_;
   _outTreeMetadata->Branch("triggerNames"  ,"std::vector< std::string > >", &triggerNamesPointer);
@@ -2209,6 +2228,18 @@ std::vector<int> UFDiMuonsAnalyzer::getPUJetID(edm::Handle<edm::View<pat::Jet> >
     result[i] = id;
   }
   return result;
+}
+
+bool isMediumMuon(const reco::Muon & recoMu) 
+{
+   bool goodGlob = recoMu.isGlobalMuon() && 
+                   recoMu.globalTrack()->normalizedChi2() < 3 && 
+                   recoMu.combinedQuality().chi2LocalPosition < 12 && 
+                   recoMu.combinedQuality().trkKink < 20; 
+   bool isMedium = muon::isLooseMuon(recoMu) && 
+                   recoMu.innerTrack()->validFraction() > 0.8 && 
+                   muon::segmentCompatibility(recoMu) > (goodGlob ? 0.303 : 0.451); 
+   return isMedium; 
 }
 
 DEFINE_FWK_MODULE(UFDiMuonsAnalyzer);

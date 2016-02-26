@@ -2,16 +2,11 @@ import Samples_v3
 
 samples = []
 
-# get the sample you want to make a crab config file for 
-#s = Samples_v3.dy_ZToMuMu_asympt25
-#s = Samples_v3.dy_jetsToLL
-#s = Samples_v3.gg_HToMuMu
-#s = Samples_v3.vbf_HToMuMu
-#s = Samples_v3.singleMuon_RunDPrompt_v4_MINIAOD
+# get the samples you want to make a crab config file for 
+#samples.extend(Samples_v3.MC);
+samples.extend(Samples_v3.singleMuon);
 
-samples.extend(Samples_v3.singleAndMC);
-
-json_number = 2
+json_number = 1
 
 for s in samples:
     # open a file for writing
