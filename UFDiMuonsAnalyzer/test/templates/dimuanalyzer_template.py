@@ -90,14 +90,14 @@ if thisIsData:
 # /////////////////////////////////////////////////////////////
 
 # Clean the Jets from good muons, apply loose jet Id
-ccMuPreSel = "pt > 15. && isGlobalMuon "
+ccMuPreSel = "pt > 10. && isGlobalMuon "
 ccMuPreSel += " && globalTrack().normalizedChi2 < 10 "
 ccMuPreSel += " && isPFMuon "
 ccMuPreSel += " && innerTrack().hitPattern().trackerLayersWithMeasurement > 5 "
 ccMuPreSel += " && innerTrack().hitPattern().numberOfValidPixelHits > 0 "
 ccMuPreSel += " && globalTrack().hitPattern().numberOfValidMuonHits > 0 "
 ccMuPreSel += " && numberOfMatchedStations > 1 && dB < 0.2 && abs(eta) < 2.4 "
-ccMuPreSel += " && ( chargedHadronIso + max(0.,neutralHadronIso + photonIso - 0.5*puChargedHadronIso) ) < 0.12 * pt"
+ccMuPreSel += " && ( chargedHadronIso + max(0.,neutralHadronIso + photonIso - 0.5*puChargedHadronIso) ) < 0.25 * pt"
 
 jetSelection = 'neutralEmEnergy/energy < 0.99 '
 jetSelection += ' && neutralHadronEnergy/energy < 0.99 '
@@ -114,7 +114,7 @@ process.cleanJets = cms.EDProducer("PATJetCleaner",
                src       = cms.InputTag("slimmedMuons"),
                algorithm = cms.string("byDeltaR"),
                preselection        = cms.string(ccMuPreSel),
-               deltaR              = cms.double(0.5),
+               deltaR              = cms.double(0.3),
                checkRecoComponents = cms.bool(False),
                pairCut             = cms.string(""),
                requireNoOverlaps   = cms.bool(True),

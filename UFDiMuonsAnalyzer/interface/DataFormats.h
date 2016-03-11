@@ -100,6 +100,10 @@ typedef struct {
   float hltPt[3];
   float hltEta[3];
   float hltPhi[3];
+
+  float segmentCompatibility;
+  float combinedQualityChi2LocalPosition;
+  float combinedQualityTrkKink;
   
 } _MuonInfo;
 

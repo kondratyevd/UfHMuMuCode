@@ -511,6 +511,19 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
                                 const edm::EventSetup& iSetup)
 {
   _numEvents++;
+  if (!_isMonteCarlo)
+  {
+      _sumEventWeights += 1;
+  }
+  else
+  {
+    // The generated weight. Due to the interference of terms in QM in the NLO simulations
+    // there are negative weights that need to be accounted for. 
+    edm::Handle<GenEventInfoProduct> genEvtInfo;
+    iEvent.getByLabel( edm::InputTag("generator"), genEvtInfo );
+    _genWeight = (genEvtInfo->weight() > 0)? 1 : -1;
+    _sumEventWeights += _genWeight;
+  }
 
   if (_isVerbose) 
     std::cout << "\n\n A N A LI Z I N G   E V E N T = " 
@@ -633,16 +646,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
        }
     }
 
-    // The generated weight. Due to the interference of terms in QM in the NLO simulations
-    // there are negative weights that need to be accounted for. 
-    edm::Handle<GenEventInfoProduct> genEvtInfo;
-    iEvent.getByLabel( edm::InputTag("generator"), genEvtInfo );
-    _genWeight = (genEvtInfo->weight() > 0)? 1 : -1;
-    _sumEventWeights += _genWeight;
-  }
-  if (!_isMonteCarlo)
-  {
-      _sumEventWeights += 1;
   }
   
   // B E A M S P O T
@@ -1152,6 +1155,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       _muon1.sumPUPtR04              = mu.pfIsolationR04().sumPUPt             ;
     }
 
+    _muon1.segmentCompatibility = muon::segmentCompatibility(mu);
+    _muon1.combinedQualityChi2LocalPosition = mu.combinedQuality().chi2LocalPosition;
+    _muon1.combinedQualityTrkKink = mu.combinedQuality().trkKink;
+
     // save trigger informations
     for (unsigned int iTrigger=0;iTrigger<triggerNames_.size();iTrigger++) 
       _muon1.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], *triggerObjsHandle_, mu);
@@ -1353,6 +1360,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     _muon1.ecalIso = mu1.isolationR03().emEt ;
     _muon1.hcalIso = mu1.isolationR03().hadEt ;
 
+    _muon1.segmentCompatibility = muon::segmentCompatibility(mu1);
+    _muon1.combinedQualityChi2LocalPosition = mu1.combinedQuality().chi2LocalPosition;
+    _muon1.combinedQualityTrkKink = mu1.combinedQuality().trkKink;
+
     // save trigger informations
     for (unsigned int iTrigger=0;iTrigger<triggerNames_.size();iTrigger++) 
       _muon1.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], *triggerObjsHandle_, mu1);
@@ -1414,6 +1425,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     //tracker iso and rel comb iso already taken care of
     _muon2.ecalIso = mu2.isolationR03().emEt ;
     _muon2.hcalIso = mu2.isolationR03().hadEt ;
+
+    _muon2.segmentCompatibility = muon::segmentCompatibility(mu2);
+    _muon2.combinedQualityChi2LocalPosition = mu2.combinedQuality().chi2LocalPosition;
+    _muon2.combinedQualityTrkKink = mu2.combinedQuality().trkKink;
 
     // save trigger informations
     for (unsigned int iTrigger=0;iTrigger<triggerNames_.size();iTrigger++) 
@@ -1529,7 +1544,10 @@ void UFDiMuonsAnalyzer::beginJob()
                    "isHltMatched[3]/I:"
                    "hltPt[3]/F:"
                    "hltEta[3]/F:"
-                   "hltPhi[3]/F");
+                   "hltPhi[3]/F:"
+                   "segmentCompatibility/F:"
+                   "combinedQualityChi2LocalPosition/F:"
+                   "combinedQualityTrkKink/F");
 
   _outTree->Branch("reco2", &_muon2, 
                    "isTracker/I:isStandAlone/I:isGlobal/I:"
@@ -1570,7 +1588,10 @@ void UFDiMuonsAnalyzer::beginJob()
                    "isHltMatched[3]/I:"
                    "hltPt[3]/F:"
                    "hltEta[3]/F:"
-                   "hltPhi[3]/F");
+                   "hltPhi[3]/F:"
+                   "segmentCompatibility/F:"
+                   "combinedQualityChi2LocalPosition/F:"
+                   "combinedQualityTrkKink/F");
 
   _outTree->Branch("reco1vc", &_muon1vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
   _outTree->Branch("reco2vc", &_muon2vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
@@ -2042,6 +2063,10 @@ void UFDiMuonsAnalyzer::initMuon(_MuonInfo& muon) {
   muon.sumNeutralHadronEtR04   = -999;
   muon.sumPhotonEtR04          = -999;
   muon.sumPUPtR04              = -999;
+
+  muon.segmentCompatibility = -999;
+  muon.combinedQualityChi2LocalPosition = -999;
+  muon.combinedQualityTrkKink = -999;
 
   for (unsigned int iTrigger=0;iTrigger<3;iTrigger++) {
     muon.isHltMatched[iTrigger] = -999;
