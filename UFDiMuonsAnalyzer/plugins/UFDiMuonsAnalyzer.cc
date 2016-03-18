@@ -410,9 +410,11 @@ private:
 
   // additional class data memebers
   bool _checkTrigger; // activate or not the trigger checking   
-  edm::Handle<edm::TriggerResults>   triggerResultsHandle_;
+  edm::Handle<edm::TriggerResults> triggerResultsHandle_;
   edm::Handle<pat::TriggerObjectStandAloneCollection>   triggerObjsHandle_;
-
+  edm::EDGetTokenT<edm::TriggerResults> triggerResultsToken_;
+  edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjsToken_;
+  
   MuonPairs  const GetMuonPairs (pat::MuonCollection  const* muons ) const;
   TrackPairs const GetTrackPairs(reco::TrackCollection const* tracks) const;
 
@@ -498,8 +500,12 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   processName_       = iConfig.getParameter<std::string>("processName");
   triggerNames_  = iConfig.getParameter<std::vector <std::string> >("triggerNames");
 
-  triggerResultsTag_ = iConfig.getParameter<edm::InputTag>("triggerResults");
-  triggerObjsTag_ = iConfig.getParameter<edm::InputTag>("triggerObjs");
+  //triggerResultsTag_ = iConfig.getParameter<edm::InputTag>("triggerResults");
+  //triggerObjsTag_ = iConfig.getParameter<edm::InputTag>("triggerObjs");
+  
+  // Updated for 7_6_X
+  triggerResultsToken_ = consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("triggerResults"));
+  triggerObjsToken_ = consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("triggerObjs"));
 }
 
 
@@ -531,12 +537,15 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
  
   // -----------------------------------------
   // H L T   H A N D L E S
-  iEvent.getByLabel(triggerResultsTag_,triggerResultsHandle_);
+  
+  //iEvent.getByLabel(triggerResultsTag_,triggerResultsHandle_);
+  iEvent.getByToken(triggerResultsToken_, triggerResultsHandle_);
   if (!triggerResultsHandle_.isValid()) {
     std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting TriggerResults product from Event!" << std::endl;
     return;
   }
-  iEvent.getByLabel(triggerObjsTag_,triggerObjsHandle_);
+  //iEvent.getByLabel(triggerObjsTag_,triggerObjsHandle_);
+  iEvent.getByToken(triggerObjsToken_, triggerObjsHandle_);
   if (!triggerObjsHandle_.isValid()) {
     std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting TriggerObjects product from Event!" << std::endl;
     return;
