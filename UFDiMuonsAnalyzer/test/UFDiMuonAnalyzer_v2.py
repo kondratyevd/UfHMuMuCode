@@ -36,7 +36,7 @@ from Configuration.AlCa.autoCond import autoCond
 # /////////////////////////////////////////////////////////////
 
 #from Samples_v2 import doubleMuon_RunB_MINIAOD as s
-from Samples_v3 import dy_jetsToLL_asympt25 as s
+from Samples_v3 import singleMuon_RunC25nsOct_MINIAOD as s
 
 thisIsData = s.isData
 
@@ -91,7 +91,7 @@ if thisIsData:
 # /////////////////////////////////////////////////////////////
 
 # Clean the Jets from good muons, apply loose jet Id
-ccMuPreSel = "pt > 15. && isGlobalMuon "
+ccMuPreSel = "pt > 10. && isGlobalMuon "
 ccMuPreSel += " && globalTrack().normalizedChi2 < 10 "
 ccMuPreSel += " && isPFMuon "
 ccMuPreSel += " && innerTrack().hitPattern().trackerLayersWithMeasurement > 5 "
@@ -115,7 +115,7 @@ process.cleanJets = cms.EDProducer("PATJetCleaner",
                src       = cms.InputTag("slimmedMuons"),
                algorithm = cms.string("byDeltaR"),
                preselection        = cms.string(ccMuPreSel),
-               deltaR              = cms.double(0.5),
+               deltaR              = cms.double(0.3),
                checkRecoComponents = cms.bool(False),
                pairCut             = cms.string(""),
                requireNoOverlaps   = cms.bool(True),
