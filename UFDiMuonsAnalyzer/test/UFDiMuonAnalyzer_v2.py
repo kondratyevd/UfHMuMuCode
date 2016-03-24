@@ -35,8 +35,7 @@ from Configuration.AlCa.autoCond import autoCond
 # Get a sample from our collection of samples
 # /////////////////////////////////////////////////////////////
 
-#from Samples_v2 import doubleMuon_RunB_MINIAOD as s
-from Samples_v3 import dy_jetsToLL_asympt25 as s
+from Samples_v3 import singleMuon_RunC25nsOct_MINIAOD as s
 
 thisIsData = s.isData
 
@@ -91,47 +90,47 @@ if thisIsData:
 # /////////////////////////////////////////////////////////////
 
 # Clean the Jets from good muons, apply loose jet Id
-ccMuPreSel = "pt > 15. && isGlobalMuon "
-ccMuPreSel += " && globalTrack().normalizedChi2 < 10 "
-ccMuPreSel += " && isPFMuon "
-ccMuPreSel += " && innerTrack().hitPattern().trackerLayersWithMeasurement > 5 "
-ccMuPreSel += " && innerTrack().hitPattern().numberOfValidPixelHits > 0 "
-ccMuPreSel += " && globalTrack().hitPattern().numberOfValidMuonHits > 0 "
-ccMuPreSel += " && numberOfMatchedStations > 1 && dB < 0.2 && abs(eta) < 2.4 "
-ccMuPreSel += " && ( chargedHadronIso + max(0.,neutralHadronIso + photonIso - 0.5*puChargedHadronIso) ) < 0.12 * pt"
-
-jetSelection = 'neutralEmEnergy/energy < 0.99 '
-jetSelection += ' && neutralHadronEnergy/energy < 0.99 '
-jetSelection += ' && (chargedMultiplicity + neutralMultiplicity) > 1 '
-jetSelection += ' && ((abs(eta)>2.4) || (chargedMultiplicity > 0 '
-jetSelection += ' && chargedHadronEnergy/energy > 0.0'
-jetSelection += ' && chargedEmEnergy/energy < 0.99))'
-
-process.cleanJets = cms.EDProducer("PATJetCleaner",
-          src = cms.InputTag("slimmedJets"),
-          preselection = cms.string(jetSelection),
-          checkOverlaps = cms.PSet(
-             muons = cms.PSet(
-               src       = cms.InputTag("slimmedMuons"),
-               algorithm = cms.string("byDeltaR"),
-               preselection        = cms.string(ccMuPreSel),
-               deltaR              = cms.double(0.5),
-               checkRecoComponents = cms.bool(False),
-               pairCut             = cms.string(""),
-               requireNoOverlaps   = cms.bool(True),
-             ),
-             #electrons = cms.PSet(
-             #  src       = cms.InputTag("slimmedElectrons"),
-             #  algorithm = cms.string("byDeltaR"),
-             #  preselection        = cms.string(ccElePreSel),
-             #  deltaR              = cms.double(0.5),
-             #  checkRecoComponents = cms.bool(False),
-             #  pairCut             = cms.string(""),
-             #  requireNoOverlaps   = cms.bool(True),
-             #),
-         ),
-         finalCut = cms.string('')
-)
+#ccMuPreSel = "pt > 15. && isGlobalMuon "
+#ccMuPreSel += " && globalTrack().normalizedChi2 < 10 "
+#ccMuPreSel += " && isPFMuon "
+#ccMuPreSel += " && innerTrack().hitPattern().trackerLayersWithMeasurement > 5 "
+#ccMuPreSel += " && innerTrack().hitPattern().numberOfValidPixelHits > 0 "
+#ccMuPreSel += " && globalTrack().hitPattern().numberOfValidMuonHits > 0 "
+#ccMuPreSel += " && numberOfMatchedStations > 1 && dB < 0.2 && abs(eta) < 2.4 "
+#ccMuPreSel += " && ( chargedHadronIso + max(0.,neutralHadronIso + photonIso - 0.5*puChargedHadronIso) ) < 0.12 * pt"
+#
+#jetSelection = 'neutralEmEnergy/energy < 0.99 '
+#jetSelection += ' && neutralHadronEnergy/energy < 0.99 '
+#jetSelection += ' && (chargedMultiplicity + neutralMultiplicity) > 1 '
+#jetSelection += ' && ((abs(eta)>2.4) || (chargedMultiplicity > 0 '
+#jetSelection += ' && chargedHadronEnergy/energy > 0.0'
+#jetSelection += ' && chargedEmEnergy/energy < 0.99))'
+#
+#process.cleanJets = cms.EDProducer("PATJetCleaner",
+#          src = cms.InputTag("slimmedJets"),
+#          preselection = cms.string(jetSelection),
+#          checkOverlaps = cms.PSet(
+#             muons = cms.PSet(
+#               src       = cms.InputTag("slimmedMuons"),
+#               algorithm = cms.string("byDeltaR"),
+#               preselection        = cms.string(ccMuPreSel),
+#               deltaR              = cms.double(0.5),
+#               checkRecoComponents = cms.bool(False),
+#               pairCut             = cms.string(""),
+#               requireNoOverlaps   = cms.bool(True),
+#             ),
+#             #electrons = cms.PSet(
+#             #  src       = cms.InputTag("slimmedElectrons"),
+#             #  algorithm = cms.string("byDeltaR"),
+#             #  preselection        = cms.string(ccElePreSel),
+#             #  deltaR              = cms.double(0.5),
+#             #  checkRecoComponents = cms.bool(False),
+#             #  pairCut             = cms.string(""),
+#             #  requireNoOverlaps   = cms.bool(True),
+#             #),
+#         ),
+#         finalCut = cms.string('')
+#)
 
 # /////////////////////////////////////////////////////////////
 # Save output with TFileService
@@ -149,14 +148,16 @@ else:
   process.load("UfHMuMuCode.UFDiMuonsAnalyzer.UFDiMuonAnalyzer_MC_cff")
 
 process.dimuons = process.DiMuons.clone()
-process.dimuons.pfJetsTag = cms.InputTag("cleanJets")
+#process.dimuons.pfJetsTag = cms.InputTag("cleanJets")
 
 
 # /////////////////////////////////////////////////////////////
 # Set the order of operations
 # /////////////////////////////////////////////////////////////
 
-process.p = cms.Path(
-                     process.cleanJets*
-                     process.dimuons
-                     )
+process.p = cms.Path(process.dimuons)
+
+#process.p = cms.Path(
+#                     process.cleanJets*
+#                     process.dimuons
+#                     )

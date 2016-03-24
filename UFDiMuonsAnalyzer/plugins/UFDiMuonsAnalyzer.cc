@@ -526,7 +526,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   }
 
   if (_isVerbose) 
-    std::cout << "\n\n A N A LI Z I N G   E V E N T = " 
+    std::cout << "\n\n A N A L Y Z I N G   E V E N T = " 
 	      << _numEvents << std::endl << std::endl;
  
   // -----------------------------------------
@@ -563,7 +563,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
   int theRun   = iEvent.id().run();
   int theLumi  = iEvent.luminosityBlock();
-  int theEvent = iEvent.id().event();
+  long long int theEvent = iEvent.id().event();
   int theBx    = iEvent.bunchCrossing();
   int theOrbit = iEvent.orbitNumber();
   
@@ -1494,7 +1494,7 @@ void UFDiMuonsAnalyzer::beginJob()
 
   // eventInfo;
   // set up the _outTree branches
-  _outTree->Branch( "eventInfo",  &eventInfo, "run/I:lumi/I:event/I:bx/I:orbit/I");
+  _outTree->Branch( "eventInfo",  &eventInfo, "run/I:lumi/I:event/L:bx/I:orbit/I");
   
   // rho
   _outTree->Branch("rho"  ,            &_rho,              "rho/F"             );

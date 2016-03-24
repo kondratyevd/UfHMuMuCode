@@ -2,7 +2,7 @@
 typedef struct {
   int run;
   int lumi;
-  int event;
+  long long int event;
   int bx;
   int orbit;
 } _EventInfo;
