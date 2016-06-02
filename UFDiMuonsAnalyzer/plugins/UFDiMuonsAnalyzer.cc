@@ -595,13 +595,15 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   // primary vertex
 
   // init (vertices)
-  if (vertices.isValid()) {
-    
+  if (vertices.isValid())
+  {
     //std::cout << "vertex->size():"<< vertices->size() << std::endl;
     int iVertex=0;
-    for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx!=vertices->end(); ++vtx){
+    for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx!=vertices->end(); ++vtx)
+    {
 
-      if (!vtx->isValid()) {
+      if (!vtx->isValid())
+      {
         vertexInfo.isValid[iVertex] = 0;
         continue;
       }
@@ -1050,8 +1052,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   _vertexY = -999;
   _vertexZ = -999;
 
- 
-
 
   if (muonsSelected.size() == 0) {
     if (_isVerbose) std::cout << "0 reco'd muons...\n";
@@ -1083,41 +1083,51 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     _muon1.phi    = mu.phi();
    
     // redundant if the muon is tracker-only muon
-    if (mu.isTrackerMuon()) {
+    if (mu.isTrackerMuon()) 
+    {
       _muon1.trkPt   = mu.innerTrack()->pt();                    
       _muon1.trkPtErr= mu.innerTrack()->ptError();
       _muon1.trketa  = mu.innerTrack()->eta();                   
       _muon1.trkPhi  = mu.innerTrack()->phi();                   
     }
 
-    _muon1.normChiSquare=track.normalizedChi2();
     _muon1.d0_BS= mu.innerTrack()->dxy( beamSpotHandle->position() );
     _muon1.dz_BS= mu.innerTrack()->dz ( beamSpotHandle->position() );
 
-    for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
-         vtx!=vertices->end(); ++vtx){
+    // Info needed to manually evaluate muon id's
+    _muon1.normChiSquare=track.normalizedChi2();
+    _muon1.numTrackerLayers = mu.innerTrack()->hitPattern().trackerLayersWithMeasurement(); 
+    _muon1.numPixelLayers   = mu.innerTrack()->hitPattern().pixelLayersWithMeasurement();   
+    _muon1.numStripLayers   = mu.innerTrack()->hitPattern().stripLayersWithMeasurement();   
+    _muon1.numValidPixelHits   = mu.innerTrack()->hitPattern().numberOfValidPixelHits();
+    _muon1.numValidTrackerHits = mu.innerTrack()->hitPattern().numberOfValidTrackerHits();
+    _muon1.numValidStripHits   = mu.innerTrack()->hitPattern().numberOfValidStripHits();
+    _muon1.validFracTracker = mu.innerTrack()->validFraction(); 
+    _muon1.numValidMuonHits    = track.hitPattern().numberOfValidMuonHits();
+    _muon1.numSegmentMatches   = mu.numberOfMatches();
+    _muon1.numOfMatchedStations= mu.numberOfMatchedStations();
+    _muon1.segmentCompatibility = muon::segmentCompatibility(mu);
+    _muon1.combinedQualityChi2LocalPosition = mu.combinedQuality().chi2LocalPosition;
+    _muon1.combinedQualityTrkKink = mu.combinedQuality().trkKink;
+
+    reco::Vertex bestVtx1;
+    for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx!=vertices->end(); ++vtx)
+    {
 
       if (!vtx->isValid()) continue;
   
       _muon1.d0_PV= track.dxy( vtx->position() );
       _muon1.dz_PV= track.dz ( vtx->position() );
+      bestVtx1 = *vtx; 
     
       //exit at the first available vertex
       break;
     }
 
-    _muon1.numPixelLayers   = track.hitPattern().pixelLayersWithMeasurement();   
-    _muon1.numTrackerLayers = track.hitPattern().trackerLayersWithMeasurement(); 
-    _muon1.numStripLayers   = track.hitPattern().stripLayersWithMeasurement();   
-    
-    _muon1.validFracTracker = track.validFraction(); 
-
-    _muon1.numValidMuonHits    = track.hitPattern().numberOfValidMuonHits();
-    _muon1.numValidPixelHits   = track.hitPattern().numberOfValidPixelHits();
-    _muon1.numValidTrackerHits = track.hitPattern().numberOfValidTrackerHits();
-    _muon1.numValidStripHits   = track.hitPattern().numberOfValidStripHits();
-    _muon1.numSegmentMatches   = mu.numberOfMatches();
-    _muon1.numOfMatchedStations= mu.numberOfMatchedStations();
+    // These methods were added in CMSSW 7_4_X, so let's use them
+    _muon1.isTightMuon = muon::isTightMuon(mu, bestVtx1);
+    _muon1.isMediumMuon = muon::isMediumMuon(mu);
+    _muon1.isLooseMuon = muon::isLooseMuon(mu);
 
     //isolation
     _muon1.trackIsoSumPt    = mu.isolationR03().sumPt;
@@ -1155,9 +1165,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       _muon1.sumPUPtR04              = mu.pfIsolationR04().sumPUPt             ;
     }
 
-    _muon1.segmentCompatibility = muon::segmentCompatibility(mu);
-    _muon1.combinedQualityChi2LocalPosition = mu.combinedQuality().chi2LocalPosition;
-    _muon1.combinedQualityTrkKink = mu.combinedQuality().trkKink;
 
     // save trigger informations
     for (unsigned int iTrigger=0;iTrigger<triggerNames_.size();iTrigger++) 
@@ -1331,6 +1338,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     _muon1.d0_BS= track1.dxy( beamSpotHandle->position() );
     _muon1.dz_BS= track1.dz ( beamSpotHandle->position() );
 
+    reco::Vertex bestVtx1;
     for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
          vtx!=vertices->end(); ++vtx){
 
@@ -1338,21 +1346,26 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   
       _muon1.d0_PV= track1.dxy( vtx->position() );
       _muon1.dz_PV= track1.dz ( vtx->position() );
+      bestVtx1 = *vtx; 
     
       //exit at the first available vertex
       break;
     }
 
-    _muon1.numPixelLayers   = track1.hitPattern().pixelLayersWithMeasurement();   
-    _muon1.numTrackerLayers = track1.hitPattern().trackerLayersWithMeasurement(); 
-    _muon1.numStripLayers   = track1.hitPattern().stripLayersWithMeasurement();   
-    
-    _muon1.validFracTracker = track1.validFraction(); 
+    // These methods were added in CMSSW 7_4_X, so let's use them
+    _muon1.isTightMuon = muon::isTightMuon(mu1, bestVtx1);
+    _muon1.isMediumMuon = muon::isMediumMuon(mu1);
+    _muon1.isLooseMuon = muon::isLooseMuon(mu1);
+
+    _muon1.numTrackerLayers = mu1.innerTrack()->hitPattern().trackerLayersWithMeasurement(); 
+    _muon1.numPixelLayers   = mu1.innerTrack()->hitPattern().pixelLayersWithMeasurement();   
+    _muon1.numStripLayers   = mu1.innerTrack()->hitPattern().stripLayersWithMeasurement();   
+    _muon1.validFracTracker = mu1.innerTrack()->validFraction(); 
 
     _muon1.numValidMuonHits    = track1.hitPattern().numberOfValidMuonHits();
-    _muon1.numValidPixelHits   = track1.hitPattern().numberOfValidPixelHits();
-    _muon1.numValidTrackerHits = track1.hitPattern().numberOfValidTrackerHits();
-    _muon1.numValidStripHits   = track1.hitPattern().numberOfValidStripHits();
+    _muon1.numValidPixelHits   = mu1.innerTrack()->hitPattern().numberOfValidPixelHits();
+    _muon1.numValidTrackerHits = mu1.innerTrack()->hitPattern().numberOfValidTrackerHits();
+    _muon1.numValidStripHits   = mu1.innerTrack()->hitPattern().numberOfValidStripHits();
     _muon1.numSegmentMatches   = mu1.numberOfMatches();
     _muon1.numOfMatchedStations= mu1.numberOfMatchedStations();
 
@@ -1393,16 +1406,19 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       _muon2.trkPhi  = mu2.innerTrack()->phi();                   
     }
 
-    _muon2.numPixelLayers   = track2.hitPattern().pixelLayersWithMeasurement();   
-    _muon2.numTrackerLayers = track2.hitPattern().trackerLayersWithMeasurement(); 
-    _muon2.numStripLayers   = track2.hitPattern().stripLayersWithMeasurement();   
-    
-    _muon2.validFracTracker = track2.validFraction(); 
+    _muon2.numTrackerLayers = mu2.innerTrack()->hitPattern().trackerLayersWithMeasurement(); 
+    _muon2.numPixelLayers   = mu2.innerTrack()->hitPattern().pixelLayersWithMeasurement();   
+    _muon2.numStripLayers   = mu2.innerTrack()->hitPattern().stripLayersWithMeasurement();   
+    _muon2.numValidPixelHits   = mu2.innerTrack()->hitPattern().numberOfValidPixelHits();
+    _muon2.numValidTrackerHits = mu2.innerTrack()->hitPattern().numberOfValidTrackerHits();
+    _muon2.numValidStripHits   = mu2.innerTrack()->hitPattern().numberOfValidStripHits();
+    _muon2.validFracTracker = mu2.innerTrack()->validFraction(); 
 
     _muon2.normChiSquare=track2.normalizedChi2();
     _muon2.d0_BS= track2.dxy( beamSpotHandle->position() );
     _muon2.dz_BS= track2.dz ( beamSpotHandle->position() );
    
+    reco::Vertex bestVtx2;
     for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
          vtx!=vertices->end(); ++vtx){
 
@@ -1410,15 +1426,18 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   
       _muon2.d0_PV= track2.dxy( vtx->position() );
       _muon2.dz_PV= track2.dz ( vtx->position() );
+      bestVtx2 = *vtx; 
     
       //exit at the first available vertex
       break;
     }
 
+    // These methods were added in CMSSW 7_4_X, so let's use them
+    _muon2.isTightMuon = muon::isTightMuon(mu2, bestVtx2);
+    _muon2.isMediumMuon = muon::isMediumMuon(mu2);
+    _muon2.isLooseMuon = muon::isLooseMuon(mu2);
+
     _muon2.numValidMuonHits    = track2.hitPattern().numberOfValidMuonHits();
-    _muon2.numValidPixelHits   = track2.hitPattern().numberOfValidPixelHits();
-    _muon2.numValidTrackerHits = track2.hitPattern().numberOfValidTrackerHits();
-    _muon2.numValidStripHits   = track2.hitPattern().numberOfValidStripHits();
     _muon2.numSegmentMatches   = mu2.numberOfMatches();
     _muon2.numOfMatchedStations= mu2.numberOfMatchedStations();
 
@@ -1507,6 +1526,7 @@ void UFDiMuonsAnalyzer::beginJob()
 
   _outTree->Branch("reco1", &_muon1, 
                    "isTracker/I:isStandAlone/I:isGlobal/I:"
+                   "isTightMuon/I:isMediumMuon/I:isLooseMuon/I:"
                    "charge/I:pt/F:ptErr/F:eta/F:phi/F:"
                    "trkPt/F:trkPtErr/F:trkEta/F:trkPhi/F:"
                    "normChiSquare/F:"
@@ -1551,6 +1571,7 @@ void UFDiMuonsAnalyzer::beginJob()
 
   _outTree->Branch("reco2", &_muon2, 
                    "isTracker/I:isStandAlone/I:isGlobal/I:"
+                   "isTightMuon/I:isMediumMuon/I:isLooseMuon/I:"
                    "charge/I:pt/F:ptErr/F:eta/F:phi/F:"
                    "trkPt/F:trkPtErr/F:trkEta/F:trkPhi/F:"
                    "normChiSquare/F:"
@@ -2014,6 +2035,10 @@ void UFDiMuonsAnalyzer::initMuon(_MuonInfo& muon) {
   muon.isTracker    = -999;
   muon.isStandAlone = -999;
   muon.isGlobal     = -999;
+
+  muon.isTightMuon = -999;
+  muon.isMediumMuon = -999;
+  muon.isLooseMuon = -999;
 
   muon.charge = -999;
   muon.pt     = -999;

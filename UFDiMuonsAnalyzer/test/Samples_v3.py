@@ -179,7 +179,7 @@ ttZToLLNuNu = sample(name="ttZToLLNuNu",
                      globaltag = '74X_mcRun2_asymptotic_v2')
 
 background.append(ttJets)
-background.append(ttZToLLNuNu)
+#background.append(ttZToLLNuNu)
 
 # ///////////////////////////////////////////////////////////////////////////////////////////////////////
 #---- Diboson -------------------------------------------------------------------------------------------
@@ -213,10 +213,10 @@ ZZTo2L2Q = sample(name="ZZTo2L2Q",
                    numevents=18790122,
                    globaltag = '74X_mcRun2_asymptotic_v2')
 
-background.append(WWTo2L2Nu)
-background.append(WZTo2L2Q)
-background.append(WZTo3LNu)
-background.append(ZZTo2L2Q)
+#background.append(WWTo2L2Nu)
+#background.append(WZTo2L2Q)
+#background.append(WZTo3LNu)
+#background.append(ZZTo2L2Q)
 
 # 1.256 pb
 ZZTo4L = sample(name="ZZTo4L", 
@@ -231,8 +231,8 @@ ZZTo2L2Nu = sample(name="ZZTo2L2Nu",
                    numevents=8719200,
                    globaltag = '74X_mcRun2_asymptotic_v2')
 
-background.append(ZZTo4L)
-background.append(ZZTo2L2Nu)
+#background.append(ZZTo4L)
+#background.append(ZZTo2L2Nu)
 
 # 0.003194 pb
 GluGluToZZTo2mu2tau = sample(name="GluGluToZZTo2mu2tau", 
@@ -255,9 +255,9 @@ GluGluToZZTo4mu = sample(name="GluGluToZZTo4mu",
                    numevents= 339600,
                    globaltag = '74X_mcRun2_asymptotic_v2')
 
-background.append(GluGluToZZTo2mu2tau)
-background.append(GluGluToZZTo2e2mu)
-background.append(GluGluToZZTo4mu)
+#background.append(GluGluToZZTo2mu2tau)
+#background.append(GluGluToZZTo2e2mu)
+#background.append(GluGluToZZTo4mu)
 
 singleAndMC = []
 singleAndMC.extend(singleMuon)
