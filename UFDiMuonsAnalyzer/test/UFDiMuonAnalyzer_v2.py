@@ -1,5 +1,5 @@
 # =============================================================#
-# UFDiMuonAnalyzer                                             #
+# UFDiMuonsAnalyzer                                             #
 # =============================================================#
 # Makes stage1 trees.                                          #
 # Adds a cleaner vector of jets to each event.                 #
@@ -15,7 +15,7 @@
 
 import FWCore.ParameterSet.Config as cms
 
-process = cms.Process("UFDiMuonAnalyzer")
+process = cms.Process("UFDiMuonsAnalyzer")
 
 process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 process.load("FWCore.MessageService.MessageLogger_cfi")
@@ -38,7 +38,7 @@ from Configuration.AlCa.autoCond import autoCond
 # /////////////////////////////////////////////////////////////
 
 #from Samples_v2 import doubleMuon_RunB_MINIAOD as s
-from Samples_v3 import singleMuon_RunC25nsOct_MINIAOD as s
+from Samples_v3 import singleMuon_RunC25nsDec_MINIAOD as s
 
 thisIsData = s.isData
 
@@ -85,7 +85,7 @@ process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange()
 # use a JSON file when locally executing cmsRun
 if thisIsData:
     import FWCore.PythonUtilities.LumiList as LumiList
-    process.source.lumisToProcess = LumiList.LumiList(filename = s.jsonfiles[1]).getVLuminosityBlockRange()
+    process.source.lumisToProcess = LumiList.LumiList(filename = s.jsonfiles[0]).getVLuminosityBlockRange()
 
 
 # /////////////////////////////////////////////////////////////
@@ -142,13 +142,13 @@ process.cleanJets = cms.EDProducer("PATJetCleaner",
 process.TFileService = cms.Service("TFileService", fileName = cms.string("stage_1_"+s.name+".root") )
 
 # /////////////////////////////////////////////////////////////
-# Load UFDiMuonAnalyzer
+# Load UFDiMuonsAnalyzer
 # /////////////////////////////////////////////////////////////
 
 if thisIsData:
-  process.load("UfHMuMuCode.UFDiMuonsAnalyzer.UFDiMuonAnalyzer_cff")
+  process.load("UfHMuMuCode.UFDiMuonsAnalyzer.UFDiMuonsAnalyzer_cff")
 else:
-  process.load("UfHMuMuCode.UFDiMuonsAnalyzer.UFDiMuonAnalyzer_MC_cff")
+  process.load("UfHMuMuCode.UFDiMuonsAnalyzer.UFDiMuonsAnalyzer_MC_cff")
 
 process.dimuons = process.DiMuons.clone()
 process.dimuons.pfJetsTag = cms.InputTag("cleanJets")

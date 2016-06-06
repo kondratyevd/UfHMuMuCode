@@ -2,7 +2,7 @@
 typedef struct {
   int run;
   int lumi;
-  int event;
+  long long int event;
   int bx;
   int orbit;
 } _EventInfo;
@@ -40,6 +40,10 @@ typedef struct {
   int isStandAlone;
   int isGlobal;
 
+  int isTightMuon;
+  int isMediumMuon;
+  int isLooseMuon;
+
   int charge;
   float pt;
   float ptErr;
@@ -50,26 +54,12 @@ typedef struct {
   float trkPtErr;
   float trketa;
   float trkPhi;
-  
-  float normChiSquare;
+
   float d0_BS;
   float dz_BS;
 
   float d0_PV;
   float dz_PV;
-  
-  int numPixelLayers;   //number of pixel layers with valid hits
-  int numTrackerLayers; //number of tracker layers with valid hits 
-  int numStripLayers;   //number of strip layers with valid hits
-
-  float validFracTracker; //valid fraction of tracker hits
-
-  int numValidMuonHits;
-  int numValidPixelHits;
-  int numValidTrackerHits;
-  int numValidStripHits;
-  int numSegmentMatches;
-  int numOfMatchedStations;
 
   float trackIsoSumPt;
   float trackIsoSumPtCorr;
@@ -84,11 +74,11 @@ typedef struct {
   float pfEta;
   float pfPhi;
   
-  float sumChargedHadronPtR03; // sum-pt of charged Hadron 
+  float sumChargedHadronPtR03;   // sum-pt of charged Hadron 
   float sumChargedParticlePtR03; // sum-pt of charged Particles(inludes e/mu) 
-  float sumNeutralHadronEtR03;  // sum pt of neutral hadrons
-  float sumPhotonEtR03;  // sum pt of PF photons
-  float sumPUPtR03;  // sum pt of charged Particles not from PV  (for Pu corrections)
+  float sumNeutralHadronEtR03;   // sum pt of neutral hadrons
+  float sumPhotonEtR03;          // sum pt of PF photons
+  float sumPUPtR03;              // sum pt of charged Particles not from PV  (for Pu corrections)
 
   float sumChargedHadronPtR04; 
   float sumChargedParticlePtR04;
@@ -101,10 +91,6 @@ typedef struct {
   float hltEta[3];
   float hltPhi[3];
 
-  float segmentCompatibility;
-  float combinedQualityChi2LocalPosition;
-  float combinedQualityTrkKink;
-  
 } _MuonInfo;
 
 //MET

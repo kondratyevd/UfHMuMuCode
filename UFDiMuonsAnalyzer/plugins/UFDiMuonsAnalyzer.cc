@@ -1,521 +1,82 @@
-// -*- C++ -*-
-//
-// Package:    UFDiMuonsAnalyzer
-// Class:      UFDiMuonsAnalyzer
-// 
-/**\class UFDiMuonsAnalyzer UserArea/UFDiMuonsAnalyzer/src/UFDiMuonsAnalyzer.cc
-
-Description: [one line class summary]
-
-Implementation:
-[Notes on implementation]
-*/
-//
-// Original Author:  Gian Piero Di Giovanni,32 4-B08,+41227674961,
-//         Created:  Thur Oct 21 10:44:13 CEST 2010
-// $Id: UFDiMuonsAnalyzer.cc,v 1.15 2013/06/14 14:23:35 digiovan Exp $
-//
-//
-
-
-// system include files
-#include <memory>
-#include <vector>
-#include <iostream>
-#include <sstream>
-#include <fstream>
-#include <string>
-#include <algorithm>
-#include <boost/regex.hpp>
-
-#include "TLorentzVector.h"
-#include "TTree.h"
-#include "TFile.h"
-#include "TH1F.h"
-#include "TH2F.h"
-#include "TBranch.h"
-
-#include "FWCore/ServiceRegistry/interface/Service.h"
-#include "CommonTools/UtilAlgos/interface/TFileService.h"
-
-// user include files
-#include "FWCore/MessageLogger/interface/MessageLogger.h"
-#include "FWCore/Framework/interface/Frameworkfwd.h"
-#include "FWCore/Framework/interface/EDAnalyzer.h"
-
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/MakerMacros.h"
-
-#include "FWCore/ParameterSet/interface/ParameterSet.h"
-#include "FWCore/Common/interface/TriggerNames.h"
-#include "DataFormats/Common/interface/TriggerResults.h"
-
-#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
-
-#include "DataFormats/MuonReco/interface/Muon.h"
-#include "DataFormats/MuonReco/interface/MuonFwd.h"
-#include "DataFormats/MuonReco/interface/MuonIsolation.h"
-#include "DataFormats/MuonReco/interface/MuonChamberMatch.h"
-#include "DataFormats/MuonReco/interface/MuonSegmentMatch.h"
-#include "DataFormats/MuonReco/interface/MuonSelectors.h"
-
-#include "DataFormats/TrackReco/interface/Track.h"
-#include "DataFormats/TrackReco/interface/TrackFwd.h"
-#include "FWCore/Framework/interface/ESHandle.h"
-#include "FWCore/Framework/interface/Event.h"
-#include "FWCore/Framework/interface/EventSetup.h"
-
-#include <Geometry/Records/interface/MuonGeometryRecord.h>
-#include <Geometry/CSCGeometry/interface/CSCGeometry.h>
-#include <Geometry/CSCGeometry/interface/CSCLayer.h>
-#include <Geometry/CSCGeometry/interface/CSCLayerGeometry.h>
-
-#include "DataFormats/DetId/interface/DetId.h"
-#include "DataFormats/MuonDetId/interface/MuonSubdetId.h"
-#include "DataFormats/MuonDetId/interface/DTWireId.h"
-#include "DataFormats/MuonDetId/interface/CSCDetId.h"
-#include "DataFormats/MuonDetId/interface/RPCDetId.h"
-
-#include "DataFormats/CSCRecHit/interface/CSCSegmentCollection.h"
-#include "DataFormats/CSCRecHit/interface/CSCRecHit2DCollection.h"
-
-
-#include "DataFormats/BeamSpot/interface/BeamSpot.h"
-
-#include "DataFormats/CSCRecHit/interface/CSCSegmentCollection.h"
-
-#include "Geometry/CommonDetUnit/interface/GlobalTrackingGeometry.h"
-#include "Geometry/Records/interface/GlobalTrackingGeometryRecord.h"
-#include "MagneticField/Engine/interface/MagneticField.h"
-
-//
-// math classes
-//
-#include "DataFormats/Math/interface/deltaR.h"
-//
-// trigger
-// 
-#include "FWCore/Common/interface/TriggerNames.h"
-#include "DataFormats/Common/interface/TriggerResults.h"
-#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
-#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
-
-//
-// vertexing
-//
-#include "DataFormats/VertexReco/interface/Vertex.h"
-#include "DataFormats/VertexReco/interface/VertexFwd.h"
-
-//
-// gen particles
-//
-#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
-#include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
-#include "DataFormats/Candidate/interface/CompositePtrCandidate.h"
-#include "DataFormats/Candidate/interface/Candidate.h"
-#include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
-
-// 2010.11.21 Adding the Muon Cocktail
-#include "DataFormats/MuonReco/interface/MuonCocktails.h"
-#include "DataFormats/Math/interface/deltaR.h"
-
-// pfJets and MET
-//#include "DataFormats/METReco/interface/PFMET.h"
-#include "DataFormats/PatCandidates/interface/MET.h"
-#include "DataFormats/PatCandidates/interface/Jet.h"
-#include "DataFormats/JetReco/interface/GenJetCollection.h"
-#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
-#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
-#include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
-
-// PU Info
-#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
-#include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
-
-#include "DataFormats/PatCandidates/interface/Muon.h"
-#include "DataFormats/PatCandidates/interface/Jet.h"
-#include "DataFormats/PatCandidates/interface/Electron.h"
-#include "DataFormats/PatCandidates/interface/Tau.h"
-#include "DataFormats/PatCandidates/interface/Photon.h"
-#include "DataFormats/PatCandidates/interface/MET.h"
-
-#include "DataFormats/Common/interface/View.h"
-
-bool sortGenJetFunc(reco::GenJet i, reco::GenJet j){ return (i.pt()>j.pt()); }
-
-// Add the data formats
-#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/DataFormats.h"
-
-// general 
-double const PDG_MASS_Z  = 91.1876;//GeV/c2
-double const PDG_WIDTH_Z = 2.4952; //GeV/c2
-double const MASS_MUON = 0.105658367;    //GeV/c2
-
-//
-// class declaration
-//
-class UFDiMuonsAnalyzer : public edm::EDAnalyzer {
-
-public:
-
-  explicit UFDiMuonsAnalyzer(const edm::ParameterSet&);
-  ~UFDiMuonsAnalyzer();
-  
-  int _numEvents;
-
-  edm::ESHandle<GlobalTrackingGeometry> globalTrackingGeometry;
-  //  MuonServiceProxy* theService;
-
-  // muons pairs
-  typedef std::pair<pat::Muon,pat::Muon> MuonPair;
-  typedef std::vector<MuonPair>            MuonPairs;
-
-  // sort the dimuons putting in front the candidates whose mass is 
-  // the closest to the Z PDG value
-  struct sortMuonsClass {
-    bool operator() (MuonPair pair1, 
-  		     MuonPair pair2) {
-
-      TLorentzVector muon11, muon12, dimuon1;
-
-      //reco::TrackRef const muon11Track = pair1.first . innerTrack();
-      //reco::TrackRef const muon12Track = pair1.second. innerTrack();
-
-      //muon11.SetPtEtaPhiM(muon11Track->pt(), muon11Track->eta(), muon11Track->phi(), MASS_MUON);
-      //muon12.SetPtEtaPhiM(muon12Track->pt(), muon12Track->eta(), muon12Track->phi(), MASS_MUON);
-
-      reco::Track const muon11Track = *(pair1.first . innerTrack());
-      reco::Track const muon12Track = *(pair1.second. innerTrack());
-
-      muon11.SetPtEtaPhiM(muon11Track.pt(), muon11Track.eta(), muon11Track.phi(), MASS_MUON);
-      muon12.SetPtEtaPhiM(muon12Track.pt(), muon12Track.eta(), muon12Track.phi(), MASS_MUON);
-
-      dimuon1 = muon11+muon12;
-
-
-      TLorentzVector muon21, muon22, dimuon2;
-
-      //reco::TrackRef const muon21Track = pair2.first . innerTrack();
-      //reco::TrackRef const muon22Track = pair2.second. innerTrack();
-
-      //muon21.SetPtEtaPhiM(muon21Track->pt(), muon21Track->eta(), muon21Track->phi(), MASS_MUON);
-      //muon22.SetPtEtaPhiM(muon22Track->pt(), muon22Track->eta(), muon22Track->phi(), MASS_MUON);
-
-      reco::Track const muon21Track = *(pair2.first . innerTrack());
-      reco::Track const muon22Track = *(pair2.second. innerTrack());
-
-      muon21.SetPtEtaPhiM(muon21Track.pt(), muon21Track.eta(), muon21Track.phi(), MASS_MUON);
-      muon22.SetPtEtaPhiM(muon22Track.pt(), muon22Track.eta(), muon22Track.phi(), MASS_MUON);
-
-      dimuon2 = muon21+muon22;
-
-      return ( fabs(dimuon1.M()-PDG_MASS_Z) < fabs(dimuon2.M()-PDG_MASS_Z) );
-    }
-  } sortMuonObject;
-
-  // tracks pairs, e.g. cocktail
-  typedef std::pair<reco::Track,reco::Track> TrackPair;
-  typedef std::vector<TrackPair> TrackPairs;
-
-  // general event information	
-  _EventInfo eventInfo;
-
-  // rho
-  float _rho;
-  float _rho25;
-  float _rho25asHtoZZto4l;
-
-  // vertex information
-  _VertexInfo vertexInfo;
-
-
-  // combined muon-muon info
-  float _recoCandMass;
-  float _recoCandPt;
-  float _recoCandEta; // pseudo rapidity
-  float _recoCandY;   // rapidity
-  float _recoCandPhi; // phi
-
-  // combined muon-muon info
-  float _recoCandMassPF;
-  float _recoCandPtPF;
-  float _recoCandEtaPF; 
-  float _recoCandYPF;   
-  float _recoCandPhiPF; 
-
-  // Vertex Constrained muon-muon info
-  float _recoCandMassVC;
-  float _recoCandMassResVC;
-  float _recoCandMassResCovVC;
-  float _recoCandPtVC;
-  float _recoCandEtaVC; 
-  float _recoCandYVC;   
-  float _recoCandPhiVC; 
-
-  // Vertex Constrained from PV info
-  float _recoCandMassPVC;
-  float _recoCandMassResPVC;
-  float _recoCandMassResCovPVC;
-  float _recoCandPtPVC;
-  float _recoCandEtaPVC; 
-  float _recoCandYPVC;   
-  float _recoCandPhiPVC; 
-
-
-  float _angleDiMuons;
-  int   _vertexIsValid;
-  float _vertexNormChiSquare;
-  float _vertexChiSquare;
-  float _vertexNDF;
-  float _vertexX;
-  float _vertexY;
-  float _vertexZ;
-
-  _MuonInfo _muon1, _muon2;
-  // dimuon candidates from refit with Vertex Constraint
-  _TrackInfo _muon1vc,_muon2vc; //dimuon
-  _TrackInfo _muon1pvc,_muon2pvc; //pv
-
-
-
-  // generator level info Z pre-FSR
-  _genPartInfo _genZpreFSR;
-  _TrackInfo   _genM1ZpreFSR,_genM2ZpreFSR;
-
-  // generator level info Z post-FSR
-  _genPartInfo _genZpostFSR;
-  _TrackInfo   _genM1ZpostFSR,_genM2ZpostFSR;
-
-
-  // generator level info W pre-FSR
-  _genPartInfo _genWpreFSR;
-  _TrackInfo   _genMWpreFSR;
-
-  // generator level info W post-FSR
-  _genPartInfo _genWpostFSR;
-  _TrackInfo   _genMWpostFSR;
-
-
-  // generator level info H pre-FSR
-  _genPartInfo _genHpreFSR;
-  _TrackInfo   _genM1HpreFSR,_genM2HpreFSR;
-
-  // generator level info H post-FSR
-  _genPartInfo _genHpostFSR;
-  _TrackInfo   _genM1HpostFSR,_genM2HpostFSR;
-
-  // Jets and MET
-  _MetInfo     _metInfo;
-  _PFJetInfo   _pfJetInfo;
-  _GenJetInfo  _genJetInfo;
-
-  int _nPU;
-  int _genWeight;
-  int _sumEventWeights;
-
-  // where to save all the info  
-  TTree* _outTree;
-  TTree* _outTreeMetadata;
-
-
-private:
-  virtual void beginJob() ;
-  virtual void analyze(const edm::Event&, const edm::EventSetup&);
-  virtual void endJob() ;
-
-  edm::Service<TFileService> fs;
-
-  void initMuon(_MuonInfo& muon);
-  void initTrack(_TrackInfo& track);
-  void initGenPart(_genPartInfo& part);
-
-  bool checkMother(const reco::Candidate &part, int momPdgId);
-  void fillDiMuonGenPart(const reco::GenParticleCollection &genColl,
-                         _genPartInfo& part,
-                         _TrackInfo&  muon1,
-                         _TrackInfo&  muon2); 
-
-  // method to select the muons
-  bool isHltPassed (const edm::Event&, const edm::EventSetup&, const std::vector<std::string> triggerNames);
-  bool isHltMatched(const edm::Event&, const edm::EventSetup&, 
-                    const std::string& triggerName, 
-                    const pat::TriggerObjectStandAloneCollection& triggerObjects,
-                    const pat::Muon&);
-
-  bool isPreselected(const pat::Muon& muon,
-                     edm::Handle<reco::BeamSpot> beamSpotHandle);
-  
-  bool passKinCuts(const pat::Muon& muon,
-                   edm::Handle<reco::BeamSpot> beamSpotHandle);
-
-  void displaySelection();
-
-
-  // muons
-  edm::InputTag _muonColl;
-  edm::InputTag _beamSpotTag;		
-  edm::InputTag _prunedGenParticleTag;		
-  edm::InputTag _packedGenParticleTag;		
-  edm::InputTag _primaryVertexTag;		
-
-  // variable to cuts over
-  double _isGlobal;
-  double _isTracker;  
-
-  double _ptMin;
-  double _etaMax;
-  double _normChiSquareMax;
-  double _d0Max;
-
-  int _numPixelLayersMin;   
-  int _numTrackerLayersMin; 
-  int _numStripLayersMin;   
-
-  double _validFracTrackerMin; 
-
-  int _numValidMuonHitsMin;
-  int _numValidPixelHitsMin;
-  int _numValidStripHitsMin;
-  int _numValidTrackerHitsMin;
-  int _numSegmentMatchesMin;
-  int _numOfMatchedStationsMin;
-
-  // track iso
-  double _trackIsoMaxSumPt;
-  // relative combines iso
-  double _relCombIsoMax;
-
-  unsigned int _nMuons;
-
-  // module config parameters
-  std::string   processName_;
-  std::vector < std::string > triggerNames_;
-
-  std::vector < int > l1Prescale_;
-  std::vector < int > hltPrescale_;
-
-  edm::InputTag triggerResultsTag_;
-  edm::InputTag triggerObjsTag_;
-
-  edm::InputTag metTag;
-  edm::InputTag pfJetsTag;
-  edm::InputTag genJetsTag;
-
-  edm::InputTag puJetMvaFullDiscTag;
-  edm::InputTag puJetMvaFullIdTag;
-  edm::InputTag puJetMvaSimpleDiscTag;
-  edm::InputTag puJetMvaSimpleIdTag;
-  edm::InputTag puJetMvaCutDiscTag;
-  edm::InputTag puJetMvaCutIdTag;
-
-  // additional class data memebers
-  bool _checkTrigger; // activate or not the trigger checking   
-  edm::Handle<edm::TriggerResults> triggerResultsHandle_;
-  edm::Handle<pat::TriggerObjectStandAloneCollection>   triggerObjsHandle_;
-  edm::EDGetTokenT<edm::TriggerResults> triggerResultsToken_;
-  edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> triggerObjsToken_;
-  
-  MuonPairs  const GetMuonPairs (pat::MuonCollection  const* muons ) const;
-  TrackPairs const GetTrackPairs(reco::TrackCollection const* tracks) const;
-
-  TLorentzVector const GetLorentzVector(UFDiMuonsAnalyzer::MuonPair  const* pair) ;//const; 
-  TLorentzVector const GetLorentzVector(UFDiMuonsAnalyzer::TrackPair const* pair) ;//const; 
-
-  // useful switches
-  bool _isVerbose;    // debug mode
-  bool _isMonteCarlo; // save MC truth
-  bool _isTriggerEmulated;
-  double _emulatedPt;
-
-  std::vector<float> getPUJetIDDisc(edm::Handle<edm::View<pat::Jet> >  jets, const edm::Event& event, edm::InputTag tag);
-  std::vector<int> getPUJetID(edm::Handle<edm::View<pat::Jet> >  jets, const edm::Event& event, edm::InputTag tag);
-};
-
-
-//
-// constructors and destructor
-//
-UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
-  _numEvents(0)
+///////////////////////////////////////////////////////////
+//=========================================================
+// UFDiMuonsAnalyzer.cxx                                 //
+//=========================================================
+//                                                       //
+// v1 coded in 2010 by Gian Pierro.                      //
+// Updated by various graduate students since.           //
+// Analyzer to grab the info needed for HToMuMu          //
+// and store it into a TTree.                            //
+//                                                       //
+//========================================================
+///////////////////////////////////////////////////////////
+
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/UFDiMuonsAnalyzer.h"
+
+
+///////////////////////////////////////////////////////////
+// Constructors/Destructors===============================
+//////////////////////////////////////////////////////////
+
+UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):_numEvents(0)
 {
+  // Initialize the weighted count and the trees.
+  // Use the file service to make the trees so that it knows to save them.
   _sumEventWeights = 0;
-
   _outTree = fs->make<TTree>("tree", "myTree");
   _outTreeMetadata = fs->make<TTree>("metadata", "Metadata Tree");
 
-  //now do what ever initialization is needed
-  _muonColl	= iConfig.getParameter<edm::InputTag>("muonColl");
+  // Get the collections designated from the config file and load them into the tokens
+  _muonCollToken = consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muonColl"));
+  _beamSpotToken = consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("beamSpotTag"));
+  _prunedGenParticleToken = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("prunedGenParticleTag" ));
+  _packedGenParticleToken = consumes<pat::PackedGenParticleCollection>(iConfig.getParameter<edm::InputTag>("packedGenParticleTag" ));
+  _primaryVertexToken = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("primaryVertexTag"));
+  _metToken     = consumes<std::vector<pat::MET>>(iConfig.getParameter<edm::InputTag>("metTag"));
+  _pfJetsToken  = consumes<std::vector<pat::Jet>>(iConfig.getParameter<edm::InputTag>("pfJetsTag"));
+  _genJetsToken = consumes<reco::GenJetCollection>(iConfig.getParameter<edm::InputTag>("genJetsTag"));
 
-  _beamSpotTag	= iConfig.getParameter<edm::InputTag>("beamSpotTag");
-  _prunedGenParticleTag	= iConfig.getParameter<edm::InputTag>("prunedGenParticleTag" );
-  _packedGenParticleTag	= iConfig.getParameter<edm::InputTag>("packedGenParticleTag" );
-  _primaryVertexTag	= iConfig.getParameter<edm::InputTag>("primaryVertexTag");
-
-  _isVerbose	= iConfig.getUntrackedParameter<bool>("isVerbose",   false);
+  // Get boolean switches from config file
+  _isVerbose	= iConfig.getUntrackedParameter<bool>("isVerbose", false);
   _isMonteCarlo	= iConfig.getParameter<bool>("isMonteCarlo");
-  _isTriggerEmulated   = iConfig.getUntrackedParameter<bool>("isTriggerEmulated",   false);
-  _emulatedPt   = iConfig.getUntrackedParameter<double>("emulatedPt",  -999);
+  _checkTrigger = iConfig.getParameter<bool>("checkTrigger");
 
-  // selection cuts
-  _isGlobal               = iConfig.getParameter<int>("isGlobal");
-  _isTracker              = iConfig.getParameter<int>("isTracker");
+  // Get selection criteria from config file
+  _nMuons  = iConfig.getParameter<int>("nMuons");
+  _isGlobal = iConfig.getParameter<int>("isGlobal");
+  _isTracker = iConfig.getParameter<int>("isTracker");
+  _ptMin  = iConfig.getParameter<double>("ptMin");
+  _etaMax = iConfig.getParameter<double>("etaMax");
 
-  if (!_isGlobal && !_isTracker) {
-    std::cout << "\n\nWARNING: you are not requiring the muon to be not TRACKER nor GLOBAL\n"
-	      << "Be aware of the fact that StandAlone muon only are rejected anyway in the code\n";
-  }
- 
-  _ptMin                  = iConfig.getParameter<double>("ptMin");
-  _etaMax                 = iConfig.getParameter<double>("etaMax");
+  if (!_isGlobal && !_isTracker) 
+    std::cout << "\n\nWARNING: you are not requiring the muon to be not TRACKER nor GLOBAL\n" << "Be aware of the fact that StandAlone muon only are rejected anyway in the code\n";
 
-  _normChiSquareMax	  = iConfig.getParameter<double>("normChiSquareMax");
+  // Get trigger information from config file
+  _processName = iConfig.getParameter<std::string>("processName");
+  _triggerNames = iConfig.getParameter<std::vector <std::string> >("triggerNames");
 
-  _numPixelLayersMin      = iConfig.getParameter<int>("minPixelLayers");  
-  _numTrackerLayersMin    = iConfig.getParameter<int>("minTrackerLayers");
-  _numStripLayersMin      = iConfig.getParameter<int>("minStripLayers");  
-                                                 
-  _validFracTrackerMin    = iConfig.getParameter<int>("validFracTrackerMin");
-
-  _numValidMuonHitsMin	  = iConfig.getParameter<int>("minMuonHits");
-  _numValidPixelHitsMin	  = iConfig.getParameter<int>("minPixelHits");
-  _numValidStripHitsMin	  = iConfig.getParameter<int>("minStripHits");
-  _numValidTrackerHitsMin = iConfig.getParameter<int>("minTrackerHits");
-  _numSegmentMatchesMin	  = iConfig.getParameter<int>("minSegmentMatches");
-  _numOfMatchedStationsMin= iConfig.getParameter<int>("minNumOfMatchedStations");
-  
-  _d0Max                  = iConfig.getParameter<double>("d0Max");
-  _trackIsoMaxSumPt       = iConfig.getParameter<double>("trackIsoMaxSumPt");
-  _relCombIsoMax          = iConfig.getParameter<double>("relCombIsoMax");
-
-  _nMuons                 = iConfig.getParameter<int>("nMuons");
-
-
-  metTag     = iConfig.getParameter<edm::InputTag>("metTag");
-  pfJetsTag  = iConfig.getParameter<edm::InputTag>("pfJetsTag");
-  genJetsTag = iConfig.getParameter<edm::InputTag>("genJetsTag");
-
-  //HLT trigger initialization
-  _checkTrigger	     = iConfig.getParameter<bool>("checkTrigger");
-
-  processName_       = iConfig.getParameter<std::string>("processName");
-  triggerNames_  = iConfig.getParameter<std::vector <std::string> >("triggerNames");
-
-  //triggerResultsTag_ = iConfig.getParameter<edm::InputTag>("triggerResults");
-  //triggerObjsTag_ = iConfig.getParameter<edm::InputTag>("triggerObjs");
-  
-  // Updated for 7_6_X
-  triggerResultsToken_ = consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("triggerResults"));
-  triggerObjsToken_ = consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("triggerObjs"));
+  _triggerResultsToken = consumes<edm::TriggerResults>(iConfig.getParameter<edm::InputTag>("triggerResults"));
+  _triggerObjsToken = consumes<pat::TriggerObjectStandAloneCollection>(iConfig.getParameter<edm::InputTag>("triggerObjs"));
 }
 
-
+// Destructor
 UFDiMuonsAnalyzer::~UFDiMuonsAnalyzer() {}
 
+///////////////////////////////////////////////////////////
+// Analyze ===============================================
+//////////////////////////////////////////////////////////
 
-// ------------ method called to for each event  ------------
-void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, 
-                                const edm::EventSetup& iSetup)
+// Need to break this up into functions for easier readability
+// Muons, Jets, Vertices
+// Could make some helper classes
+
+void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup& iSetup)
 {
+// function called every event
+
+  // -----------------------------------------
+  // COUNT EVENTS AND WEIGHTS 
+  // -----------------------------------------
   _numEvents++;
   if (!_isMonteCarlo)
   {
@@ -536,17 +97,19 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 	      << _numEvents << std::endl << std::endl;
  
   // -----------------------------------------
-  // H L T   H A N D L E S
+  // HLT HANDLES
+  // -----------------------------------------
   
-  //iEvent.getByLabel(triggerResultsTag_,triggerResultsHandle_);
-  iEvent.getByToken(triggerResultsToken_, triggerResultsHandle_);
-  if (!triggerResultsHandle_.isValid()) {
+  iEvent.getByToken(_triggerResultsToken, _triggerResultsHandle);
+  if (!_triggerResultsHandle.isValid()) 
+  {
     std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting TriggerResults product from Event!" << std::endl;
     return;
   }
-  //iEvent.getByLabel(triggerObjsTag_,triggerObjsHandle_);
-  iEvent.getByToken(triggerObjsToken_, triggerObjsHandle_);
-  if (!triggerObjsHandle_.isValid()) {
+
+  iEvent.getByToken(_triggerObjsToken, _triggerObjsHandle);
+  if (!_triggerObjsHandle.isValid()) 
+  {
     std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting TriggerObjects product from Event!" << std::endl;
     return;
   }
@@ -554,7 +117,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   // if all the HLT paths are not fired, will discard the event immediately
   if (_checkTrigger) 
   {
-    if ( !isHltPassed(iEvent,iSetup,triggerNames_) )
+    if ( !isHltPassed(iEvent,iSetup,_triggerNames) )
     {
       if (_isVerbose) std::cout << "None of the HLT paths fired -> discard the event\n";
       return;
@@ -562,17 +125,13 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
      
   }
 
-  //// once the triggernames are cleared add the prescales
-  //for (unsigned int iTrigger=0; iTrigger<triggerNames_.size(); iTrigger++) {
-  //  std::pair<int,int> prescaleValues = hltConfig_.prescaleValues(iEvent, iSetup,triggerNames_[iTrigger]);
-  //  l1Prescale_[iTrigger]  = prescaleValues.first;
-  //  hltPrescale_[iTrigger] = prescaleValues.second;
-
-  //}
-
+  // -----------------------------------------
+  // RUN/EVENT INFO
+  // -----------------------------------------
+  
   int theRun   = iEvent.id().run();
   int theLumi  = iEvent.luminosityBlock();
-  int theEvent = iEvent.id().event();
+  long long int theEvent = iEvent.id().event();
   int theBx    = iEvent.bunchCrossing();
   int theOrbit = iEvent.orbitNumber();
   
@@ -583,9 +142,12 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   eventInfo.orbit = theOrbit;
 
 
-  //vertices
+  // -----------------------------------------
+  // VERTICES AND PILEUP
+  // -----------------------------------------
+  
   edm::Handle<reco::VertexCollection> vertices;
-  iEvent.getByLabel(_primaryVertexTag, vertices);
+  iEvent.getByToken(_primaryVertexToken, vertices);
  
   for (int i=0;i<20;i++) {
     vertexInfo.isValid[i]  = 0;
@@ -659,11 +221,12 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   
   // B E A M S P O T
   edm::Handle<reco::BeamSpot> beamSpotHandle;
-  iEvent.getByLabel(_beamSpotTag, beamSpotHandle);
+  iEvent.getByToken(_beamSpotToken, beamSpotHandle);
 
-  //
-  // get the sim mass if it exists
-  //
+  // -----------------------------------------
+  // MONTE CARLO GEN INFO: MUONS, H, W, Z
+  // -----------------------------------------
+  
   if (_isMonteCarlo) {
 
     // initialize Z to default values
@@ -679,7 +242,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     initGenPart(_genWpostFSR); initTrack(_genMWpostFSR);
 
     edm::Handle<reco::GenParticleCollection> prunedGenParticles;
-    iEvent.getByLabel(_prunedGenParticleTag, prunedGenParticles);
+    iEvent.getByToken(_prunedGenParticleToken, prunedGenParticles);
 
     reco::GenParticleCollection hardProcessMuons;
 
@@ -795,7 +358,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     }
 
     edm::Handle<pat::PackedGenParticleCollection> packedGenParticles;
-    iEvent.getByLabel(_packedGenParticleTag, packedGenParticles);
+    iEvent.getByToken(_packedGenParticleToken, packedGenParticles);
     pat::PackedGenParticleCollection finalStateGenMuons;
   
     for (pat::PackedGenParticleCollection::const_iterator gen = packedGenParticles->begin(), 
@@ -842,10 +405,12 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   
   }// end _isMonteCarlo
 
-  // ===========================================================================
-  // Jet Info
+  // -----------------------------------------
+  // JETS, GENJETS
+  // -----------------------------------------
+  
   edm::Handle < std::vector<pat::MET> > mets;
-  if( metTag.label() != "null" ) iEvent.getByLabel(metTag, mets);
+  if(!_metToken.isUninitialized()) iEvent.getByToken(_metToken, mets);
   bzero(&_metInfo,sizeof(_MetInfo));
 
   if( mets.isValid() ){
@@ -857,7 +422,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   }
 
   edm::Handle < std::vector<pat::Jet> > jets;
-  if( pfJetsTag.label() != "null" ) iEvent.getByLabel(pfJetsTag, jets);
+  if(!_pfJetsToken.isUninitialized()) iEvent.getByToken(_pfJetsToken, jets);
   bzero(&_pfJetInfo,sizeof(_PFJetInfo));
 
   //// Get JEC Uncertainty Calculator
@@ -866,11 +431,14 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   //JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
   //JetCorrectionUncertainty *jecUncCalculator = new JetCorrectionUncertainty(JetCorPar);
 
-  if( jets.isValid() ){
+  if( jets.isValid() )
+  {
 
-    for(unsigned int i=0; i<jets->size(); i++){
+    for(unsigned int i=0; i<jets->size(); i++)
+    {
       _pfJetInfo.nJets++;
-      if( i<10 ){
+      if( i<10 )
+      {
         const pat::Jet& jet = jets->at(i);
         _pfJetInfo.px[i] = jet.px();
         _pfJetInfo.py[i] = jet.py();
@@ -951,7 +519,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 //  delete jecUncCalculator;
 
   edm::Handle < reco::GenJetCollection > genJets;
-  if( genJetsTag.label() != "null" ) iEvent.getByLabel(genJetsTag, genJets);
+  if(!_genJetsToken.isUninitialized()) iEvent.getByToken(_genJetsToken, genJets);
   bzero(&_genJetInfo,sizeof(_GenJetInfo));
 
   if( genJets.isValid() ){
@@ -971,11 +539,12 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     }
   }
 
-  // ===========================================================================
-  // M U O N S
-  //
+  // -----------------------------------------
+  // MUONS
+  // -----------------------------------------
+  
   edm::Handle<pat::MuonCollection> muons;
-  iEvent.getByLabel(_muonColl, muons);
+  iEvent.getByToken(_muonCollToken, muons);
 
   // reco muons collection 
   pat::MuonCollection muonsSelected; 
@@ -1012,7 +581,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   // at least _nMuons muons
   if ( muonsSelected.size() < _nMuons  ) return;
 
-  // initialize the muons to default values
+  // -----------------------------------------
+  // INIT MUON VALUES
+  // -----------------------------------------
+  
   initMuon(_muon1);
   initMuon(_muon2);
 
@@ -1022,6 +594,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   initTrack(_muon1pvc);
   initTrack(_muon2pvc);
 
+  // -----------------------------------------
+  // INIT DIMUON VALUES
+  // -----------------------------------------
+  
   _recoCandMass = -999;
   _recoCandPt   = -999;
   _recoCandEta  = -999;
@@ -1061,13 +637,14 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
 
  
 
-
+  // Zero Muons /////////////////////////////////////////////
   if (muonsSelected.size() == 0) {
     if (_isVerbose) std::cout << "0 reco'd muons...\n";
     _outTree->Fill();
     return;
   }
 
+  // One Muon /////////////////////////////////////////////
   if (muonsSelected.size() == 1) {
     if (_isVerbose) std::cout << "Only 1 reco'd muon...\n";
     pat::Muon mu = muonsSelected.at(0);
@@ -1099,10 +676,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       _muon1.trkPhi  = mu.innerTrack()->phi();                   
     }
 
-    _muon1.normChiSquare=track.normalizedChi2();
     _muon1.d0_BS= mu.innerTrack()->dxy( beamSpotHandle->position() );
     _muon1.dz_BS= mu.innerTrack()->dz ( beamSpotHandle->position() );
 
+    reco::Vertex bestVtx1;
     for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
          vtx!=vertices->end(); ++vtx){
 
@@ -1110,23 +687,16 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   
       _muon1.d0_PV= track.dxy( vtx->position() );
       _muon1.dz_PV= track.dz ( vtx->position() );
+      bestVtx1 = *vtx;
     
       //exit at the first available vertex
       break;
     }
 
-    _muon1.numPixelLayers   = track.hitPattern().pixelLayersWithMeasurement();   
-    _muon1.numTrackerLayers = track.hitPattern().trackerLayersWithMeasurement(); 
-    _muon1.numStripLayers   = track.hitPattern().stripLayersWithMeasurement();   
-    
-    _muon1.validFracTracker = track.validFraction(); 
-
-    _muon1.numValidMuonHits    = track.hitPattern().numberOfValidMuonHits();
-    _muon1.numValidPixelHits   = track.hitPattern().numberOfValidPixelHits();
-    _muon1.numValidTrackerHits = track.hitPattern().numberOfValidTrackerHits();
-    _muon1.numValidStripHits   = track.hitPattern().numberOfValidStripHits();
-    _muon1.numSegmentMatches   = mu.numberOfMatches();
-    _muon1.numOfMatchedStations= mu.numberOfMatchedStations();
+    // type of muon
+    _muon1.isTightMuon  =  muon::isTightMuon(mu, bestVtx1);
+    _muon1.isMediumMuon =  muon::isMediumMuon(mu);
+    _muon1.isLooseMuon  =  muon::isLooseMuon(mu);
 
     //isolation
     _muon1.trackIsoSumPt    = mu.isolationR03().sumPt;
@@ -1164,13 +734,9 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       _muon1.sumPUPtR04              = mu.pfIsolationR04().sumPUPt             ;
     }
 
-    _muon1.segmentCompatibility = muon::segmentCompatibility(mu);
-    _muon1.combinedQualityChi2LocalPosition = mu.combinedQuality().chi2LocalPosition;
-    _muon1.combinedQualityTrkKink = mu.combinedQuality().trkKink;
-
     // save trigger informations
-    for (unsigned int iTrigger=0;iTrigger<triggerNames_.size();iTrigger++) 
-      _muon1.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], *triggerObjsHandle_, mu);
+    for (unsigned int iTrigger=0;iTrigger<_triggerNames.size();iTrigger++) 
+      _muon1.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, _triggerNames[iTrigger], *_triggerObjsHandle, mu);
 
     _outTree->Fill();
     
@@ -1178,8 +744,11 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     return;
   }
   
-
-  // ... if we got two or more muons we construct dimuon candidates
+  /////////////////////////////////////////////////////////////////// 
+  // More than one muon /////////////////////////////////////////////
+  /////////////////////////////////////////////////////////////////// 
+  
+  // ... if we have two or more muons we construct dimuon candidates
   
   // grab the candidates: they are already sorted by
   // distance to the Z mass PDG value: the closer the better
@@ -1277,14 +846,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     }
 
     bool passSelection=false;
-     
-      
-    // both muons have to be isolated
-    if (_muon1.trackIsoSumPt > _trackIsoMaxSumPt) return;
-    if (_muon2.trackIsoSumPt > _trackIsoMaxSumPt) return;
-
-    if (_muon1.relCombIso > _relCombIsoMax) return;
-    if (_muon2.relCombIso > _relCombIsoMax) return;
 
     // pass kinematic tighter selections
     if ( passKinCuts(mu1, beamSpotHandle) && 
@@ -1297,7 +858,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
     //  // and then check it passes the trigger
     //  passSelection=!true;
 
-    //  if ( isHltMatched(iEvent,iSetup,triggerNames_, mu1, mu2) ) {
+    //  if ( isHltMatched(iEvent,iSetup,_triggerNames, mu1, mu2) ) {
     //    if (_isVerbose) std::cout << "Both Muons TIGHT and At Least One Matches the Trigger\n";
     //    passSelection=true;
     //  }
@@ -1336,10 +897,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       _muon1.trkPhi  = mu1.innerTrack()->phi();                   
     }
 
-    _muon1.normChiSquare=track1.normalizedChi2();
     _muon1.d0_BS= track1.dxy( beamSpotHandle->position() );
     _muon1.dz_BS= track1.dz ( beamSpotHandle->position() );
 
+    reco::Vertex bestVtx1;
     for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
          vtx!=vertices->end(); ++vtx){
 
@@ -1347,35 +908,24 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   
       _muon1.d0_PV= track1.dxy( vtx->position() );
       _muon1.dz_PV= track1.dz ( vtx->position() );
+      bestVtx1 = *vtx;
     
       //exit at the first available vertex
       break;
     }
 
-    _muon1.numPixelLayers   = track1.hitPattern().pixelLayersWithMeasurement();   
-    _muon1.numTrackerLayers = track1.hitPattern().trackerLayersWithMeasurement(); 
-    _muon1.numStripLayers   = track1.hitPattern().stripLayersWithMeasurement();   
-    
-    _muon1.validFracTracker = track1.validFraction(); 
-
-    _muon1.numValidMuonHits    = track1.hitPattern().numberOfValidMuonHits();
-    _muon1.numValidPixelHits   = track1.hitPattern().numberOfValidPixelHits();
-    _muon1.numValidTrackerHits = track1.hitPattern().numberOfValidTrackerHits();
-    _muon1.numValidStripHits   = track1.hitPattern().numberOfValidStripHits();
-    _muon1.numSegmentMatches   = mu1.numberOfMatches();
-    _muon1.numOfMatchedStations= mu1.numberOfMatchedStations();
+    // type of muon
+    _muon1.isTightMuon  =  muon::isTightMuon(mu1, bestVtx1);
+    _muon1.isMediumMuon =  muon::isMediumMuon(mu1);
+    _muon1.isLooseMuon  =  muon::isLooseMuon(mu1);
 
     //tracker iso and rel comb iso already taken care of
     _muon1.ecalIso = mu1.isolationR03().emEt ;
     _muon1.hcalIso = mu1.isolationR03().hadEt ;
 
-    _muon1.segmentCompatibility = muon::segmentCompatibility(mu1);
-    _muon1.combinedQualityChi2LocalPosition = mu1.combinedQuality().chi2LocalPosition;
-    _muon1.combinedQualityTrkKink = mu1.combinedQuality().trkKink;
-
     // save trigger informations
-    for (unsigned int iTrigger=0;iTrigger<triggerNames_.size();iTrigger++) 
-      _muon1.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], *triggerObjsHandle_, mu1);
+    for (unsigned int iTrigger=0;iTrigger<_triggerNames.size();iTrigger++) 
+      _muon1.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, _triggerNames[iTrigger], *_triggerObjsHandle, mu1);
     
     // muon 2
     _muon2.isGlobal     = mu2.isGlobalMuon(); 
@@ -1402,16 +952,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
       _muon2.trkPhi  = mu2.innerTrack()->phi();                   
     }
 
-    _muon2.numPixelLayers   = track2.hitPattern().pixelLayersWithMeasurement();   
-    _muon2.numTrackerLayers = track2.hitPattern().trackerLayersWithMeasurement(); 
-    _muon2.numStripLayers   = track2.hitPattern().stripLayersWithMeasurement();   
-    
-    _muon2.validFracTracker = track2.validFraction(); 
-
-    _muon2.normChiSquare=track2.normalizedChi2();
     _muon2.d0_BS= track2.dxy( beamSpotHandle->position() );
     _muon2.dz_BS= track2.dz ( beamSpotHandle->position() );
    
+    reco::Vertex bestVtx2;
     for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
          vtx!=vertices->end(); ++vtx){
 
@@ -1419,29 +963,24 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   
       _muon2.d0_PV= track2.dxy( vtx->position() );
       _muon2.dz_PV= track2.dz ( vtx->position() );
+      bestVtx2 = *vtx;
     
       //exit at the first available vertex
       break;
     }
 
-    _muon2.numValidMuonHits    = track2.hitPattern().numberOfValidMuonHits();
-    _muon2.numValidPixelHits   = track2.hitPattern().numberOfValidPixelHits();
-    _muon2.numValidTrackerHits = track2.hitPattern().numberOfValidTrackerHits();
-    _muon2.numValidStripHits   = track2.hitPattern().numberOfValidStripHits();
-    _muon2.numSegmentMatches   = mu2.numberOfMatches();
-    _muon2.numOfMatchedStations= mu2.numberOfMatchedStations();
+    // type of muon
+    _muon2.isTightMuon  =  muon::isTightMuon(mu2, bestVtx2);
+    _muon2.isMediumMuon =  muon::isMediumMuon(mu2);
+    _muon2.isLooseMuon  =  muon::isLooseMuon(mu2);
 
     //tracker iso and rel comb iso already taken care of
     _muon2.ecalIso = mu2.isolationR03().emEt ;
     _muon2.hcalIso = mu2.isolationR03().hadEt ;
 
-    _muon2.segmentCompatibility = muon::segmentCompatibility(mu2);
-    _muon2.combinedQualityChi2LocalPosition = mu2.combinedQuality().chi2LocalPosition;
-    _muon2.combinedQualityTrkKink = mu2.combinedQuality().trkKink;
-
     // save trigger informations
-    for (unsigned int iTrigger=0;iTrigger<triggerNames_.size();iTrigger++) 
-      _muon2.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, triggerNames_[iTrigger], *triggerObjsHandle_, mu2);
+    for (unsigned int iTrigger=0;iTrigger<_triggerNames.size();iTrigger++) 
+      _muon2.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, _triggerNames[iTrigger], *_triggerObjsHandle, mu2);
     
     // combine the info
     // muons collection
@@ -1496,14 +1035,20 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent,
   
 }
 	
-// ------------ method called once each job just before starting event loop  ------------
+///////////////////////////////////////////////////////////
+// BeginJob ==============================================
+//////////////////////////////////////////////////////////
+
 void UFDiMuonsAnalyzer::beginJob()
 {
+// Method called once each job just before starting event loop
+// Set up TTrees where we save all of the info gathered in the analyzer
+
   displaySelection();
 
   // eventInfo;
   // set up the _outTree branches
-  _outTree->Branch( "eventInfo",  &eventInfo, "run/I:lumi/I:event/I:bx/I:orbit/I");
+  _outTree->Branch( "eventInfo",  &eventInfo, "run/I:lumi/I:event/L:bx/I:orbit/I");
   
   // rho
   _outTree->Branch("rho"  ,            &_rho,              "rho/F"             );
@@ -1516,21 +1061,11 @@ void UFDiMuonsAnalyzer::beginJob()
 
   _outTree->Branch("reco1", &_muon1, 
                    "isTracker/I:isStandAlone/I:isGlobal/I:"
+                   "isTightMuon/I:isMediumMuon/I:isLooseMuon/I:"
                    "charge/I:pt/F:ptErr/F:eta/F:phi/F:"
                    "trkPt/F:trkPtErr/F:trkEta/F:trkPhi/F:"
-                   "normChiSquare/F:"
                    "d0_BS/F:dz_BS/F:"
                    "d0_PV/F:dz_PV/F:"
-                   "numPixelLayers/I:"
-                   "numTrackerLayers/I:"
-                   "numStripLayers/I:"
-                   "validFracTracker/F:"
-                   "numValidMuonHits/I:"
-                   "numValidPixelHits/I:"    
-                   "numValidTrackerHits/I:"  
-                   "numValidStripHits/I:"    
-                   "numSegmentMatches/I:"    
-                   "numOfMatchedStations/I:"
                    "trackIsoSumPt/F:"
                    "trackIsoSumPtCorr/F:"      
                    "hcalIso/F:"
@@ -1553,28 +1088,15 @@ void UFDiMuonsAnalyzer::beginJob()
                    "isHltMatched[3]/I:"
                    "hltPt[3]/F:"
                    "hltEta[3]/F:"
-                   "hltPhi[3]/F:"
-                   "segmentCompatibility/F:"
-                   "combinedQualityChi2LocalPosition/F:"
-                   "combinedQualityTrkKink/F");
+                   "hltPhi[3]/F");
 
   _outTree->Branch("reco2", &_muon2, 
                    "isTracker/I:isStandAlone/I:isGlobal/I:"
+                   "isTightMuon/I:isMediumMuon/I:isLooseMuon/I:"
                    "charge/I:pt/F:ptErr/F:eta/F:phi/F:"
                    "trkPt/F:trkPtErr/F:trkEta/F:trkPhi/F:"
-                   "normChiSquare/F:"
                    "d0_BS/F:dz_BS/F:"
                    "d0_PV/F:dz_PV/F:"
-                   "numPixelLayers/I:"
-                   "numTrackerLayers/I:"
-                   "numStripLayers/I:"
-                   "validFracTracker/F:"
-                   "numValidMuonHits/I:"
-                   "numValidPixelHits/I:"    
-                   "numValidTrackerHits/I:"  
-                   "numValidStripHits/I:"    
-                   "numSegmentMatches/I:"   
-                   "numOfMatchedStations/I:" 
                    "trackIsoSumPt/F:"      
                    "trackIsoSumPtCorr/F:"      
                    "hcalIso/F:"
@@ -1597,10 +1119,7 @@ void UFDiMuonsAnalyzer::beginJob()
                    "isHltMatched[3]/I:"
                    "hltPt[3]/F:"
                    "hltEta[3]/F:"
-                   "hltPhi[3]/F:"
-                   "segmentCompatibility/F:"
-                   "combinedQualityChi2LocalPosition/F:"
-                   "combinedQualityTrkKink/F");
+                   "hltPhi[3]/F");
 
   _outTree->Branch("reco1vc", &_muon1vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
   _outTree->Branch("reco2vc", &_muon2vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
@@ -1608,10 +1127,7 @@ void UFDiMuonsAnalyzer::beginJob()
   _outTree->Branch("reco1pvc", &_muon1pvc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
   _outTree->Branch("reco2pvc", &_muon2pvc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
 
-  _outTree->Branch("hltPaths",    &triggerNames_);
-  _outTree->Branch("l1Prescale",  &l1Prescale_  );
-  _outTree->Branch("hltPrescale", &hltPrescale_ );
- 
+  _outTree->Branch("hltPaths",    &_triggerNames);
 
   // mass and pt for the fit
   _outTree->Branch("recoCandMass", &_recoCandMass, "recoCandMass/F");
@@ -1688,28 +1204,39 @@ void UFDiMuonsAnalyzer::beginJob()
 
 }
 
+///////////////////////////////////////////////////////////
+// BeginJob ==============================================
+//////////////////////////////////////////////////////////
 
-// ------------ method called once each job just after ending the event loop  ------------
-void UFDiMuonsAnalyzer::endJob() {
+void UFDiMuonsAnalyzer::endJob() 
+{
+// Method called once each job just after ending the event loop
+// Set up the meta data ttree and save it.
 
   std::cout << "Total Number of Events Read: "<< _numEvents << std::endl <<std::endl;
   std::cout << "Number of events weighted: "  << _sumEventWeights << std::endl <<std::endl;
 
-  std::cout<<"number of candidate dimuons candidates: "
+  std::cout<<"number of dimuon candidates: "
            <<_outTree->GetEntries()<<std::endl;
 
   // create the metadata tree branches
   _outTreeMetadata->Branch("originalNumEvents"  ,            &_numEvents,            "originalNumEvents/I"             );
   _outTreeMetadata->Branch("sumEventWeights"  ,            &_sumEventWeights,      "sumEventWeights/I"             );
   _outTreeMetadata->Branch("isMonteCarlo"  ,            &_isMonteCarlo,              "isMonteCarlo/O"             );
-  std::vector <std::string> * triggerNamesPointer = &triggerNames_;
+  std::vector <std::string> * triggerNamesPointer = &_triggerNames;
   _outTreeMetadata->Branch("triggerNames"  ,"std::vector< std::string > >", &triggerNamesPointer);
   _outTreeMetadata->Fill();
 
 }
 
 
-TLorentzVector const UFDiMuonsAnalyzer::GetLorentzVector(UFDiMuonsAnalyzer::MuonPair const* pair) {
+////////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+
+TLorentzVector const UFDiMuonsAnalyzer::GetLorentzVector(UFDiMuonsAnalyzer::MuonPair const* pair)
+{
   
   TLorentzVector muon1, muon2, sum;
   double const MASS_MUON = 0.105658367;    //GeV/c2
@@ -1731,6 +1258,9 @@ TLorentzVector const UFDiMuonsAnalyzer::GetLorentzVector(UFDiMuonsAnalyzer::Muon
 
 }
 
+////////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
 
 TLorentzVector const UFDiMuonsAnalyzer::GetLorentzVector(UFDiMuonsAnalyzer::TrackPair const* pair) {
   
@@ -1748,14 +1278,18 @@ TLorentzVector const UFDiMuonsAnalyzer::GetLorentzVector(UFDiMuonsAnalyzer::Trac
   
 }
 
-// this method will simply check is the selected HLT path (via triggerName)
+////////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent, const edm::EventSetup& iSetup, 
+                                    const std::vector<std::string> desiredTriggerNames) 
+{
+// this method will simply check if the selected HLT path (via triggerName)
 // is run and accepted and no error are found
 //
 // bool true  if (run && accept && !error)
 //      false if any other combination
-bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent, 
-                                    const edm::EventSetup& iSetup, 
-                                    const std::vector<std::string> desiredTriggerNames) {
   
   using namespace std;
   using namespace edm;
@@ -1765,9 +1299,9 @@ bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent,
 
   const boost::regex re("_v[0-9]+");
 
-  const TriggerNames &triggerNames = iEvent.triggerNames(*triggerResultsHandle_);
+  const TriggerNames &triggerNames = iEvent.triggerNames(*_triggerResultsHandle);
 
-  const unsigned nTriggers = triggerResultsHandle_->size();
+  const unsigned nTriggers = _triggerResultsHandle->size();
   for (unsigned iTrigger = 0; iTrigger < nTriggers; ++iTrigger)
   {
     const string triggerName = triggerNames.triggerName(iTrigger);
@@ -1775,11 +1309,11 @@ bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent,
     for(std::vector<std::string>::const_iterator desiredTriggerName=desiredTriggerNames.begin();
             desiredTriggerName!=desiredTriggerNames.end();desiredTriggerName++)
     {
-      if (*desiredTriggerName == triggerNameStripped && triggerResultsHandle_->accept(iTrigger))
+      if (*desiredTriggerName == triggerNameStripped && _triggerResultsHandle->accept(iTrigger))
       {
         stringstream debugString;
         debugString << "isHltPassed:" <<endl;
-        debugString << "  Trigger "<<iTrigger<<": "<< triggerName << "("<<triggerNameStripped<<") passed: "<<triggerResultsHandle_->accept(iTrigger)<<endl;
+        debugString << "  Trigger "<<iTrigger<<": "<< triggerName << "("<<triggerNameStripped<<") passed: "<<_triggerResultsHandle->accept(iTrigger)<<endl;
         debugString << "    Desired Trigger Names: ";
         debugString <<"'"<< *desiredTriggerName<<"' ";
         debugString << endl << "    Accept Trigger" << endl;
@@ -1791,14 +1325,15 @@ bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent,
   return false;
 }
 
+////////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent, const edm::EventSetup& iSetup, const std::string& desiredTriggerName, 
+                                     const pat::TriggerObjectStandAloneCollection& triggerObjects, const pat::Muon& mu)
+{
 // same check for isHltPassed +
 // check if the muon is the one firing the HLT path
-bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent, 
-                                     const edm::EventSetup& iSetup, 
-                                     const std::string& desiredTriggerName, 
-                                     const pat::TriggerObjectStandAloneCollection& triggerObjects,
-                                     const pat::Muon& mu)
-{
   using namespace std;
   using namespace edm;
   using namespace pat;
@@ -1808,19 +1343,19 @@ bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent,
 
   const boost::regex re("_v[0-9]+");
 
-  const TriggerNames &triggerNames = iEvent.triggerNames(*triggerResultsHandle_);
+  const TriggerNames &triggerNames = iEvent.triggerNames(*_triggerResultsHandle);
 
-  const unsigned nTriggers = triggerResultsHandle_->size();
+  const unsigned nTriggers = _triggerResultsHandle->size();
   for (unsigned iTrigger = 0; iTrigger < nTriggers; ++iTrigger)
   {
     const string triggerName = triggerNames.triggerName(iTrigger);
     string triggerNameStripped = boost::regex_replace(triggerName,re,"",boost::match_default | boost::format_sed);
-    if (desiredTriggerName == triggerNameStripped && triggerResultsHandle_->accept(iTrigger))
+    if (desiredTriggerName == triggerNameStripped && _triggerResultsHandle->accept(iTrigger))
     {
       stringstream debugString;
       debugString << "isHltMatched: ";
       debugString << "'" << desiredTriggerName<<"'\n";
-      debugString << "  Trigger "<<iTrigger<<": "<< triggerName << "("<<triggerNameStripped<<") passed: "<<triggerResultsHandle_->accept(iTrigger)<<endl;
+      debugString << "  Trigger "<<iTrigger<<": "<< triggerName << "("<<triggerNameStripped<<") passed: "<<_triggerResultsHandle->accept(iTrigger)<<endl;
       for(TriggerObjectStandAloneCollection::const_iterator trigObj=triggerObjects.begin(); 
           trigObj!=triggerObjects.end();trigObj++)
       {
@@ -1846,8 +1381,15 @@ bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent,
   return false;
 }
 
+////////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
 bool UFDiMuonsAnalyzer::isPreselected(const pat::Muon& muon,
-                                      edm::Handle<reco::BeamSpot> beamSpotHandle){
+                                      edm::Handle<reco::BeamSpot> beamSpotHandle)
+{
+// Most basic type cuts on the muons tested here
+// Currently only checks if the muon is at least a tracker muon
 
   bool pass=false;
 
@@ -1871,23 +1413,33 @@ bool UFDiMuonsAnalyzer::isPreselected(const pat::Muon& muon,
   
 }
 
+////////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+/////////////////////////////////////////////////////////////////////////////
+
 bool UFDiMuonsAnalyzer::passKinCuts(const pat::Muon& muon,
-                                    edm::Handle<reco::BeamSpot> beamSpotHandle){
+                                    edm::Handle<reco::BeamSpot> beamSpotHandle)
+{
+// Most basic kinematic cuts on the muons tested here
+// Redundantly checks that the muon is at least a tracker muon
+// Check that pt is greater than ptmin specified in the python config file 
+// Check that the muon has eta less than eta max specified in python config file
   
   bool passKinCuts=false;
   
   // =========================================================== //
   // What was corresponding to the old Loose VBTF
   // =========================================================== //
-  if (_isVerbose) {
+  if (_isVerbose) 
+  {
     std::cout<< "is Global?"     << muon.isGlobalMuon()     << std::endl;
     std::cout<< "is Tracker?"    << muon.isTrackerMuon()    << std::endl;
     std::cout<< "is StandAlone?" << muon.isStandAloneMuon() << std::endl;
   }
 
   // reconstruction cuts
-  if (!muon.isGlobalMuon()    && _isGlobal )    return passKinCuts; // gbl muon
-  if (!muon.isTrackerMuon()   && _isTracker)    return passKinCuts; // trk muon
+  if (!muon.isGlobalMuon() && _isGlobal ) return passKinCuts; // gbl muon
+  if (!muon.isTrackerMuon() && _isTracker) return passKinCuts; // trk muon
 
   // do not accept muons which are standalone only
   if(!muon.isGlobalMuon() && !muon.isTrackerMuon()) return passKinCuts;
@@ -1895,102 +1447,22 @@ bool UFDiMuonsAnalyzer::passKinCuts(const pat::Muon& muon,
   reco::Track globalTrack;
   if (muon.isGlobalMuon())       globalTrack = *(muon.globalTrack());
   else if (muon.isTrackerMuon()) globalTrack = *(muon.innerTrack());
-  else {
+  else 
+  {
     // redundant: just in case...
     std::cout << "ERROR: The muon is NOT global NOR tracker ?!?\n";
     return false;
   }
 
-  if (_isVerbose) {
+  if (_isVerbose) 
+  {
     std::cout<< "muon.pt(): "  << muon.pt() << " [ptMin="  << _ptMin  <<"]" << std::endl;
     std::cout<< "fabs(muon.eta()): " << fabs(muon.eta())<< " [etaMax=" << _etaMax <<"]" << std::endl;
-    std::cout<< "numberOfValidTrackerHits(): " << globalTrack.hitPattern().numberOfValidTrackerHits() 
-             << " [min=" << _numValidTrackerHitsMin << "]" << std::endl;
-    
-    std::cout<<"d0: " << fabs(globalTrack.dxy(beamSpotHandle->position()))
-             << " [max=" << _d0Max << "]" << std::endl;
-    
   }
-
     
   // kinematic cuts
   if (muon.pt()        < _ptMin ) return passKinCuts; // pt cut
   if (fabs(muon.eta()) > _etaMax) return passKinCuts; // eta cut
-  if (globalTrack.hitPattern().numberOfValidTrackerHits() < _numValidTrackerHitsMin) return passKinCuts; // # hits in tracker
-
-  // beam spot cut
-  if (fabs(globalTrack.dxy(beamSpotHandle->position())) > _d0Max) return passKinCuts;
-
-
-  // =========================================================== //
-  // What was corresponding to the old Tight VBTF
-  // + some additions
-  // =========================================================== //
-  if (_isVerbose) {
-    std::cout << "numberOfValidMuonHits: " 
-              << globalTrack.hitPattern().numberOfValidMuonHits() 
-              << " [min=" << _numValidMuonHitsMin << "]" 
-              << std::endl;
-  
-    std::cout << "numberOfValidPixelHits(): " 
-              << globalTrack.hitPattern().numberOfValidPixelHits() 
-              << " [min=" << _numValidPixelHitsMin << "]" 
-              << std::endl;
-     
-    std::cout << "numberOfValidStripHits(): " 
-              << globalTrack.hitPattern().numberOfValidStripHits() 
-              << " [min=" << _numValidStripHitsMin << "]" 
-              << std::endl;
-    
-    std::cout << "pixelLayersWithMeasurement(): " 
-              << globalTrack.hitPattern().pixelLayersWithMeasurement() 
-              << " [min=" << _numPixelLayersMin << "]" 
-              << std::endl;
-
-    std::cout << "trackerLayersWithMeasurement(): " 
-              << globalTrack.hitPattern().trackerLayersWithMeasurement() 
-              << " [min=" << _numTrackerLayersMin << "]" 
-              << std::endl;
-
-    std::cout << "stripLayersWithMeasurement(): " 
-              << globalTrack.hitPattern().stripLayersWithMeasurement() 
-              << " [min=" << _numStripLayersMin << "]" 
-              << std::endl;
-
-    std::cout << "validFraction(): " 
-              << globalTrack. validFraction()
-              << " [min=" << _validFracTrackerMin << "]" 
-              << std::endl;
-
-    std::cout << "muon.numberOfMatches(): " 
-              <<  muon.numberOfMatches() 
-              << " [min=" << _numSegmentMatchesMin << "]" 
-              << std::endl;
-  
-    std::cout << "muon.numberOfMatchedStations(): " 
-              <<  muon.numberOfMatchedStations() 
-              << " [min=" << _numOfMatchedStationsMin << "]" 
-              << std::endl;
-  
-    std::cout<<"globalTrack.normalizedChi2(): " 
-             << globalTrack.normalizedChi2()
-             << " [max=" << _normChiSquareMax <<"]" 
-             << std::endl;
-   
-  }
-
-  if (globalTrack.hitPattern().pixelLayersWithMeasurement()   < _numPixelLayersMin)   return passKinCuts;   
-  if (globalTrack.hitPattern().trackerLayersWithMeasurement() < _numTrackerLayersMin) return passKinCuts; 
-  if (globalTrack.hitPattern().stripLayersWithMeasurement()   < _numTrackerLayersMin) return passKinCuts;   
-  		 
-  if (globalTrack.validFraction() < _validFracTrackerMin) return passKinCuts; 
-
-  if ( globalTrack.hitPattern().numberOfValidMuonHits() < _numValidMuonHitsMin  )  return passKinCuts;
-  if ( globalTrack.hitPattern().numberOfValidPixelHits() < _numValidPixelHitsMin ) return passKinCuts;
-  if ( globalTrack.hitPattern().numberOfValidStripHits() < _numValidStripHitsMin ) return passKinCuts;
-  if ( muon.numberOfMatches() < _numSegmentMatchesMin   )         return passKinCuts;
-  if ( muon.numberOfMatchedStations() < _numOfMatchedStationsMin) return passKinCuts;
-  if ( globalTrack.normalizedChi2() > _normChiSquareMax)          return passKinCuts;
 
   if (_isVerbose) std::cout << "passing kinematic cuts\n"; 
 
@@ -1998,7 +1470,12 @@ bool UFDiMuonsAnalyzer::passKinCuts(const pat::Muon& muon,
   return passKinCuts;
 }
 
-UFDiMuonsAnalyzer::MuonPairs const UFDiMuonsAnalyzer::GetMuonPairs(pat::MuonCollection const* muons) const {
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+UFDiMuonsAnalyzer::MuonPairs const UFDiMuonsAnalyzer::GetMuonPairs(pat::MuonCollection const* muons) const 
+{
                                                                            
   
   MuonPairs muonpairs; 
@@ -2018,36 +1495,32 @@ UFDiMuonsAnalyzer::MuonPairs const UFDiMuonsAnalyzer::GetMuonPairs(pat::MuonColl
   return muonpairs;
 }
 
-void UFDiMuonsAnalyzer::initMuon(_MuonInfo& muon) {
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+void UFDiMuonsAnalyzer::initMuon(_MuonInfo& muon) 
+{
+// initialize values in the muon info data structure
 
   muon.isTracker    = -999;
   muon.isStandAlone = -999;
   muon.isGlobal     = -999;
+
+  muon.isTightMuon    = -999;
+  muon.isMediumMuon   = -999;
+  muon.isLooseMuon    = -999;
 
   muon.charge = -999;
   muon.pt     = -999;
   muon.eta    = -999; 
   muon.phi    = -999;
   
-  muon.normChiSquare=-999;
   muon.d0_BS= -999;
   muon.dz_BS= -999;
   
   muon.d0_PV= -999;
   muon.dz_PV= -999;
-
-  muon.numPixelLayers = -999; 
-  muon.numTrackerLayers = -999;
-  muon.numStripLayers = -999;  
-  
-  muon.validFracTracker = -999;
-
-  muon.numValidMuonHits    = -999;
-  muon.numValidPixelHits   = -999;
-  muon.numValidTrackerHits = -999;
-  muon.numValidStripHits   = -999;
-  muon.numSegmentMatches   = -999;
-  muon.numOfMatchedStations= -999;
   
   muon.trackIsoSumPt     = -999;
   muon.trackIsoSumPtCorr = -999;
@@ -2073,10 +1546,6 @@ void UFDiMuonsAnalyzer::initMuon(_MuonInfo& muon) {
   muon.sumPhotonEtR04          = -999;
   muon.sumPUPtR04              = -999;
 
-  muon.segmentCompatibility = -999;
-  muon.combinedQualityChi2LocalPosition = -999;
-  muon.combinedQualityTrkKink = -999;
-
   for (unsigned int iTrigger=0;iTrigger<3;iTrigger++) {
     muon.isHltMatched[iTrigger] = -999;
     muon.hltPt[iTrigger] = -999;
@@ -2086,7 +1555,13 @@ void UFDiMuonsAnalyzer::initMuon(_MuonInfo& muon) {
 
 }
 
-void UFDiMuonsAnalyzer::initTrack(_TrackInfo& track) {
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+void UFDiMuonsAnalyzer::initTrack(_TrackInfo& track) 
+{
+// Initialize track info data structure
   track.charge = -999; 
   track.pt     = -999; 
   track.ptErr  = -999;
@@ -2094,13 +1569,23 @@ void UFDiMuonsAnalyzer::initTrack(_TrackInfo& track) {
   track.phi    = -999;
 }
 
-void UFDiMuonsAnalyzer::initGenPart(_genPartInfo& part){
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+void UFDiMuonsAnalyzer::initGenPart(_genPartInfo& part)
+{
+// Initialize gen info data structure
   part.mass = -999;
   part.pt   = -999;
   part.eta  = -999;
   part.y    = -999;
   part.phi  = -999;
 }
+
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
 
 bool UFDiMuonsAnalyzer::checkMother(const reco::Candidate &part,
                                     int momPdgId){
@@ -2137,6 +1622,10 @@ bool UFDiMuonsAnalyzer::checkMother(const reco::Candidate &part,
   return matchFound;
 
 }
+
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
 
 void UFDiMuonsAnalyzer::fillDiMuonGenPart(const reco::GenParticleCollection &genColl,
                                           _genPartInfo& part,
@@ -2179,103 +1668,34 @@ void UFDiMuonsAnalyzer::fillDiMuonGenPart(const reco::GenParticleCollection &gen
    return;
 }
 
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
 
 void UFDiMuonsAnalyzer::displaySelection() {
 
   std::cout << "\n\n*** UFDiMuonsAnalyzer Configuration ***\n";
 
   // variable to cuts over
+  std::cout << " - _isGlobal:         " << _isGlobal << std::endl;
+  std::cout << " - _isTracker:        " << _isTracker << std::endl;
   std::cout << " - _ptMin:            " << _ptMin << std::endl;
   std::cout << " - _etaMax:           " << _etaMax<< std::endl;
-  std::cout << " - _normChiSquareMax: " << _normChiSquareMax << std::endl;
-  std::cout << " - _d0Max:            " << _d0Max << std::endl;            
-
-  std::cout << " - _numPixelLayersMin:   " << _numPixelLayersMin  << std::endl;   
-  std::cout << " - _numTrackerLayersMin: " << _numTrackerLayersMin<< std::endl; 
-  std::cout << " - _numStripLayersMin:   " << _numStripLayersMin  << std::endl;   
-
-  std::cout << " - _validFracTrackerMin: " << _validFracTrackerMin<< std::endl; 
-
-  std::cout << " - _numValidMuonHitsMin:    " << _numValidMuonHitsMin     << std::endl;
-  std::cout << " - _numValidPixelHitsMin:   " << _numValidPixelHitsMin    << std::endl;
-  std::cout << " - _numValidStripHitsMin:   " << _numValidStripHitsMin    << std::endl;
-  std::cout << " - _numValidTrackerHitsMin: " << _numValidTrackerHitsMin  << std::endl;
-  std::cout << " - _numSegmentMatchesMin:   " << _numSegmentMatchesMin    << std::endl;  
-  std::cout << " - _numOfMatchedStationsMin:" << _numOfMatchedStationsMin << std::endl;  
-
-  std::cout << " - _trackIsoMaxSumPt: " << _trackIsoMaxSumPt << std::endl;
-  std::cout << " - _relCombIsoMax: "    << _relCombIsoMax    << std::endl;      
 
   // module config parameters
   std::cout << " - _checkTrigger: " << _checkTrigger << std::endl;
-  std::cout << " - Additional Triggers To Probe:\n";
-  unsigned int triggerSize = triggerNames_.size();
+  std::cout << " - Triggers To Probe:\n";
+  unsigned int triggerSize = _triggerNames.size();
   for (unsigned int i=0; i < triggerSize; i++) 
-    std::cout << "    * triggerNames["<<i<<"]: " << triggerNames_[i] << std::endl;
+    std::cout << "    * triggerNames["<<i<<"]: " << _triggerNames[i] << std::endl;
   
   std::cout << std::endl << std::endl;
 
 }
 
-std::vector<float> UFDiMuonsAnalyzer::getPUJetIDDisc(edm::Handle<edm::View<pat::Jet> >  jets, const edm::Event& event, edm::InputTag tag)
-{
-  if(!jets.isValid())
-  {
-    std::vector<float> result;
-    return result;
-  }
-  unsigned nJets = jets->size();
-  std::vector<float> result(nJets,-99999999.0);
-  if(tag.label()=="null")
-    return result;
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
 
-  edm::Handle<edm::ValueMap<float> > puJetId;
-  event.getByLabel(tag,puJetId);
-  if (!puJetId.isValid())
-    return result;
-
-  for(unsigned i=0; i<nJets;++i)
-  {
-    float id = (*puJetId)[jets->refAt(i)];
-    result[i] = id;
-  }
-  return result;
-}
-std::vector<int> UFDiMuonsAnalyzer::getPUJetID(edm::Handle<edm::View<pat::Jet> >  jets, const edm::Event& event, edm::InputTag tag)
-{
-  if(!jets.isValid())
-  {
-    std::vector<int> result;
-    return result;
-  }
-  unsigned nJets = jets->size();
-  std::vector<int> result(nJets,-99999999.0);
-  if(tag.label()=="null")
-    return result;
-  edm::Handle<edm::ValueMap<int> > puJetId;
-  event.getByLabel(tag,puJetId);
-  if (!puJetId.isValid())
-    return result;
-  for(unsigned i=0; i<nJets;++i)
-  {
-    int id = (*puJetId)[jets->refAt(i)];
-    result[i] = id;
-  }
-  return result;
-}
-
-bool isMediumMuon(const reco::Muon & recoMu) 
-{
-   bool goodGlob = recoMu.isGlobalMuon() && 
-                   recoMu.globalTrack()->normalizedChi2() < 3 && 
-                   recoMu.combinedQuality().chi2LocalPosition < 12 && 
-                   recoMu.combinedQuality().trkKink < 20; 
-   bool isMedium = muon::isLooseMuon(recoMu) && 
-                   recoMu.innerTrack()->validFraction() > 0.8 && 
-                   muon::segmentCompatibility(recoMu) > (goodGlob ? 0.303 : 0.451); 
-   return isMedium; 
-}
-
-DEFINE_FWK_MODULE(UFDiMuonsAnalyzer);
-
+bool UFDiMuonsAnalyzer::sortGenJetFunc(reco::GenJet i, reco::GenJet j){ return (i.pt()>j.pt()); }
 
