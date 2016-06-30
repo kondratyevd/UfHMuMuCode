@@ -25,24 +25,24 @@ jsonlist76X = ['sample_file_lists/data/json/Cert_13TeV_16Dec2015ReReco_Collision
 singleMuon = []
 
 # 25 ns
-singleMuon_RunC25nsDec_MINIAOD = sample(name="singleMuon_RunC25nsDec_MINIAOD", 
+singleMuon_RunC2015_MINIAOD = sample(name="singleMuon_RunC2015_MINIAOD", 
                                  dir="/SingleMuon/Run2015C_25ns-16Dec2015-v1/MINIAOD", 
-                                 files = open('sample_file_lists/data/singleMuon_RunC25nsDec_MINIAOD.files').read().splitlines(),
+                                 files = open('sample_file_lists/data/singleMuon_RunC2015_MINIAOD.files').read().splitlines(),
                                  numevents=1341179,
                                  globaltag = '76X_dataRun2_v15',
                                  jsonfiles = jsonlist76X[:],
                                  isData = True)
 
-singleMuon_RunDDec_v1_MINIAOD = sample(name="singleMuon_RunDDec_v1_MINIAOD", 
+singleMuon_RunD2015_MINIAOD = sample(name="singleMuon_RunD2015_MINIAOD", 
                                  dir="/SingleMuon/Run2015D-16Dec2015-v1/MINIAOD", 
-                                 files = open('sample_file_lists/data/singleMuon_RunDDec_v1_MINIAOD.files').read().splitlines(),
+                                 files = open('sample_file_lists/data/singleMuon_RunD2015_MINIAOD.files').read().splitlines(),
                                  numevents=91999861,
                                  globaltag = '76X_dataRun2_v15',
                                  jsonfiles = jsonlist76X[:],
                                  isData = True)
 
-singleMuon.append(singleMuon_RunC25nsDec_MINIAOD)
-singleMuon.append(singleMuon_RunDDec_v1_MINIAOD)
+singleMuon.append(singleMuon_RunC2015_MINIAOD)
+singleMuon.append(singleMuon_RunD2015_v1_MINIAOD)
 
 # =======================================================================================================
 # ------------------------------- SIGNAL ----------------------------------------------------------------
