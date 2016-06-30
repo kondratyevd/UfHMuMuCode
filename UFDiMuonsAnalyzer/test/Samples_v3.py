@@ -28,7 +28,7 @@ singleMuon = []
 # 25 ns
 singleMuon_Run2015C_MINIAOD = sample(name="singleMuon_Run2015CDec_MINIAOD",
                                  dir="/SingleMuon/Run2015C_25ns-16Dec2015-v1/MINIAOD",
-                                 #files = open('sample_file_lists/data/singleMuon_Run2015C_MINIAOD.files ').read().splitlines(),
+                                 files = open('sample_file_lists/data/singleMuon_Run2015C_MINIAOD.files').read().splitlines(),
                                  numevents=1341179,
                                  globaltag = '76X_dataRun2_v15',
                                  jsonfiles = jsonlist2015[:],
@@ -36,7 +36,7 @@ singleMuon_Run2015C_MINIAOD = sample(name="singleMuon_Run2015CDec_MINIAOD",
 
 singleMuon_Run2015D_MINIAOD = sample(name="singleMuon_Run2015D_MINIAOD",
                                  dir="/SingleMuon/Run2015D-16Dec2015-v1/MINIAOD",
-                                 #files = open('sample_file_lists/data/singleMuon_Run2015D_MINIAOD.files ').read().splitlines(),
+                                 files = open('sample_file_lists/data/singleMuon_Run2015D_MINIAOD.files').read().splitlines(),
                                  numevents=91999861,
                                  globaltag = '76X_dataRun2_v15',
                                  jsonfiles = jsonlist2015[:],
@@ -44,15 +44,15 @@ singleMuon_Run2015D_MINIAOD = sample(name="singleMuon_Run2015D_MINIAOD",
 
 singleMuon_Run2016B_MINIAOD = sample(name="singleMuon_Run2016B_MINIAOD",
                                  dir="/SingleMuon/Run2016B-PromptReco-v2/MINIAOD",
-                                 #files = open('sample_file_lists/data/singleMuon_Run2016B_MINIAOD.files').read().splitlines(),
+                                 files = open('sample_file_lists/data/singleMuon_Run2016B_MINIAOD.files').read().splitlines(),
                                  numevents=158188719,
                                  globaltag = '80X_dataRun2_Prompt_v9',
                                  jsonfiles = jsonlist2016[:],
                                  isData = True)
 
 singleMuon.append(singleMuon_Run2015C_MINIAOD)
-singleMuon.append(singleMuon_Run2015D_v1_MINIAOD)
-singleMuon.append(singleMuon_Run2016B_v2_MINIAOD)
+singleMuon.append(singleMuon_Run2015D_MINIAOD)
+singleMuon.append(singleMuon_Run2016B_MINIAOD)
 
 # =======================================================================================================
 # ------------------------------- SIGNAL ----------------------------------------------------------------

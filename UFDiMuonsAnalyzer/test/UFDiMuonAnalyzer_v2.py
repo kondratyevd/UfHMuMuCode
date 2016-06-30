@@ -38,8 +38,7 @@ from Configuration.AlCa.autoCond import autoCond
 # /////////////////////////////////////////////////////////////
 
 #from Samples_v2 import doubleMuon_RunB_MINIAOD as s
-#from Samples_v3 import singleMuon_RunC25nsDec_MINIAOD as s
-from Samples_v3 import vbf_HToMuMu as s
+from Samples_v3 import singleMuon_Run2016B_MINIAOD as s
 
 thisIsData = s.isData
 
@@ -61,8 +60,8 @@ print ""
 
 globalTag = s.globaltag
 
-# The updated FrontierConditions_GlobalTag load needed for 2015 13TeV data does not like the ::All at the end of the tag
-process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
+
+#process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
 
 print 'Loading Global Tag: ' + globalTag
 process.GlobalTag.globaltag = globalTag
