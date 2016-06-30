@@ -380,6 +380,8 @@ private:
   edm::EDGetTokenT<reco::GenParticleCollection> _prunedGenParticleToken;		
   edm::EDGetTokenT<pat::PackedGenParticleCollection> _packedGenParticleToken;		
   edm::EDGetTokenT<reco::VertexCollection> _primaryVertexToken;		
+  edm::EDGetTokenT<GenEventInfoProduct> _genEvtInfoToken;		
+  edm::EDGetTokenT< std::vector< PileupSummaryInfo > > _PupInfoToken;		
 
   // jets
   edm::EDGetTokenT<std::vector<pat::MET>> _metToken;

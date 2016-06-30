@@ -35,6 +35,8 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):_numEvent
   _metToken     = consumes<std::vector<pat::MET>>(iConfig.getParameter<edm::InputTag>("metTag"));
   _pfJetsToken  = consumes<std::vector<pat::Jet>>(iConfig.getParameter<edm::InputTag>("pfJetsTag"));
   _genJetsToken = consumes<reco::GenJetCollection>(iConfig.getParameter<edm::InputTag>("genJetsTag"));
+  _genEvtInfoToken = consumes<GenEventInfoProduct>(edm::InputTag("generator"));
+  _PupInfoToken = consumes< std::vector<PileupSummaryInfo> >(edm::InputTag("slimmedAddPileupInfo"));
 
   // Get boolean switches from config file
   _isVerbose	= iConfig.getUntrackedParameter<bool>("isVerbose", false);
@@ -87,7 +89,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     // The generated weight. Due to the interference of terms in QM in the NLO simulations
     // there are negative weights that need to be accounted for. 
     edm::Handle<GenEventInfoProduct> genEvtInfo;
-    iEvent.getByLabel( edm::InputTag("generator"), genEvtInfo );
+    iEvent.getByToken(_genEvtInfoToken, genEvtInfo );
     _genWeight = (genEvtInfo->weight() > 0)? 1 : -1;
     _sumEventWeights += _genWeight;
   }
@@ -202,7 +204,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   if (_isMonteCarlo) 
   {
     edm::Handle<std::vector< PileupSummaryInfo > >  PupInfo;
-    iEvent.getByLabel(edm::InputTag("slimmedAddPileupInfo"), PupInfo);
+    iEvent.getByToken(_PupInfoToken, PupInfo);
 
     std::vector<PileupSummaryInfo>::const_iterator PVI;
 
