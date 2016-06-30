@@ -31,7 +31,6 @@ process.MessageLogger.cerr.FwkReport.reportEvery = 1000
 process.load("Configuration.Geometry.GeometryIdeal_cff")
 process.load('Configuration.EventContent.EventContent_cff')
 process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
-from Configuration.AlCa.autoCond import autoCond
 
 # /////////////////////////////////////////////////////////////
 # Get a sample from our collection of samples
@@ -60,8 +59,7 @@ print ""
 
 globalTag = s.globaltag
 
-
-#process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
+process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
 
 print 'Loading Global Tag: ' + globalTag
 process.GlobalTag.globaltag = globalTag
