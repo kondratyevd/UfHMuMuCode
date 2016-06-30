@@ -18,31 +18,41 @@ class sample:
 
 # 25 ns
 # The jsonfiles details the valid lumi sections
-jsonlist76X = ['sample_file_lists/data/json/Cert_13TeV_16Dec2015ReReco_Collisions15_25ns_JSON_v2.txt'] 
+jsonlist2015 = ['sample_file_lists/data/json/Cert_13TeV_16Dec2015ReReco_Collisions15_25ns_JSON_v2.txt']
+jsonlist2016 = ['sample_file_lists/data/json/Cert_271036-275125_13TeV_PromptReco_Collisions16_JSON.txt']
 
 #//////////////////////////// Single Muon /////////////////////////////////////////////////////////////////////////////////////////////
 
 singleMuon = []
 
 # 25 ns
-singleMuon_RunC2015_MINIAOD = sample(name="singleMuon_RunC2015_MINIAOD", 
-                                 dir="/SingleMuon/Run2015C_25ns-16Dec2015-v1/MINIAOD", 
-                                 files = open('sample_file_lists/data/singleMuon_RunC2015_MINIAOD.files').read().splitlines(),
+singleMuon_Run2015C_MINIAOD = sample(name="singleMuon_Run2015CDec_MINIAOD",
+                                 dir="/SingleMuon/Run2015C_25ns-16Dec2015-v1/MINIAOD",
+                                 #files = open('sample_file_lists/data/singleMuon_Run2015C_MINIAOD.files ').read().splitlines(),
                                  numevents=1341179,
                                  globaltag = '76X_dataRun2_v15',
-                                 jsonfiles = jsonlist76X[:],
+                                 jsonfiles = jsonlist2015[:],
                                  isData = True)
 
-singleMuon_RunD2015_MINIAOD = sample(name="singleMuon_RunD2015_MINIAOD", 
-                                 dir="/SingleMuon/Run2015D-16Dec2015-v1/MINIAOD", 
-                                 files = open('sample_file_lists/data/singleMuon_RunD2015_MINIAOD.files').read().splitlines(),
+singleMuon_Run2015D_MINIAOD = sample(name="singleMuon_Run2015D_MINIAOD",
+                                 dir="/SingleMuon/Run2015D-16Dec2015-v1/MINIAOD",
+                                 #files = open('sample_file_lists/data/singleMuon_Run2015D_MINIAOD.files ').read().splitlines(),
                                  numevents=91999861,
                                  globaltag = '76X_dataRun2_v15',
-                                 jsonfiles = jsonlist76X[:],
+                                 jsonfiles = jsonlist2015[:],
                                  isData = True)
 
-singleMuon.append(singleMuon_RunC2015_MINIAOD)
-singleMuon.append(singleMuon_RunD2015_v1_MINIAOD)
+singleMuon_Run2016B_MINIAOD = sample(name="singleMuon_Run2016B_MINIAOD",
+                                 dir="/SingleMuon/Run2016B-PromptReco-v2/MINIAOD",
+                                 #files = open('sample_file_lists/data/singleMuon_Run2016B_MINIAOD.files').read().splitlines(),
+                                 numevents=158188719,
+                                 globaltag = '80X_dataRun2_Prompt_v9',
+                                 jsonfiles = jsonlist2016[:],
+                                 isData = True)
+
+singleMuon.append(singleMuon_Run2015C_MINIAOD)
+singleMuon.append(singleMuon_Run2015D_v1_MINIAOD)
+singleMuon.append(singleMuon_Run2016B_v2_MINIAOD)
 
 # =======================================================================================================
 # ------------------------------- SIGNAL ----------------------------------------------------------------
