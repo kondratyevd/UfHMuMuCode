@@ -39,7 +39,7 @@ from Configuration.AlCa.autoCond import autoCond
 
 #from Samples_v2 import doubleMuon_RunB_MINIAOD as s
 #from Samples_v3 import singleMuon_RunC25nsDec_MINIAOD as s
-from Samples_v3 import vbf_HToMuMu as s
+from Samples_v3 import singleMuon_Run2015D_MINIAOD as s
 
 thisIsData = s.isData
 

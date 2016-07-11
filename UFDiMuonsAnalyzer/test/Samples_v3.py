@@ -25,24 +25,24 @@ jsonlist76X = ['sample_file_lists/data/json/Cert_13TeV_16Dec2015ReReco_Collision
 singleMuon = []
 
 # 25 ns
-singleMuon_RunC2015_MINIAOD = sample(name="singleMuon_RunC2015_MINIAOD", 
+singleMuon_Run2015C_MINIAOD = sample(name="singleMuon_Run2015C_MINIAOD", 
                                  dir="/SingleMuon/Run2015C_25ns-16Dec2015-v1/MINIAOD", 
-                                 files = open('sample_file_lists/data/singleMuon_RunC2015_MINIAOD.files').read().splitlines(),
+                                 files = open('sample_file_lists/data/singleMuon_Run2015C_MINIAOD.files').read().splitlines(),
                                  numevents=1341179,
                                  globaltag = '76X_dataRun2_v15',
                                  jsonfiles = jsonlist76X[:],
                                  isData = True)
 
-singleMuon_RunD2015_MINIAOD = sample(name="singleMuon_RunD2015_MINIAOD", 
+singleMuon_Run2015D_MINIAOD = sample(name="singleMuon_Run2015D_MINIAOD", 
                                  dir="/SingleMuon/Run2015D-16Dec2015-v1/MINIAOD", 
-                                 files = open('sample_file_lists/data/singleMuon_RunD2015_MINIAOD.files').read().splitlines(),
+                                 files = open('sample_file_lists/data/singleMuon_Run2015D_MINIAOD.files').read().splitlines(),
                                  numevents=91999861,
                                  globaltag = '76X_dataRun2_v15',
                                  jsonfiles = jsonlist76X[:],
                                  isData = True)
 
-singleMuon.append(singleMuon_RunC2015_MINIAOD)
-singleMuon.append(singleMuon_RunD2015_v1_MINIAOD)
+singleMuon.append(singleMuon_Run2015C_MINIAOD)
+singleMuon.append(singleMuon_Run2015D_MINIAOD)
 
 # =======================================================================================================
 # ------------------------------- SIGNAL ----------------------------------------------------------------
@@ -116,10 +116,16 @@ background.append(dy_jetsToLL)
 #---- TTBAR --------------------------------------------------------------------------------------------
 # ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
+#ttJets = sample(name="ttJets", 
+#                dir="/TTJets_DiLept_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM",
+#                files = open('sample_file_lists/bg/ttJets.files').read().splitlines(),
+#                numevents=6102376,
+#                globaltag = '76X_mcRun2_asymptotic_v12')
+
 ttJets = sample(name="ttJets", 
-                dir="/TTJets_DiLept_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM",
+                dir="/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM",
                 files = open('sample_file_lists/bg/ttJets.files').read().splitlines(),
-                numevents=6102376,
+                numevents=38475776,
                 globaltag = '76X_mcRun2_asymptotic_v12')
 
 ttZToLLNuNu = sample(name="ttZToLLNuNu", 
@@ -129,7 +135,7 @@ ttZToLLNuNu = sample(name="ttZToLLNuNu",
                      globaltag = '74X_mcRun2_asymptotic_v2')
 
 background.append(ttJets)
-background.append(ttZToLLNuNu)
+#background.append(ttZToLLNuNu)
 
 # ///////////////////////////////////////////////////////////////////////////////////////////////////////
 #---- Diboson -------------------------------------------------------------------------------------------
@@ -163,10 +169,10 @@ ZZTo2L2Q = sample(name="ZZTo2L2Q",
                    numevents=18790122,
                    globaltag = '74X_mcRun2_asymptotic_v2')
 
-background.append(WWTo2L2Nu)
-background.append(WZTo2L2Q)
-background.append(WZTo3LNu)
-background.append(ZZTo2L2Q)
+#background.append(WWTo2L2Nu)
+#background.append(WZTo2L2Q)
+#background.append(WZTo3LNu)
+#background.append(ZZTo2L2Q)
 
 # 1.256 pb
 ZZTo4L = sample(name="ZZTo4L", 
@@ -181,8 +187,8 @@ ZZTo2L2Nu = sample(name="ZZTo2L2Nu",
                    numevents=8719200,
                    globaltag = '74X_mcRun2_asymptotic_v2')
 
-background.append(ZZTo4L)
-background.append(ZZTo2L2Nu)
+#background.append(ZZTo4L)
+#background.append(ZZTo2L2Nu)
 
 # 0.003194 pb
 GluGluToZZTo2mu2tau = sample(name="GluGluToZZTo2mu2tau", 
@@ -205,9 +211,9 @@ GluGluToZZTo4mu = sample(name="GluGluToZZTo4mu",
                    numevents= 339600,
                    globaltag = '74X_mcRun2_asymptotic_v2')
 
-background.append(GluGluToZZTo2mu2tau)
-background.append(GluGluToZZTo2e2mu)
-background.append(GluGluToZZTo4mu)
+#background.append(GluGluToZZTo2mu2tau)
+#background.append(GluGluToZZTo2e2mu)
+#background.append(GluGluToZZTo4mu)
 
 singleAndMC = []
 singleAndMC.extend(singleMuon)
