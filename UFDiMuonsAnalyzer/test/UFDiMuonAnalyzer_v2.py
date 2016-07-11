@@ -37,7 +37,7 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 # /////////////////////////////////////////////////////////////
 
 #from Samples_v2 import doubleMuon_RunB_MINIAOD as s
-from Samples_v3 import singleMuon_Run2016B_MINIAOD as s
+from Samples_v3 import singleMuon_Run2015D_MINIAOD as s
 
 thisIsData = s.isData
 
@@ -59,7 +59,7 @@ print ""
 
 globalTag = s.globaltag
 
-process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
+#process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_condDBv2_cff")
 
 print 'Loading Global Tag: ' + globalTag
 process.GlobalTag.globaltag = globalTag

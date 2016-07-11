@@ -114,10 +114,10 @@ wh_zh_HToMuMu_PU20bx25 = sample(name="wh_zh_HToMuMu_PU20bx25",
 background = []
 
 dy_jetsToLL = sample(name="dy_jetsToLL", 
-                     dir="/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM",
+                     dir="dataset=/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM",
                      files = open('sample_file_lists/bg/dy_jetsToLL.files').read().splitlines(),
-                     numevents=28751199,
-                     globaltag = '76X_mcRun2_asymptotic_v12');
+                     numevents=28696958,
+                     globaltag = '80X_mcRun2_asymptotic_2016_miniAODv2_v0');
 
 #background.append(dy_ZToMuMu_asympt25)
 background.append(dy_jetsToLL)
@@ -127,10 +127,10 @@ background.append(dy_jetsToLL)
 # ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
 ttJets = sample(name="ttJets", 
-                dir="/TTJets_DiLept_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM",
+                dir="/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM",
                 files = open('sample_file_lists/bg/ttJets.files').read().splitlines(),
-                numevents=6102376,
-                globaltag = '76X_mcRun2_asymptotic_v12')
+                numevents=38261382,
+                globaltag = '76X_mcRun2_asymptotic_v14')
 
 ttZToLLNuNu = sample(name="ttZToLLNuNu", 
                      dir="/TTZToLLNuNu_M-10_TuneCUETP8M1_13TeV-amcatnlo-pythia8/RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v2/MINIAODSIM",
