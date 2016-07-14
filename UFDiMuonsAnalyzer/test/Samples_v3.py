@@ -65,10 +65,10 @@ singleMuon.append(singleMuon_Run2016B_MINIAOD)
 signal = []
 
 gg_HToMuMu = sample( name="gg_HToMuMu", 
-                     dir="/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM", 
+                     dir="/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM", 
                      files = open('sample_file_lists/signal/gg_HToMuMu.files').read().splitlines(),
                      numevents=250000,
-                     globaltag = '76X_mcRun2_asymptotic_v12')
+                     globaltag = '80X_mcRun2_asymptotic_v14')
 
 signal.append(gg_HToMuMu)
 
@@ -78,10 +78,10 @@ signal.append(gg_HToMuMu)
 
 
 vbf_HToMuMu = sample(name="vbf_HToMuMu", 
-                     dir="/VBF_HToMuMu_M125_13TeV_powheg_pythia8/RunIIFall15MiniAODv2-PU25nsData2015v1_76X_mcRun2_asymptotic_v12-v1/MINIAODSIM",
+                     dir="/VBF_HToMuMu_M125_13TeV_powheg_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v2/MINIAODSIM",
                      files = open('sample_file_lists/signal/vbf_HToMuMu.files').read().splitlines(),
-                     numevents=249200,
-                     globaltag = '76X_mcRun2_asymptotic_v12')
+                     numevents=227820,
+                     globaltag = '80X_mcRun2_asymptotic_2016_miniAODv2_v0')
 
 signal.append(vbf_HToMuMu)
 
@@ -130,7 +130,7 @@ ttJets = sample(name="ttJets",
                 dir="/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM",
                 files = open('sample_file_lists/bg/ttJets.files').read().splitlines(),
                 numevents=38261382,
-                globaltag = '76X_mcRun2_asymptotic_v14')
+                globaltag = '80X_mcRun2_asymptotic_v14')
 
 ttZToLLNuNu = sample(name="ttZToLLNuNu", 
                      dir="/TTZToLLNuNu_M-10_TuneCUETP8M1_13TeV-amcatnlo-pythia8/RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v2/MINIAODSIM",
