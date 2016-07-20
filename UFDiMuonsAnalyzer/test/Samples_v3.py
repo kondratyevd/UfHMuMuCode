@@ -18,29 +18,13 @@ class sample:
 
 # 25 ns
 # The jsonfiles details the valid lumi sections
-jsonlist2015 = ['sample_file_lists/data/json/Cert_13TeV_16Dec2015ReReco_Collisions15_25ns_JSON_v2.txt']
-jsonlist2016 = ['sample_file_lists/data/json/Cert_271036-275125_13TeV_PromptReco_Collisions16_JSON.txt']
+jsonlist2016 = ['sample_file_lists/data/json/']
 
 #//////////////////////////// Single Muon /////////////////////////////////////////////////////////////////////////////////////////////
 
 singleMuon = []
 
 # 25 ns
-singleMuon_Run2015C_MINIAOD = sample(name="singleMuon_Run2015CDec_MINIAOD",
-                                 dir="/SingleMuon/Run2015C_25ns-16Dec2015-v1/MINIAOD",
-                                 files = open('sample_file_lists/data/singleMuon_Run2015C_MINIAOD.files').read().splitlines(),
-                                 numevents=1341179,
-                                 globaltag = '76X_dataRun2_v15',
-                                 jsonfiles = jsonlist2015[:],
-                                 isData = True)
-
-singleMuon_Run2015D_MINIAOD = sample(name="singleMuon_Run2015D_MINIAOD",
-                                 dir="/SingleMuon/Run2015D-16Dec2015-v1/MINIAOD",
-                                 files = open('sample_file_lists/data/singleMuon_Run2015D_MINIAOD.files').read().splitlines(),
-                                 numevents=91999861,
-                                 globaltag = '76X_dataRun2_v15',
-                                 jsonfiles = jsonlist2015[:],
-                                 isData = True)
 
 singleMuon_Run2016B_MINIAOD = sample(name="singleMuon_Run2016B_MINIAOD",
                                  dir="/SingleMuon/Run2016B-PromptReco-v2/MINIAOD",
@@ -50,9 +34,34 @@ singleMuon_Run2016B_MINIAOD = sample(name="singleMuon_Run2016B_MINIAOD",
                                  jsonfiles = jsonlist2016[:],
                                  isData = True)
 
-singleMuon.append(singleMuon_Run2015C_MINIAOD)
-singleMuon.append(singleMuon_Run2015D_MINIAOD)
+singleMuon_Run2016C_MINIAOD = sample(name="singleMuon_Run2016C_MINIAOD",
+                                 dir="/SingleMuon/Run2016C-PromptReco-v2/MINIAOD",
+                                 files = open('sample_file_lists/data/singleMuon_Run2016C_MINIAOD.files').read().splitlines(),
+                                 numevents=68492270,
+                                 globaltag = '80X_dataRun2_Prompt_v9',
+                                 jsonfiles = jsonlist2016[:],
+                                 isData = True)
+
+singleMuon_Run2016D_MINIAOD = sample(name="singleMuon_Run2016D_MINIAOD",
+                                 dir="/SingleMuon/Run2016D-PromptReco-v2/MINIAOD",
+                                 files = open('sample_file_lists/data/singleMuon_Run2016D_MINIAOD.files').read().splitlines(),
+                                 numevents=98175265,
+                                 globaltag = '80X_dataRun2_Prompt_v10',
+                                 jsonfiles = jsonlist2016[:],
+                                 isData = True)
+
+singleMuon_Run2016E_MINIAOD = sample(name="singleMuon_Run2016E_MINIAOD",
+                                 dir="/SingleMuon/Run2016E-PromptReco-v2/MINIAOD",
+                                 files = open('sample_file_lists/data/singleMuon_Run2016E_MINIAOD.files').read().splitlines(),
+                                 numevents=10435107,
+                                 globaltag = '80X_dataRun2_Prompt_v10',
+                                 jsonfiles = jsonlist2016[:],
+                                 isData = True)
+
 singleMuon.append(singleMuon_Run2016B_MINIAOD)
+singleMuon.append(singleMuon_Run2016C_MINIAOD)
+singleMuon.append(singleMuon_Run2016D_MINIAOD)
+singleMuon.append(singleMuon_Run2016E_MINIAOD)
 
 # =======================================================================================================
 # ------------------------------- SIGNAL ----------------------------------------------------------------
@@ -114,7 +123,7 @@ wh_zh_HToMuMu_PU20bx25 = sample(name="wh_zh_HToMuMu_PU20bx25",
 background = []
 
 dy_jetsToLL = sample(name="dy_jetsToLL", 
-                     dir="dataset=/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM",
+                     dir="/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM",
                      files = open('sample_file_lists/bg/dy_jetsToLL.files').read().splitlines(),
                      numevents=28696958,
                      globaltag = '80X_mcRun2_asymptotic_2016_miniAODv2_v0');
@@ -126,11 +135,24 @@ background.append(dy_jetsToLL)
 #---- TTBAR --------------------------------------------------------------------------------------------
 # ///////////////////////////////////////////////////////////////////////////////////////////////////////
 
-ttJets = sample(name="ttJets", 
-                dir="/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM",
-                files = open('sample_file_lists/bg/ttJets.files').read().splitlines(),
-                numevents=38261382,
-                globaltag = '80X_mcRun2_asymptotic_v14')
+# This one is broken!! I end up with 0 events after analyzing for some reason.
+#ttJets_reHLT = sample(name="ttJets_reHLT", 
+#                dir="/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM",
+#                files = open('sample_file_lists/bg/ttJets_reHLT.files').read().splitlines(),
+#                numevents=38261382,
+#                globaltag = '80X_mcRun2_asymptotic_v14')
+
+ttJets1 = sample(name="ttJets1", 
+                dir="/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv1-PUSpring16_80X_mcRun2_asymptotic_2016_v3-v3/MINIAODSIM",
+                files = open('sample_file_lists/bg/ttJets1.files').read().splitlines(),
+                numevents=28088535,
+                globaltag = '80X_mcRun2_asymptotic_2016_v3')
+
+ttJets2 = sample(name="ttJets2", 
+                dir="/TTJets_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM",
+                files = open('sample_file_lists/bg/ttJets2.files').read().splitlines(),
+                numevents=37459078,
+                globaltag = '80X_mcRun2_asymptotic_2016_miniAODv2_v0')
 
 ttZToLLNuNu = sample(name="ttZToLLNuNu", 
                      dir="/TTZToLLNuNu_M-10_TuneCUETP8M1_13TeV-amcatnlo-pythia8/RunIISpring15MiniAODv2-74X_mcRun2_asymptotic_v2-v2/MINIAODSIM",
@@ -138,7 +160,8 @@ ttZToLLNuNu = sample(name="ttZToLLNuNu",
                      numevents=398000,
                      globaltag = '74X_mcRun2_asymptotic_v2')
 
-background.append(ttJets)
+background.append(ttJets1)
+background.append(ttJets2)
 #background.append(ttZToLLNuNu)
 
 # ///////////////////////////////////////////////////////////////////////////////////////////////////////
