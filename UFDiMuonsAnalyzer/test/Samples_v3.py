@@ -73,13 +73,27 @@ singleMuon.append(singleMuon_Run2016E_MINIAOD)
 
 signal = []
 
-gg_HToMuMu = sample( name="gg_HToMuMu", 
-                     dir="/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM", 
-                     files = open('sample_file_lists/signal/gg_HToMuMu.files').read().splitlines(),
-                     numevents=250000,
-                     globaltag = '80X_mcRun2_asymptotic_v14')
+# reHLT samples seem to be broken. I get 0 events after analyzing.
+#gg_HToMuMu_reHLT = sample( name="gg_HToMuMu_reHLT", 
+#                     dir="/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM", 
+#                     files = open('sample_file_lists/signal/gg_HToMuMu_reHLT.files').read().splitlines(),
+#                     numevents=250000,
+#                     globaltag = '80X_mcRun2_asymptotic_v14')
 
-signal.append(gg_HToMuMu)
+gg_HToMuMu1 = sample( name="gg_HToMuMu1", 
+                     dir="/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/RunIISpring16MiniAODv1-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_v3-v1/MINIAODSIM", 
+                     files = open('sample_file_lists/signal/gg_HToMuMu1.files').read().splitlines(),
+                     numevents=250000,
+                     globaltag = '80X_mcRun2_asymptotic_2016_v3')
+
+gg_HToMuMu2 = sample( name="gg_HToMuMu2", 
+                     dir="/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v2/MINIAODSIM", 
+                     files = open('sample_file_lists/signal/gg_HToMuMu2.files').read().splitlines(),
+                     numevents=250000,
+                     globaltag = '80X_mcRun2_asymptotic_2016_miniAODv2_v0')
+
+signal.append(gg_HToMuMu1)
+signal.append(gg_HToMuMu2)
 
 # ///////////////////////////////////////////////////////////////////////////////////////////////////////
 #---- Vector Boson Fusion --------------------------------------------------------------------------------
