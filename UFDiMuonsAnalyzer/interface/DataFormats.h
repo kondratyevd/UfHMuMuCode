@@ -86,10 +86,10 @@ typedef struct {
   float sumPhotonEtR04;
   float sumPUPtR04;
 
-  int isHltMatched[3];
-  float hltPt[3];
-  float hltEta[3];
-  float hltPhi[3];
+  int isHltMatched[6];
+  float hltPt[6];
+  float hltEta[6];
+  float hltPhi[6];
 
 } _MuonInfo;
 

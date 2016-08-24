@@ -26,8 +26,7 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          checkTrigger = cms.bool(True),
 
                          processName = cms.string("HLT"),
-                         # Not sure why only 3, haven't tried more
-                         triggerNames = cms.vstring("HLT_IsoMu20","HLT_IsoTkMu20","HLT_Mu17_TrkIsoVVL_TkMu8_TrkIsoVVL_DZ"), # up to 3 trigger names
+                         triggerNames = cms.vstring("HLT_IsoMu20", "HLT_IsoTkMu20","HLT_IsoMu22", "HLT_IsoTkMu22","HLT_IsoMu24","HLT_IsoTkMu24"), # up to 6 trigger names
                          triggerResults = cms.InputTag("TriggerResults","","HLT"),
                          triggerObjs = cms.InputTag("selectedPatTrigger"),
                          

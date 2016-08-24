@@ -5,10 +5,11 @@ samples = []
 # get the samples you want to make a crab config file for 
 #samples.extend(Samples_v3.MC);
 #samples.extend(Samples_v3.background);
-samples.extend(Samples_v3.signal);
+#samples.extend(Samples_v3.signal);
 #samples.extend(Samples_v3.singleMuon);
+samples.extend(Samples_v3.singleAndMC);
 
-json_number = 0
+json_number = 1
 
 for s in samples:
     # open a file for writing

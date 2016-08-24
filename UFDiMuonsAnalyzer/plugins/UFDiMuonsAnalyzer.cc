@@ -1087,7 +1087,7 @@ void UFDiMuonsAnalyzer::beginJob()
                    "sumNeutralHadronEtR04/F:"
                    "sumPhotonEtR04/F:"
                    "sumPUPtR04/F:"
-                   "isHltMatched[3]/I:"
+                   "isHltMatched[6]/I:"
                    "hltPt[3]/F:"
                    "hltEta[3]/F:"
                    "hltPhi[3]/F");
@@ -1118,7 +1118,7 @@ void UFDiMuonsAnalyzer::beginJob()
                    "sumNeutralHadronEtR04/F:"
                    "sumPhotonEtR04/F:"
                    "sumPUPtR04/F:"
-                   "isHltMatched[3]/I:"
+                   "isHltMatched[6]/I:"
                    "hltPt[3]/F:"
                    "hltEta[3]/F:"
                    "hltPhi[3]/F");
