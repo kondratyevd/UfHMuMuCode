@@ -1,19 +1,18 @@
 #!/usr/bin/env python
-
 # import ROOT in batch mode
-from Samples_v3 import dy_jetsToLL_asympt50 as s
-
 import sys
+import ROOT
+
 oldargv = sys.argv[:]
 sys.argv = [ '-b-' ]
-import ROOT
+
 ROOT.gROOT.SetBatch(True)
 sys.argv = oldargv
 
 # load FWLite C++ libraries
 ROOT.gSystem.Load("libFWCoreFWLite.so");
 ROOT.gSystem.Load("libDataFormatsFWLite.so");
-ROOT.AutoLibraryLoader.enable()
+ROOT.FWLiteEnabler.enable()
 
 # load FWlite python libraries
 from DataFormats.FWLite import Handle, Events
@@ -51,7 +50,6 @@ def isGammaFromMuFromZ(p):
             return hasMotherWithId(part, 23)
     return False
     
-
 muons, muonLabel = Handle("std::vector<pat::Muon>"), "slimmedMuons"
 electrons, electronLabel = Handle("std::vector<pat::Electron>"), "slimmedElectrons"
 photons, photonLabel = Handle("std::vector<pat::Photon>"), "slimmedPhotons"
@@ -65,7 +63,7 @@ prunedGenParts, prunedGenPartLabel = Handle("std::vector<reco::GenParticle>"), "
 
 # open file (you can use 'edmFileUtil -d /store/whatever.root' to get the physical file name)
 #events = Events("root://eoscms//eos/cms/store/cmst3/user/gpetrucc/miniAOD/v1/TT_Tune4C_13TeV-pythia8-tauola_PU_S14_PAT.root")
-events = Events('dy_jetsToLL_asympt50.root')
+events = Events('../dy_jetsToLL.root')
 
 numTauFromZ = 0;
 numElectronFromZ = 0;

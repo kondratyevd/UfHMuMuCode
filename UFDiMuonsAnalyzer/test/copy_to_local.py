@@ -6,14 +6,6 @@ from FWCore.ParameterSet.VarParsing import VarParsing
 
 # implement input from the shell
 options = VarParsing ('analysis')
-
-
-options.register ('whichSample',
-				  0,
-				  VarParsing.multiplicity.singleton,
-				  VarParsing.varType.int,
-				  "Choose which sample to process from the samples array.")
-
 options.parseArguments()
 
 # Must define a CMSSW process named process
@@ -24,13 +16,13 @@ process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(options.maxE
 readFiles = cms.untracked.vstring()
 
 
-from Samples_v3 import background as s
+from Samples_v3 import dy_jetsToLL as s
 
 print ""
-print "Copying from " + s[options.whichSample].name + ", " + s[options.whichSample].dir
+print "Copying from " + s.name + ", " + s.dir
 print ""
 
-readFiles.extend(s[options.whichSample].files);
+readFiles.extend(s.files);
 
 print "=== Files in the sample ==="
 print readFiles
@@ -42,7 +34,7 @@ process.source = cms.Source ("PoolSource", fileNames = readFiles)
 # Save the events to a file
 process.Out = cms.OutputModule("PoolOutputModule",
 #         outputCommands = cms.untracked.vstring("drop *", "keep recoTracks_*_*_*"),
-         fileName = cms.untracked.string (s[options.whichSample].name+".root")
+         fileName = cms.untracked.string (s.name+".root")
 )
 
 # make sure everything is hooked up
