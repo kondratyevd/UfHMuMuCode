@@ -65,6 +65,7 @@ prunedGenParts, prunedGenPartLabel = Handle("std::vector<reco::GenParticle>"), "
 #events = Events("root://eoscms//eos/cms/store/cmst3/user/gpetrucc/miniAOD/v1/TT_Tune4C_13TeV-pythia8-tauola_PU_S14_PAT.root")
 events = Events('../dy_jetsToLL.root')
 
+numZ = 0;
 numTauFromZ = 0;
 numElectronFromZ = 0;
 numMuFromZ = 0;
@@ -84,6 +85,9 @@ for iev,event in enumerate(events):
                 i, part.pdgId(), part.status(), part.pt(), part.eta(), part.phi(), part.mass())
             printMothers(part)
 
+            if part.pdgId() == 23 and part.status() == 62:
+                numZ+=1
+
             if hasMotherWithId(part, 23) and abs(part.pdgId()) == 15:
                 numTauFromZ+=1
 
@@ -100,6 +104,7 @@ for iev,event in enumerate(events):
             printMothers(part)
 
 print ""
+print "num Z               :", numZ
 print "num muons from Z    :", numMuFromZ
 print "num tau from Z      :", numTauFromZ
 print "num electrons from Z:", numElectronFromZ

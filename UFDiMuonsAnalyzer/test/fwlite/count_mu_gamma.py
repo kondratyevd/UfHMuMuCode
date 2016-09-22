@@ -107,6 +107,7 @@ for iev,event in enumerate(events):
                 numZ62+=1
                 numZ+=1
                 Z.append(part)
+                printMothers(part)
         
         if(abs(part.pdgId()) == 13):
             if(part.status() == 23):

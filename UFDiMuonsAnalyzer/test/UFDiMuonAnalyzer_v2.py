@@ -19,7 +19,7 @@ process = cms.Process("UFDiMuonsAnalyzer")
 
 process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 1000
+process.MessageLogger.cerr.FwkReport.reportEvery = 1
 ##process.MessageLogger.destinations.append("detailedInfo")
 ##process.MessageLogger.detailedInfo = cms.untracked.PSet(
 ##    threshold = cms.untracked.string("INFO"),
@@ -37,7 +37,7 @@ process.load("Configuration.StandardSequences.FrontierConditions_GlobalTag_cff")
 # /////////////////////////////////////////////////////////////
 
 #from Samples_v2 import doubleMuon_RunB_MINIAOD as s
-from Samples_v3 import singleMuon_Run2015D_MINIAOD as s
+from Samples_v3 import dy_jetsToLL as s
 
 thisIsData = s.isData
 

@@ -231,6 +231,14 @@ public:
   _TrackInfo _muon1vc,_muon2vc; //dimuon
   _TrackInfo _muon1pvc,_muon2pvc; //pv
 
+  // generator level info Gamma pre-FSR
+  _genPartInfo _genGpreFSR;
+  _TrackInfo   _genM1GpreFSR,_genM2GpreFSR;
+
+  // generator level info Gamma post-FSR
+  _genPartInfo _genGpostFSR;
+  _TrackInfo   _genM1GpostFSR,_genM2GpostFSR;
+
   // generator level info Z pre-FSR
   _genPartInfo _genZpreFSR;
   _TrackInfo   _genM1ZpreFSR,_genM2ZpreFSR;
@@ -323,11 +331,7 @@ private:
   void initTrack(_TrackInfo& track);
   void initGenPart(_genPartInfo& part);
 
-  bool checkMother(const reco::Candidate &part, int momPdgId);
-  void fillDiMuonGenPart(const reco::GenParticleCollection &genColl,
-                         _genPartInfo& part,
-                         _TrackInfo&  muon1,
-                         _TrackInfo&  muon2); 
+  void fillBosonAndMuDaughters(const reco::Candidate* boson);
 
   // methods to select the muons
   bool isHltPassed (const edm::Event&, const edm::EventSetup&, const std::vector<std::string> triggerNames);

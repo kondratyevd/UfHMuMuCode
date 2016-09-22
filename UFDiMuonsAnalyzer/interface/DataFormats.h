@@ -191,6 +191,7 @@ typedef struct {
 
 // generator level composite Candidate
 typedef struct {
+  int charge;
   float mass;
   float pt;
   float eta;  // pseudo rapidity

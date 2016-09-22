@@ -226,10 +226,14 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   iEvent.getByToken(_beamSpotToken, beamSpotHandle);
 
   // -----------------------------------------
-  // MONTE CARLO GEN INFO: MUONS, H, W, Z
+  // MONTE CARLO GEN INFO: MUONS, Gamma, H, W, Z
   // -----------------------------------------
   
   if (_isMonteCarlo) {
+
+    // initialize Gamma to default values
+    initGenPart(_genGpreFSR); initTrack(_genM1GpreFSR); initTrack(_genM2GpreFSR);
+    initGenPart(_genGpostFSR);initTrack(_genM1GpostFSR);initTrack(_genM2GpostFSR);
 
     // initialize Z to default values
     initGenPart(_genZpreFSR); initTrack(_genM1ZpreFSR); initTrack(_genM2ZpreFSR);
@@ -246,165 +250,13 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     edm::Handle<reco::GenParticleCollection> prunedGenParticles;
     iEvent.getByToken(_prunedGenParticleToken, prunedGenParticles);
 
-    reco::GenParticleCollection hardProcessMuons;
-
-    bool foundW = false;
-    bool foundZ = false;
-    bool foundH = false;
     //std::cout << "\n====================================\n"; 
-    for (reco::GenParticleCollection::const_iterator gen = prunedGenParticles->begin(), genEnd = prunedGenParticles->end(); 
-         gen != genEnd; ++gen) 
+    for (reco::GenParticle g: *prunedGenParticles) 
     {
-      
-        int id = gen->pdgId();
-        int genstatus = gen->status();
-
-        // In Pythia 6, take status code 3 to mean hard process particle
-        // and status code 2 to mean later in the process
-
-        // Status code 22 means hard process intermediate particle in Pythia 8
-        if (abs(id) == 23 && (genstatus == 22 || genstatus == 3)) {
-          foundZ = true;
-          _genZpreFSR.mass = gen->mass(); 
-          _genZpreFSR.pt   = gen->pt();   
-          _genZpreFSR.eta  = gen->eta();  
-          _genZpreFSR.y    = gen->rapidity();    
-          _genZpreFSR.phi  = gen->phi();  
-          continue;
-        }
-        if (abs(id) == 24 && (genstatus == 22 || genstatus == 3)) {
-          foundW = true;
-          _genWpreFSR.mass = gen->mass(); 
-          _genWpreFSR.pt   = gen->pt();   
-          _genWpreFSR.eta  = gen->eta();  
-          _genWpreFSR.y    = gen->rapidity();    
-          _genWpreFSR.phi  = gen->phi();  
-          continue;
-        }
-        if (abs(id) == 25 && (genstatus == 22 || genstatus == 3)) {
-          foundH = true;
-          _genHpreFSR.mass = gen->mass(); 
-          _genHpreFSR.pt   = gen->pt();   
-          _genHpreFSR.eta  = gen->eta();  
-          _genHpreFSR.y    = gen->rapidity();    
-          _genHpreFSR.phi  = gen->phi();  
-          continue;
-        }
-     
-        // Status code 23 means hard process outgoing particle in Pythia 8
-        if (abs(id) == 13 && (genstatus == 23 || genstatus == 3))  {
-          hardProcessMuons.push_back(*gen);
-          continue;
-        } // muon 
-
-        // Status code 62 means after ISR,FSR, and primoridial pt from UE
-        if (abs(id) == 23 && (genstatus == 62 || genstatus == 2)) {
-          _genZpostFSR.mass = gen->mass(); 
-          _genZpostFSR.pt   = gen->pt();   
-          _genZpostFSR.eta  = gen->eta();  
-          _genZpostFSR.y    = gen->rapidity();    
-          _genZpostFSR.phi  = gen->phi();  
-          continue;
-        }
-        if (abs(id) == 25 && (genstatus == 62 || genstatus == 2)) {
-          _genHpostFSR.mass = gen->mass(); 
-          _genHpostFSR.pt   = gen->pt();   
-          _genHpostFSR.eta  = gen->eta();  
-          _genHpostFSR.y    = gen->rapidity();    
-          _genHpostFSR.phi  = gen->phi();  
-          continue;
-        }
-
-        if (abs(id) == 24 && (genstatus == 62 || genstatus == 2)) {
-          foundW = true;
-          _genWpostFSR.mass = gen->mass(); 
-          _genWpostFSR.pt   = gen->pt();   
-          _genWpostFSR.eta  = gen->eta();  
-          _genWpostFSR.y    = gen->rapidity();    
-          _genWpostFSR.phi  = gen->phi();  
-          continue;
-        }
-
+        reco::GenParticle* gen = &g;
+        fillBosonAndMuDaughters(gen); // looks for gamma, W, Z, H and the muons from them 
     } // loop over gen level
 
-    if (foundZ && hardProcessMuons.size()==2){
-      reco::GenParticle& gen1 = hardProcessMuons[0];
-      reco::GenParticle& gen2 = hardProcessMuons[1];
-      _genM1ZpreFSR.pt = gen1.pt();
-      _genM1ZpreFSR.eta = gen1.eta();
-      _genM1ZpreFSR.phi = gen1.phi();
-      _genM1ZpreFSR.charge = gen1.charge();
-      _genM2ZpreFSR.pt = gen2.pt();
-      _genM2ZpreFSR.eta = gen2.eta();
-      _genM2ZpreFSR.phi = gen2.phi();
-      _genM2ZpreFSR.charge = gen2.charge();
-    }
-    if (foundW && hardProcessMuons.size()==1){
-      reco::GenParticle& gen1 = hardProcessMuons[0];
-      _genMWpreFSR.pt = gen1.pt();
-      _genMWpreFSR.eta = gen1.eta();
-      _genMWpreFSR.phi = gen1.phi();
-      _genMWpreFSR.charge = gen1.charge();
-    }
-    if (foundH && hardProcessMuons.size()==2){
-      reco::GenParticle& gen1 = hardProcessMuons[0];
-      reco::GenParticle& gen2 = hardProcessMuons[1];
-      _genM1HpreFSR.pt = gen1.pt();
-      _genM1HpreFSR.eta = gen1.eta();
-      _genM1HpreFSR.phi = gen1.phi();
-      _genM1HpreFSR.charge = gen1.charge();
-      _genM2HpreFSR.pt = gen2.pt();
-      _genM2HpreFSR.eta = gen2.eta();
-      _genM2HpreFSR.phi = gen2.phi();
-      _genM2HpreFSR.charge = gen2.charge();
-    }
-
-    edm::Handle<pat::PackedGenParticleCollection> packedGenParticles;
-    iEvent.getByToken(_packedGenParticleToken, packedGenParticles);
-    pat::PackedGenParticleCollection finalStateGenMuons;
-  
-    for (pat::PackedGenParticleCollection::const_iterator gen = packedGenParticles->begin(), 
-            genEnd = packedGenParticles->end(); 
-         gen != genEnd; ++gen) 
-    {
-        if (abs(gen->pdgId()) == 13)  {
-          finalStateGenMuons.push_back(*gen);
-        } // muon 
-    }
-
-    if (foundZ && finalStateGenMuons.size()==2){
-      pat::PackedGenParticle& gen1 = finalStateGenMuons[0];
-      pat::PackedGenParticle& gen2 = finalStateGenMuons[1];
-      _genM1ZpostFSR.pt = gen1.pt();
-      _genM1ZpostFSR.eta = gen1.eta();
-      _genM1ZpostFSR.phi = gen1.phi();
-      _genM1ZpostFSR.charge = gen1.charge();
-      _genM2ZpostFSR.pt = gen2.pt();
-      _genM2ZpostFSR.eta = gen2.eta();
-      _genM2ZpostFSR.phi = gen2.phi();
-      _genM2ZpostFSR.charge = gen2.charge();
-    }
-    if (foundW && finalStateGenMuons.size()==1){
-      pat::PackedGenParticle& gen1 = finalStateGenMuons[0];
-      _genMWpostFSR.pt = gen1.pt();
-      _genMWpostFSR.eta = gen1.eta();
-      _genMWpostFSR.phi = gen1.phi();
-      _genMWpostFSR.charge = gen1.charge();
-    }
-    if (foundH && finalStateGenMuons.size()==2){
-      pat::PackedGenParticle& gen1 = finalStateGenMuons[0];
-      pat::PackedGenParticle& gen2 = finalStateGenMuons[1];
-      _genM1HpostFSR.pt = gen1.pt();
-      _genM1HpostFSR.eta = gen1.eta();
-      _genM1HpostFSR.phi = gen1.phi();
-      _genM1HpostFSR.charge = gen1.charge();
-      _genM2HpostFSR.pt = gen2.pt();
-      _genM2HpostFSR.eta = gen2.eta();
-      _genM2HpostFSR.phi = gen2.phi();
-      _genM2HpostFSR.charge = gen2.charge();
-    }
-
-  
   }// end _isMonteCarlo
 
   // -----------------------------------------
@@ -762,6 +614,9 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     
     pat::Muon mu1  = pair->first;
     pat::Muon mu2  = pair->second;
+
+    // only consider dimuon events with opposite charge
+    if(mu1.charge() == mu2.charge()) continue;
 
     // - relative combined isolation -
     double isovar1 = mu1.isolationR03().sumPt;
@@ -1175,26 +1030,36 @@ void UFDiMuonsAnalyzer::beginJob()
   // MC information
   if (_isMonteCarlo) {
 
-    _outTree->Branch("genZpreFSR",  &_genZpreFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+     // Off shell gamma block
+    _outTree->Branch("genGpreFSR",  &_genGpreFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genM1GpreFSR",&_genM1GpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genM2GpreFSR",&_genM2GpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+    _outTree->Branch("genGpostFSR",  &_genGpostFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genM1GpostFSR",&_genM1GpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genM2GpostFSR",&_genM2GpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+
+    // Z block
+    _outTree->Branch("genZpreFSR",  &_genZpreFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
     _outTree->Branch("genM1ZpreFSR",&_genM1ZpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
     _outTree->Branch("genM2ZpreFSR",&_genM2ZpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
 
-    _outTree->Branch("genZpostFSR",  &_genZpostFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genZpostFSR",  &_genZpostFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
     _outTree->Branch("genM1ZpostFSR",&_genM1ZpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
     _outTree->Branch("genM2ZpostFSR",&_genM2ZpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
 
     // W block
-    _outTree->Branch("genWpreFSR",  &_genWpreFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genWpreFSR",  &_genWpreFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
     _outTree->Branch("genMWpreFSR", &_genMWpreFSR ,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
-    _outTree->Branch("genWpostFSR",  &_genWpostFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genWpostFSR",  &_genWpostFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
     _outTree->Branch("genMWpostFSR",&_genMWpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
 
     // H block
-    _outTree->Branch("genHpreFSR",  &_genHpreFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genHpreFSR",  &_genHpreFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
     _outTree->Branch("genM1HpreFSR",&_genM1HpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
     _outTree->Branch("genM2HpreFSR",&_genM2HpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
 
-    _outTree->Branch("genHpostFSR",  &_genHpostFSR  ,"mass/F:pt/F:eta/F:y/F:phi/F");
+    _outTree->Branch("genHpostFSR",  &_genHpostFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
     _outTree->Branch("genM1HpostFSR",&_genM1HpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
     _outTree->Branch("genM2HpostFSR",&_genM2HpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
 
@@ -1578,6 +1443,7 @@ void UFDiMuonsAnalyzer::initTrack(_TrackInfo& track)
 void UFDiMuonsAnalyzer::initGenPart(_genPartInfo& part)
 {
 // Initialize gen info data structure
+  part.charge = -999;
   part.mass = -999;
   part.pt   = -999;
   part.eta  = -999;
@@ -1586,88 +1452,233 @@ void UFDiMuonsAnalyzer::initGenPart(_genPartInfo& part)
 }
 
 ////////////////////////////////////////////////////////////////////////////
-//-- ----------------------------------------------------------------------
+//-------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////
 
-bool UFDiMuonsAnalyzer::checkMother(const reco::Candidate &part,
-                                    int momPdgId){
+void UFDiMuonsAnalyzer::fillBosonAndMuDaughters(const reco::Candidate* boson)
+{
+  // photon, Z, W, H
+  if(boson->status() == 62)
+  {
+      if(!(abs(boson->pdgId()) == 22 || abs(boson->pdgId()) == 23 || abs(boson->pdgId()) == 24 || abs(boson->pdgId()) == 25)) return;
+  }
+  // technically 21 is an incoming particle from the feynman diagram
+  // q, anti-q -> lept,lept but no intermediate gen particle. I think this is q,anti-q->gamma*->lept,lept
+  // whenever there is no Z in the dyJetsToLL sample there is this q,antiq -> lept, lept where the quark 
+  // and the antiquark have the same two leptons as daughters
+  // we will have to reconstruct the values for the off shell gamma
+  else if(boson->status() == 21) ;
 
-  bool matchFound = false;
+  // Don't care about other situations
+  else return;
 
-  // loop over all the mothers
-  int nMothers = part.numberOfMothers();
-  bool hasMother = nMothers ? true : false;
-  const reco::Candidate *mom = NULL;
-  if (hasMother) mom=part.mother();          
+  // initialize the temporary structs
+  _genPartInfo bosonInfo;
+  _TrackInfo mu1preFSR;
+  _TrackInfo mu1postFSR;
+  _TrackInfo mu2preFSR;
+  _TrackInfo mu2postFSR;
 
-  while (hasMother && mom) {
-    // exit if
-    // 1. match is found
-    //std::cout << "   --- momPdgId = " << mom->pdgId() << std::endl;
-    if (abs(mom->pdgId()) == abs(momPdgId)) {
-      matchFound = true;
-      hasMother=false;
-    }
+  initGenPart(bosonInfo);
+  initTrack(mu1preFSR);
+  initTrack(mu1postFSR);
+  initTrack(mu2preFSR);
+  initTrack(mu2postFSR);
 
-    // 2. we are at the parton level
-    if (abs(mom->pdgId()) < 10) hasMother=false;
+  bosonInfo.mass = boson->mass(); 
+  bosonInfo.pt   = boson->pt();   
+  bosonInfo.eta  = boson->eta();  
+  bosonInfo.y    = boson->rapidity();    
+  bosonInfo.phi  = boson->phi();  
+  bosonInfo.charge = boson->charge();
 
-    // 3. there is no other mom
-    if (mom->numberOfMothers() == 0) mom=NULL;
-    else                             mom=mom->mother();
- 
+  TLorentzVector l1, l2, mother;
+  bool moreThanOneLeptPair = false;
+
+  // Get the daughter muons for the boson 
+  for(unsigned int i=0; i<boson->numberOfDaughters(); i++)
+  {
+      const reco::Candidate* daughter = boson->daughter(i);
+
+      // get information about the lepton daughters to reconstruct the virtual photon later
+      if(daughter->pdgId() == 11 || daughter->pdgId() == 13 || daughter->pdgId() == 15)
+      {
+          for(unsigned int j=0; j<boson->numberOfDaughters(); j++)
+          {
+              // we already know you can't make a lepton pair with yourself, so skip this one if it's the case
+              if(i==j) continue;
+              const reco::Candidate* daughter2 = boson->daughter(j);
+
+              // found a pair of opposite signed lepton daughters
+              if(daughter->pdgId() == -1*daughter2->pdgId()) 
+              {
+                  // we already found a pair, l1 AND l2 were initialized already
+                  if(l1.M() !=0 && l2.M() != 0) moreThanOneLeptPair = true;
+                  l1.SetPtEtaPhiM(daughter->pt(), daughter->eta(), daughter->phi(), daughter->mass());
+                  l2.SetPtEtaPhiM(daughter2->pt(), daughter2->eta(), daughter2->phi(), daughter2->mass());
+              }
+          }
+      }
+
+      // status 23 muon, intermediate particle from a decay
+      if(daughter->pdgId() == 13 && daughter->status() == 23)
+      {
+          // we have an intermediate status 23 muon, save the intermediate values as preFSR
+          mu1preFSR.pt = daughter->pt();
+          mu1preFSR.eta = daughter->eta();
+          mu1preFSR.phi = daughter->phi();
+          mu1preFSR.charge = daughter->charge();
+
+          // If it did not radiate then the post and pre are the same
+          mu1postFSR = mu1preFSR;
+
+          // if it did radiate, get the postFSR final state, status 1, version of this muon
+          // and overwrite the postFSR quantities
+          for(unsigned int i=0; i<daughter->numberOfDaughters(); i++)
+          {
+              const reco::Candidate* postFSRcand = daughter->daughter(i);
+              if(postFSRcand->pdgId() == 13 && daughter->status() == 1)
+              {
+                  mu1postFSR.pt = postFSRcand->pt();
+                  mu1postFSR.eta = postFSRcand->eta();
+                  mu1postFSR.phi = postFSRcand->phi();
+                  mu1postFSR.charge = postFSRcand->charge();
+              }
+          }
+      }
+      // status 23 antimuon, intermediate particle from a decay
+      else if(daughter->pdgId() == -13 && daughter->status() == 23)
+      {
+          // we have an intermediate status 23 muon, save the intermediate values as preFSR
+          mu2preFSR.pt = daughter->pt();
+          mu2preFSR.eta = daughter->eta();
+          mu2preFSR.phi = daughter->phi();
+          mu2preFSR.charge = daughter->charge();
+
+          mu2postFSR = mu2preFSR;
+
+          // if it did radiate, get the postFSR final state, status 1, version of this muon
+          // and overwrite the postFSR quantities
+          for(unsigned int i=0; i<daughter->numberOfDaughters(); i++)
+          {
+              const reco::Candidate* postFSRcand = daughter->daughter(i);
+              if(postFSRcand->pdgId() == -13 && daughter->status() == 1)
+              {
+                  mu2postFSR.pt = postFSRcand->pt();
+                  mu2postFSR.eta = postFSRcand->eta();
+                  mu2postFSR.phi = postFSRcand->phi();
+                  mu2postFSR.charge = postFSRcand->charge();
+              }
+          }
+      }
+      // final state muon
+      else if(daughter->pdgId() == 13 && daughter->status() == 1)
+      {
+          // no intermediate status 23 muon that radiated only final state status 1, so pre and post are the same
+          mu1preFSR.pt = daughter->pt();
+          mu1preFSR.eta = daughter->eta();
+          mu1preFSR.phi = daughter->phi();
+          mu1preFSR.charge = daughter->charge();
+
+          // no radiation, post and pre are the same
+          mu1postFSR = mu1preFSR;
+      }
+      // final state antimuon
+      else if(daughter->pdgId() == -13 && daughter->status() == 1)
+      {
+          // no intermediate status 23 muon that radiated only final state status 1, so pre and post are the same
+          mu2preFSR.pt = daughter->pt();
+          mu2preFSR.eta = daughter->eta();
+          mu2preFSR.phi = daughter->phi();
+          mu2preFSR.charge = daughter->charge();
+
+          // no radiation, post and pre are the same
+          mu2postFSR = mu2preFSR;
+      }
+    
   }
 
-  mom = NULL;
-  delete mom;
+  // fill the appropriate boson and daughters
+  if(boson->status() == 21)
+  {
+  // in DY this is an incoming quark, anti-quark annihilation 
+  // 21 could be any incoming particle in other samples though
+  
+      // if the virtual photon went to two leptons then reconstruct it 
+      if(l1.M() != 0 && l2.M() != 0)
+      {
+          mother = l1 + l2;
 
-  return matchFound;
+          bosonInfo.mass = mother.M(); 
+          bosonInfo.pt   = mother.Pt();   
+          bosonInfo.eta  = -111;  
+          bosonInfo.y    = mother.Rapidity();    
+          bosonInfo.phi  = mother.Phi();  
+          bosonInfo.charge = 0;
 
-}
+          // Not sure what to do if the virtual photon decayed to a bunch of leptons
+          if(moreThanOneLeptPair)
+          {
+              bosonInfo.mass = -333; 
+              bosonInfo.pt   = -333;
+              bosonInfo.eta  = -333;
+              bosonInfo.y    = -333;    
+              bosonInfo.phi  = -333;
+              bosonInfo.charge = -333;
+          }
+      }
+      else
+      {
+          bosonInfo.mass = -999; 
+          bosonInfo.pt   = -999;
+          bosonInfo.eta  = -999;
+          bosonInfo.y    = -999;    
+          bosonInfo.phi  = -999;
+          bosonInfo.charge = -999;
+      }
 
-////////////////////////////////////////////////////////////////////////////
-//-- ----------------------------------------------------------------------
-////////////////////////////////////////////////////////////////////////////
+      _genGpreFSR = bosonInfo;
+      _genM1GpreFSR = mu1preFSR;
+      _genM2GpreFSR = mu2preFSR;
 
-void UFDiMuonsAnalyzer::fillDiMuonGenPart(const reco::GenParticleCollection &genColl,
-                                          _genPartInfo& part,
-                                          _TrackInfo&  muon1,
-                                          _TrackInfo&  muon2) {
+      _genGpostFSR = bosonInfo;
+      _genM1GpostFSR = mu1postFSR;
+      _genM2GpostFSR = mu2postFSR;
+  }
+  // Z
+  if(abs(boson->pdgId()) == 23)
+  {
+      _genZpreFSR = bosonInfo;
+      _genM1ZpreFSR = mu1preFSR;
+      _genM2ZpreFSR = mu2preFSR;
 
+      _genZpostFSR = bosonInfo;
+      _genM1ZpostFSR = mu1postFSR;
+      _genM2ZpostFSR = mu2postFSR;
+  }
+  // W
+  if(abs(boson->pdgId()) == 24)
+  {
+      _genWpreFSR = bosonInfo;
+      if(bosonInfo.charge == mu1preFSR.charge) _genMWpreFSR = mu1preFSR;
+      if(bosonInfo.charge == mu2preFSR.charge) _genMWpreFSR = mu2preFSR;
 
-  if (genColl.size() != 2) return;
+      _genWpostFSR = bosonInfo;
+      if(bosonInfo.charge == mu1postFSR.charge) _genMWpreFSR = mu1postFSR;
+      if(bosonInfo.charge == mu2postFSR.charge) _genMWpreFSR = mu2postFSR;
+  }
+  // H
+  if(abs(boson->pdgId()) == 25)
+  {
+      _genHpreFSR = bosonInfo;
+      _genM1HpreFSR = mu1preFSR;
+      _genM2HpreFSR = mu2preFSR;
 
-   muon1.charge = genColl[0].charge(); 
-   muon1.pt     = genColl[0].pt(); 
-   muon1.eta    = genColl[0].eta(); 
-   muon1.phi    = genColl[0].phi();	
+      _genHpostFSR = bosonInfo;
+      _genM1HpostFSR = mu1postFSR;
+      _genM2HpostFSR = mu2postFSR;
+  }
 
-   muon2.charge = genColl[1].charge(); 
-   muon2.pt     = genColl[1].pt(); 
-   muon2.eta    = genColl[1].eta(); 
-   muon2.phi    = genColl[1].phi();	
-
-   TLorentzVector vtrue1, vtrue2, vtrueMother;
-
-   vtrue1.SetPtEtaPhiM(genColl[0].pt(), 
-                       genColl[0].eta(), 
-                       genColl[0].phi(), 
-                       genColl[0].mass());
-
-   vtrue2.SetPtEtaPhiM(genColl[1].pt(), 
-                       genColl[1].eta(), 
-                       genColl[1].phi(), 
-                       genColl[1].mass());
-
-   vtrueMother = vtrue1+vtrue2;	
-
-   part.mass = vtrueMother.M();
-   part.pt   = vtrueMother.Pt();
-   part.eta  = vtrueMother.PseudoRapidity();
-   part.y    = vtrueMother.Rapidity();
-   part.phi  = vtrueMother.Phi();
-
-   return;
 }
 
 ////////////////////////////////////////////////////////////////////////////
