@@ -181,33 +181,7 @@ public:
   float _recoCandYPF;   
   float _recoCandPhiPF; 
 
-  // Vertex Constrained muon-muon info
-  float _recoCandMassVC;
-  float _recoCandMassResVC;
-  float _recoCandMassResCovVC;
-  float _recoCandPtVC;
-  float _recoCandEtaVC; 
-  float _recoCandYVC;   
-  float _recoCandPhiVC; 
-
-  // Vertex Constrained from PV info
-  float _recoCandMassPVC;
-  float _recoCandMassResPVC;
-  float _recoCandMassResCovPVC;
-  float _recoCandPtPVC;
-  float _recoCandEtaPVC; 
-  float _recoCandYPVC;   
-  float _recoCandPhiPVC; 
-
-
   float _angleDiMuons;
-  int   _vertexIsValid;
-  float _vertexNormChiSquare;
-  float _vertexChiSquare;
-  float _vertexNDF;
-  float _vertexX;
-  float _vertexY;
-  float _vertexZ;
 
   int _nPU;
   int _genWeight;
@@ -219,17 +193,13 @@ public:
   //////////////////////////////////////////////////////////
   
   // general event information	
-  _EventInfo eventInfo;
+  _EventInfo _eventInfo;
 
-  // vertex information
-  _VertexInfo vertexInfo;
+  // array of vertex information
+  _VertexInfo _vertexInfo;
 
-   // muon info
-  _MuonInfo _muon1, _muon2;
-
-  // dimuon candidates from refit with Vertex Constraint
-  _TrackInfo _muon1vc,_muon2vc; //dimuon
-  _TrackInfo _muon1pvc,_muon2pvc; //pv
+  // array of muons, 0,1 locations are the dimuon candidate
+  _MuonInfo    _muonInfo;
 
   // generator level info Gamma pre-FSR
   _genPartInfo _genGpreFSR;
@@ -268,7 +238,7 @@ public:
   _PFJetInfo   _pfJetInfo;
   _GenJetInfo  _genJetInfo;
 
-  // muons pairs
+  // muons pairs for dimuon candidates
   typedef std::pair<pat::Muon,pat::Muon> MuonPair;
   typedef std::vector<MuonPair>          MuonPairs;
 
@@ -327,10 +297,16 @@ private:
 
   edm::Service<TFileService> fs;
 
-  void initMuon(_MuonInfo& muon);
+  // init the structs, should make these into objects
+  void initMuons(_MuonInfo& muon);
   void initTrack(_TrackInfo& track);
   void initGenPart(_genPartInfo& part);
 
+  // Methods to fill the structs
+  void fillMuon(unsigned int i, pat::Muon& mu, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
+                const edm::Event& iEvent, const edm::EventSetup& iSetup);
+  void fillDimuonCandidate(const UFDiMuonsAnalyzer::MuonPair* pair, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
+                           const edm::Event& iEvent, const edm::EventSetup& iSetup);
   void fillBosonAndMuDaughters(const reco::Candidate* boson);
 
   // methods to select the muons
@@ -340,10 +316,7 @@ private:
                     const pat::TriggerObjectStandAloneCollection& triggerObjects,
                     const pat::Muon&);
 
-  bool isPreselected(const pat::Muon& muon,
-                     edm::Handle<reco::BeamSpot> beamSpotHandle);
-  
-  bool passKinCuts(const pat::Muon& muon,
+  bool passBasicMuonSelection(const pat::Muon& muon,
                    edm::Handle<reco::BeamSpot> beamSpotHandle);
 
   void displaySelection();

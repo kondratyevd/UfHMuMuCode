@@ -69,7 +69,8 @@ process.GlobalTag.globaltag = globalTag
 # /////////////////////////////////////////////////////////////
 readFiles = cms.untracked.vstring();
 # Get list of files from the sample we loaded
-readFiles.extend(s.files);
+#readFiles.extend(s.files);
+readFiles.extend(['file:dy_jetsToLL.root']);
 
 process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(2000) )
 process.source = cms.Source("PoolSource",fileNames = readFiles)
@@ -133,7 +134,7 @@ if thisIsData:
 # Save output with TFileService
 # /////////////////////////////////////////////////////////////
 
-process.TFileService = cms.Service("TFileService", fileName = cms.string("stage_1_"+s.name+".root") )
+process.TFileService = cms.Service("TFileService", fileName = cms.string("stage_1_"+s.name+"_edit.root") )
 
 # /////////////////////////////////////////////////////////////
 # Load UFDiMuonsAnalyzer

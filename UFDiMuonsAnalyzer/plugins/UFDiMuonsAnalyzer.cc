@@ -137,11 +137,11 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   int theBx    = iEvent.bunchCrossing();
   int theOrbit = iEvent.orbitNumber();
   
-  eventInfo.run   = theRun;
-  eventInfo.lumi  = theLumi;
-  eventInfo.event = theEvent;
-  eventInfo.bx    = theBx;
-  eventInfo.orbit = theOrbit;
+  _eventInfo.run   = theRun;
+  _eventInfo.lumi  = theLumi;
+  _eventInfo.event = theEvent;
+  _eventInfo.bx    = theBx;
+  _eventInfo.orbit = theOrbit;
 
 
   // -----------------------------------------
@@ -151,19 +151,19 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByToken(_primaryVertexToken, vertices);
  
-  for (int i=0;i<20;i++) {
-    vertexInfo.isValid[i]  = 0;
-    vertexInfo.x[i]        = -999;     
-    vertexInfo.y[i]        = -999;     
-    vertexInfo.z[i]        = -999;     
-    vertexInfo.xErr[i]     = -999;
-    vertexInfo.yErr[i]     = -999;
-    vertexInfo.zErr[i]     = -999;
-    vertexInfo.chi2[i]     = -999;
-    vertexInfo.ndf[i]      = -999;
-    vertexInfo.normChi2[i] = -999;
+  for (unsigned int i=0;i<N_VERTEX_INFO;i++) {
+    _vertexInfo.isValid[i]  = 0;
+    _vertexInfo.x[i]        = -999;     
+    _vertexInfo.y[i]        = -999;     
+    _vertexInfo.z[i]        = -999;     
+    _vertexInfo.xErr[i]     = -999;
+    _vertexInfo.yErr[i]     = -999;
+    _vertexInfo.zErr[i]     = -999;
+    _vertexInfo.chi2[i]     = -999;
+    _vertexInfo.ndf[i]      = -999;
+    _vertexInfo.normChi2[i] = -999;
   }      
-  vertexInfo.nVertices   = 0;
+  _vertexInfo.nVertices   = 0;
   
   // primary vertex
 
@@ -175,24 +175,24 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx!=vertices->end(); ++vtx){
 
       if (!vtx->isValid()) {
-        vertexInfo.isValid[iVertex] = 0;
+        _vertexInfo.isValid[iVertex] = 0;
         continue;
       }
     
-      vertexInfo.isValid[iVertex] = 1;
+      _vertexInfo.isValid[iVertex] = 1;
       
-      vertexInfo.x[iVertex]        = vtx->position().X();	
-      vertexInfo.y[iVertex]        = vtx->position().Y();	
-      vertexInfo.z[iVertex]        = vtx->position().Z();	
-      vertexInfo.xErr[iVertex]     = vtx->xError();	
-      vertexInfo.yErr[iVertex]     = vtx->yError();	
-      vertexInfo.zErr[iVertex]     = vtx->zError();	
-      vertexInfo.chi2[iVertex]     = vtx->chi2();	
-      vertexInfo.ndf[iVertex]      = vtx->ndof();	
-      vertexInfo.normChi2[iVertex] = vtx->normalizedChi2();
+      _vertexInfo.x[iVertex]        = vtx->position().X();	
+      _vertexInfo.y[iVertex]        = vtx->position().Y();	
+      _vertexInfo.z[iVertex]        = vtx->position().Z();	
+      _vertexInfo.xErr[iVertex]     = vtx->xError();	
+      _vertexInfo.yErr[iVertex]     = vtx->yError();	
+      _vertexInfo.zErr[iVertex]     = vtx->zError();	
+      _vertexInfo.chi2[iVertex]     = vtx->chi2();	
+      _vertexInfo.ndf[iVertex]      = vtx->ndof();	
+      _vertexInfo.normChi2[iVertex] = vtx->normalizedChi2();
       
       iVertex++;
-      vertexInfo.nVertices++;
+      _vertexInfo.nVertices++;
     }
   }
   else std::cout << "VertexCollection is NOT valid -> vertex Info NOT filled!\n";
@@ -291,7 +291,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     for(unsigned int i=0; i<jets->size(); i++)
     {
       _pfJetInfo.nJets++;
-      if( i<10 )
+      if( i<N_JET_INFO )
       {
         const pat::Jet& jet = jets->at(i);
         _pfJetInfo.px[i] = jet.px();
@@ -404,24 +404,19 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   pat::MuonCollection muonsSelected; 
   muonsSelected.clear(); 
 
+  int countMuons = 0;
+
   // pre-selection: just check the muons are at least tracker muons.
-  for (pat::MuonCollection::const_iterator muon = muons->begin(), 
-         muonsEnd = muons->end(); muon !=muonsEnd; ++muon){
-    
-    // 
-    if (!isPreselected(*muon, beamSpotHandle)) {
-      if (_isVerbose) std::cout << "Muon NOT passing pre-selections\n"; 
+  for (pat::MuonCollection::const_iterator muon = muons->begin(), muonsEnd = muons->end(); muon !=muonsEnd; ++muon)
+  {
+    countMuons++;
+
+    // basic cuts
+    if (!passBasicMuonSelection(*muon, beamSpotHandle)) {
+      if (_isVerbose) std::cout << "Muon NOT passing basic selections\n"; 
       continue;
     }
-    if (_isVerbose) std::cout << "Muon passing the defined pre-selections\n\n";     
-
-
-    // all cuts but isolation
-    if (!passKinCuts(*muon, beamSpotHandle)) {
-      if (_isVerbose) std::cout << "Muon NOT passing kinematic selections\n"; 
-      continue;
-    }
-    if (_isVerbose) std::cout << "Muon passing the defined kinematic selections\n\n";     
+    if (_isVerbose) std::cout << "Muon passing the basic selections\n\n";     
     
     // put this muons in the collection
     muonsSelected.push_back(*muon);
@@ -439,14 +434,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   // INIT MUON VALUES
   // -----------------------------------------
   
-  initMuon(_muon1);
-  initMuon(_muon2);
-
-  initTrack(_muon1vc);
-  initTrack(_muon2vc);
-
-  initTrack(_muon1pvc);
-  initTrack(_muon2pvc);
+  initMuons(_muonInfo);
 
   // -----------------------------------------
   // INIT DIMUON VALUES
@@ -464,32 +452,11 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   _recoCandYPF    = -999;
   _recoCandPhiPF  = -999;
 
-  _recoCandMassVC = -999; 
-  _recoCandMassResVC    = -999;
-  _recoCandMassResCovVC = -999;
-  _recoCandPtVC   = -999;
-  _recoCandEtaVC  = -999;
-  _recoCandYVC    = -999;
-  _recoCandPhiVC  = -999;
-
-  _recoCandMassPVC = -999; 
-  _recoCandMassResPVC    = -999;
-  _recoCandMassResCovPVC = -999;
-  _recoCandPtPVC   = -999;
-  _recoCandEtaPVC  = -999;
-  _recoCandYPVC    = -999;
-  _recoCandPhiPVC  = -999;
-
   _angleDiMuons = -999;
-  _vertexIsValid = -999;
-  _vertexNormChiSquare = -999;
-  _vertexChiSquare = -999;
-  _vertexNDF = -999;
-  _vertexX = -999;
-  _vertexY = -999;
-  _vertexZ = -999;
 
- 
+  _muonInfo.nMuons = countMuons;
+  _muonInfo.nSelectedMuons = muonsSelected.size();
+  _muonInfo.nMuonPairs = 0;
 
   // Zero Muons /////////////////////////////////////////////
   if (muonsSelected.size() == 0) {
@@ -504,94 +471,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     pat::Muon mu = muonsSelected.at(0);
     // store all the info
     // muon 1
-    _muon1.isGlobal     = mu.isGlobalMuon(); 
-    _muon1.isTracker    = mu.isTrackerMuon(); 
-    _muon1.isStandAlone = mu.isStandAloneMuon(); 
 
-    reco::Track track;
-    if      (mu.isGlobalMuon())  track = *(mu.globalTrack());
-    else if (mu.isTrackerMuon()) track = *(mu.innerTrack());
-    else {
-      std::cout << "ERROR: The muon is NOT global NOR tracker ?!?\n";
-      return ;
-    }
-
-    _muon1.charge = mu.charge();
-    _muon1.pt     = mu.pt();  
-    _muon1.ptErr  = track.ptError(); 
-    _muon1.eta    = mu.eta(); 
-    _muon1.phi    = mu.phi();
-   
-    // redundant if the muon is tracker-only muon
-    if (mu.isTrackerMuon()) {
-      _muon1.trkPt   = mu.innerTrack()->pt();                    
-      _muon1.trkPtErr= mu.innerTrack()->ptError();
-      _muon1.trketa  = mu.innerTrack()->eta();                   
-      _muon1.trkPhi  = mu.innerTrack()->phi();                   
-    }
-
-    _muon1.d0_BS= mu.innerTrack()->dxy( beamSpotHandle->position() );
-    _muon1.dz_BS= mu.innerTrack()->dz ( beamSpotHandle->position() );
-
-    reco::Vertex bestVtx1;
-    for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
-         vtx!=vertices->end(); ++vtx){
-
-      if (!vtx->isValid()) continue;
-  
-      _muon1.d0_PV= track.dxy( vtx->position() );
-      _muon1.dz_PV= track.dz ( vtx->position() );
-      bestVtx1 = *vtx;
-    
-      //exit at the first available vertex
-      break;
-    }
-
-    // type of muon
-    _muon1.isTightMuon  =  muon::isTightMuon(mu, bestVtx1);
-    _muon1.isMediumMuon =  muon::isMediumMuon(mu);
-    _muon1.isLooseMuon  =  muon::isLooseMuon(mu);
-
-    //isolation
-    _muon1.trackIsoSumPt    = mu.isolationR03().sumPt;
-    _muon1.trackIsoSumPtCorr= mu.isolationR03().sumPt; // no correction with only 1 muon
-    _muon1.ecalIso          = mu.isolationR03().emEt;
-    _muon1.hcalIso          = mu.isolationR03().hadEt;
-
-    double isovar = mu.isolationR03().sumPt;
-    isovar += mu.isolationR03().hadEt; //tracker + HCAL 
-    isovar /= mu.pt(); // relative combine isolation
-    _muon1.relCombIso=isovar;
-
-  
-    // PF Isolation
-    _muon1.isPFMuon = mu.isPFMuon();
-    
-    if ( mu.isPFMuon() ) {
-      
-      reco::Candidate::LorentzVector pfmuon = mu.pfP4();
-      
-      _muon1.pfPt  = pfmuon.Pt();
-      _muon1.pfEta = pfmuon.Eta();
-      _muon1.pfPhi = pfmuon.Phi();
-
-      _muon1.sumChargedHadronPtR03   = mu.pfIsolationR03().sumChargedHadronPt  ;
-      _muon1.sumChargedParticlePtR03 = mu.pfIsolationR03().sumChargedParticlePt;
-      _muon1.sumNeutralHadronEtR03   = mu.pfIsolationR03().sumNeutralHadronEt  ;
-      _muon1.sumPhotonEtR03          = mu.pfIsolationR03().sumPhotonEt         ;
-      _muon1.sumPUPtR03              = mu.pfIsolationR03().sumPUPt             ;
-      
-      _muon1.sumChargedHadronPtR04   = mu.pfIsolationR04().sumChargedHadronPt  ;
-      _muon1.sumChargedParticlePtR04 = mu.pfIsolationR04().sumChargedParticlePt;
-      _muon1.sumNeutralHadronEtR04   = mu.pfIsolationR04().sumNeutralHadronEt  ;
-      _muon1.sumPhotonEtR04          = mu.pfIsolationR04().sumPhotonEt         ;
-      _muon1.sumPUPtR04              = mu.pfIsolationR04().sumPUPt             ;
-    }
-
-    // save trigger informations
-    for (unsigned int iTrigger=0;iTrigger<_triggerNames.size();iTrigger++) 
-      _muon1.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, _triggerNames[iTrigger], *_triggerObjsHandle, mu);
-
+    fillMuon(0, mu, vertices, beamSpotHandle, iEvent, iSetup);
     _outTree->Fill();
     
     // you can exit and pass to the new event
@@ -609,283 +490,22 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   MuonPairs dimuons = GetMuonPairs(&muonsSelected);
 
   // loop over the candidates
-  for (MuonPairs::const_iterator pair= dimuons.begin(); 
-       pair != dimuons.end(); ++pair){
+  for (MuonPairs::const_iterator pair= dimuons.begin(); pair != dimuons.end(); ++pair)
+  {
     
     pat::Muon mu1  = pair->first;
     pat::Muon mu2  = pair->second;
 
     // only consider dimuon events with opposite charge
     if(mu1.charge() == mu2.charge()) continue;
-
-    // - relative combined isolation -
-    double isovar1 = mu1.isolationR03().sumPt;
-    isovar1 += mu1.isolationR03().hadEt; //tracker + HCAL 
-    isovar1 /= mu1.pt(); // relative combine isolation
-
-    double isovar2 = mu2.isolationR03().sumPt;
-    isovar2 += mu2.isolationR03().hadEt; //tracker + HCAL
-    isovar2 /= mu2.pt(); // relative combine isolation
-    
-    _muon1.relCombIso=isovar1;
-    _muon2.relCombIso=isovar2;
-
-    _muon1.trackIsoSumPt=mu1.isolationR03().sumPt ;
-    _muon2.trackIsoSumPt=mu2.isolationR03().sumPt ;
-  
-    // correction for the high boosts (if needed)
-    _muon1.trackIsoSumPtCorr=mu1.isolationR03().sumPt ;
-    _muon2.trackIsoSumPtCorr=mu2.isolationR03().sumPt ;
-
-    if( mu2.innerTrack().isNonnull() ){
-      double dEta =      mu2.track()->eta() - mu1.track()->eta();
-      double dPhi = fabs(mu2.track()->phi() - mu1.track()->phi());
-      if( dPhi>3.1415927 ) dPhi = 2.*3.1415927 - dPhi;
-      if( sqrt(dEta*dEta+dPhi*dPhi)<0.3 && _muon1.trackIsoSumPt>0.9*mu2.track()->pt() ) 
-        _muon1.trackIsoSumPtCorr = _muon1.trackIsoSumPt - mu2.track()->pt();
-    }
-
-    if( mu1.innerTrack().isNonnull() ){
-      double dEta =      mu1.track()->eta() - mu2.track()->eta();
-      double dPhi = fabs(mu1.track()->phi() - mu2.track()->phi());
-      if( dPhi>3.1415927 ) dPhi = 2.*3.1415927 - dPhi;
-      if( sqrt(dEta*dEta+dPhi*dPhi)<0.3 && _muon2.trackIsoSumPt>0.9*mu1.track()->pt() ) 
-        _muon2.trackIsoSumPtCorr = _muon2.trackIsoSumPt - mu1.track()->pt();
-    }
-
-
-    // PF Isolation
-    _muon1.isPFMuon = mu1.isPFMuon();
-    
-    if ( mu1.isPFMuon() ) {
-      
-      reco::Candidate::LorentzVector pfmuon = mu1.pfP4();
-      
-      _muon1.pfPt  = pfmuon.Pt();
-      _muon1.pfEta = pfmuon.Eta();
-      _muon1.pfPhi = pfmuon.Phi();
-
-      _muon1.sumChargedHadronPtR03   = mu1.pfIsolationR03().sumChargedHadronPt  ;
-      _muon1.sumChargedParticlePtR03 = mu1.pfIsolationR03().sumChargedParticlePt;
-      _muon1.sumNeutralHadronEtR03   = mu1.pfIsolationR03().sumNeutralHadronEt  ;
-      _muon1.sumPhotonEtR03          = mu1.pfIsolationR03().sumPhotonEt         ;
-      _muon1.sumPUPtR03              = mu1.pfIsolationR03().sumPUPt             ;
-                                         
-      _muon1.sumChargedHadronPtR04   = mu1.pfIsolationR04().sumChargedHadronPt  ;
-      _muon1.sumChargedParticlePtR04 = mu1.pfIsolationR04().sumChargedParticlePt;
-      _muon1.sumNeutralHadronEtR04   = mu1.pfIsolationR04().sumNeutralHadronEt  ;
-      _muon1.sumPhotonEtR04          = mu1.pfIsolationR04().sumPhotonEt         ;
-      _muon1.sumPUPtR04              = mu1.pfIsolationR04().sumPUPt             ;
-    }
-
-
-    _muon2.isPFMuon = mu2.isPFMuon();
-
-    if ( mu2.isPFMuon() ) {
-      
-      reco::Candidate::LorentzVector pfmuon = mu2.pfP4();
-      
-      _muon2.pfPt  = pfmuon.Pt();
-      _muon2.pfEta = pfmuon.Eta();
-      _muon2.pfPhi = pfmuon.Phi();
-
-      _muon2.sumChargedHadronPtR03   = mu2.pfIsolationR03().sumChargedHadronPt  ;
-      _muon2.sumChargedParticlePtR03 = mu2.pfIsolationR03().sumChargedParticlePt;
-      _muon2.sumNeutralHadronEtR03   = mu2.pfIsolationR03().sumNeutralHadronEt  ;
-      _muon2.sumPhotonEtR03          = mu2.pfIsolationR03().sumPhotonEt         ;
-      _muon2.sumPUPtR03              = mu2.pfIsolationR03().sumPUPt             ;
-                                         
-      _muon2.sumChargedHadronPtR04   = mu2.pfIsolationR04().sumChargedHadronPt  ;
-      _muon2.sumChargedParticlePtR04 = mu2.pfIsolationR04().sumChargedParticlePt;
-      _muon2.sumNeutralHadronEtR04   = mu2.pfIsolationR04().sumNeutralHadronEt  ;
-      _muon2.sumPhotonEtR04          = mu2.pfIsolationR04().sumPhotonEt         ;
-      _muon2.sumPUPtR04              = mu2.pfIsolationR04().sumPUPt             ;
-    }
-
-    bool passSelection=false;
-
-    // pass kinematic tighter selections
-    if ( passKinCuts(mu1, beamSpotHandle) && 
-         passKinCuts(mu2, beamSpotHandle)  ) passSelection=true; 
-
-    //// chek the trigger
-    //if (passSelection) {
-    //    
-    //  // set the event as not passed  
-    //  // and then check it passes the trigger
-    //  passSelection=!true;
-
-    //  if ( isHltMatched(iEvent,iSetup,_triggerNames, mu1, mu2) ) {
-    //    if (_isVerbose) std::cout << "Both Muons TIGHT and At Least One Matches the Trigger\n";
-    //    passSelection=true;
-    //  }
-    //}
-    // ===== END Requirements ====
-    
-    // do we pass the selection? Yes -> store the event
-    // else move to the next event
-    if (!passSelection) return;
-
-    // store all the info
-    // muon 1
-    _muon1.isGlobal     = mu1.isGlobalMuon(); 
-    _muon1.isTracker    = mu1.isTrackerMuon(); 
-    _muon1.isStandAlone = mu1.isStandAloneMuon(); 
-
-
-    reco::Track track1;
-    if      (mu1.isGlobalMuon())  track1 = *(mu1.globalTrack());
-    else if (mu1.isTrackerMuon()) track1 = *(mu1.innerTrack());
-    else {
-      std::cout << "ERROR: The muon is NOT global NOR tracker ?!?\n";
-      return ;
-    }
-
-    _muon1.charge = mu1.charge();
-    _muon1.pt     = mu1.pt();  
-    _muon1.ptErr  = track1.ptError(); 
-    _muon1.eta    = mu1.eta(); 
-    _muon1.phi    = mu1.phi();
-   
-    if (mu1.isTrackerMuon()) {
-      _muon1.trkPt   = mu1.innerTrack()->pt();                    
-      _muon1.trkPtErr= mu1.innerTrack()->ptError();
-      _muon1.trketa  = mu1.innerTrack()->eta();                   
-      _muon1.trkPhi  = mu1.innerTrack()->phi();                   
-    }
-
-    _muon1.d0_BS= track1.dxy( beamSpotHandle->position() );
-    _muon1.dz_BS= track1.dz ( beamSpotHandle->position() );
-
-    reco::Vertex bestVtx1;
-    for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
-         vtx!=vertices->end(); ++vtx){
-
-      if (!vtx->isValid()) continue;
-  
-      _muon1.d0_PV= track1.dxy( vtx->position() );
-      _muon1.dz_PV= track1.dz ( vtx->position() );
-      bestVtx1 = *vtx;
-    
-      //exit at the first available vertex
-      break;
-    }
-
-    // type of muon
-    _muon1.isTightMuon  =  muon::isTightMuon(mu1, bestVtx1);
-    _muon1.isMediumMuon =  muon::isMediumMuon(mu1);
-    _muon1.isLooseMuon  =  muon::isLooseMuon(mu1);
-
-    //tracker iso and rel comb iso already taken care of
-    _muon1.ecalIso = mu1.isolationR03().emEt ;
-    _muon1.hcalIso = mu1.isolationR03().hadEt ;
-
-    // save trigger informations
-    for (unsigned int iTrigger=0;iTrigger<_triggerNames.size();iTrigger++) 
-      _muon1.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, _triggerNames[iTrigger], *_triggerObjsHandle, mu1);
-    
-    // muon 2
-    _muon2.isGlobal     = mu2.isGlobalMuon(); 
-    _muon2.isTracker    = mu2.isTrackerMuon(); 
-
-    reco::Track track2;
-    if      (mu2.isGlobalMuon())  track2 = *(mu2.globalTrack());
-    else if (mu2.isTrackerMuon()) track2 = *(mu2.innerTrack());
-    else {
-      std::cout << "ERROR: The muon is NOT global NOR tracker ?!?\n";
-      return ;
-    }
-
-    _muon2.charge = mu2.charge(); 
-    _muon2.pt     = mu2.pt(); 
-    _muon2.ptErr  = track2.ptError(); 
-    _muon2.eta    = mu2.eta(); 
-    _muon2.phi    = mu2.phi();
-   
-    if (mu2.isTrackerMuon()) {
-      _muon2.trkPt   = mu2.innerTrack()->pt();                    
-      _muon2.trkPtErr= mu2.innerTrack()->ptError();
-      _muon2.trketa  = mu2.innerTrack()->eta();                   
-      _muon2.trkPhi  = mu2.innerTrack()->phi();                   
-    }
-
-    _muon2.d0_BS= track2.dxy( beamSpotHandle->position() );
-    _muon2.dz_BS= track2.dz ( beamSpotHandle->position() );
-   
-    reco::Vertex bestVtx2;
-    for (reco::VertexCollection::const_iterator vtx = vertices->begin(); 
-         vtx!=vertices->end(); ++vtx){
-
-      if (!vtx->isValid()) continue;
-  
-      _muon2.d0_PV= track2.dxy( vtx->position() );
-      _muon2.dz_PV= track2.dz ( vtx->position() );
-      bestVtx2 = *vtx;
-    
-      //exit at the first available vertex
-      break;
-    }
-
-    // type of muon
-    _muon2.isTightMuon  =  muon::isTightMuon(mu2, bestVtx2);
-    _muon2.isMediumMuon =  muon::isMediumMuon(mu2);
-    _muon2.isLooseMuon  =  muon::isLooseMuon(mu2);
-
-    //tracker iso and rel comb iso already taken care of
-    _muon2.ecalIso = mu2.isolationR03().emEt ;
-    _muon2.hcalIso = mu2.isolationR03().hadEt ;
-
-    // save trigger informations
-    for (unsigned int iTrigger=0;iTrigger<_triggerNames.size();iTrigger++) 
-      _muon2.isHltMatched[iTrigger] = isHltMatched(iEvent, iSetup, _triggerNames[iTrigger], *_triggerObjsHandle, mu2);
-    
-    // combine the info
-    // muons collection
-    TLorentzVector mother=GetLorentzVector(&*pair); 
-
-    _recoCandMass = mother.M();
-    _recoCandPt   = mother.Pt();
-    _recoCandEta  = mother.PseudoRapidity();
-    _recoCandY    = mother.Rapidity();
-    _recoCandPhi  = mother.Phi();
-
-    _angleDiMuons = acos(-mu1.track()->momentum().Dot(mu2.track()->momentum()/
-                                                      mu1.track()->p()/mu2.track()->p())); 
-    
-    
-    if ( mu1.isPFMuon() && mu2.isPFMuon() ) {
-
-      TLorentzVector muon1_pf, muon2_pf, mother_pf;
-      double const MASS_MUON = 0.105658367; //GeV/c2
-
-      reco::Candidate::LorentzVector pfmuon1 = mu1.pfP4();
-      reco::Candidate::LorentzVector pfmuon2 = mu2.pfP4();
-      
-      muon1_pf.SetPtEtaPhiM(pfmuon1.Pt(), pfmuon1.Eta(), pfmuon1.Phi(), MASS_MUON);
-      muon2_pf.SetPtEtaPhiM(pfmuon2.Pt(), pfmuon2.Eta(), pfmuon2.Phi(), MASS_MUON);
-
-      mother_pf = muon1_pf+muon2_pf;
-      
-      _recoCandMassPF = mother_pf.M();
-      _recoCandPtPF   = mother_pf.Pt();
-                              
-      _recoCandEtaPF  = mother_pf.PseudoRapidity();
-      _recoCandYPF    = mother_pf.Rapidity();
-      _recoCandPhiPF  = mother_pf.Phi();
-    
-    }
+ 
+    _muonInfo.nMuonPairs++;
+    fillDimuonCandidate(&*pair, vertices, beamSpotHandle, iEvent, iSetup);
 
     // ===========================================================================
     // store everything in a ntuple
     _outTree->Fill();
   
-    if (_isVerbose) {
-      std::cout<<"\t"<<theRun    <<":"<<theLumi<<":"<<theEvent
-               <<"\t"<<mother.M() <<":"<<mother.Pt()
-               <<"\t"<<_muon1.eta<<":"<<_muon2.eta
-               <<"\t"<<_muon1.pt <<":"<<_muon2.pt
-               <<std::endl;
-    }
   }
   
   return;
@@ -905,84 +525,48 @@ void UFDiMuonsAnalyzer::beginJob()
 
   // eventInfo;
   // set up the _outTree branches
-  _outTree->Branch( "eventInfo",  &eventInfo, "run/I:lumi/I:event/L:bx/I:orbit/I");
+  _outTree->Branch( "eventInfo",  &_eventInfo, "run/I:lumi/I:event/L:bx/I:orbit/I");
   
   // rho
   _outTree->Branch("rho"  ,            &_rho,              "rho/F"             );
   _outTree->Branch("rho25",            &_rho25,            "rho25/F"           );
   _outTree->Branch("rho25asHtoZZto4l", &_rho25asHtoZZto4l, "rho25asHtoZZto4l/F");
 
-  _outTree->Branch("vertexInfo", &vertexInfo, "nVertices/I:isValid[20]/I:"
+  _outTree->Branch("vertexInfo", &_vertexInfo, "nVertices/I:isValid[20]/I:"
 		   "x[20]/F:y[20]/F:z[20]/F:xErr[20]/F:yErr[20]/F:zErr[20]/F:"
 		   "chi2[20]/F:ndf[20]/I:normChi2[20]/F");
 
-  _outTree->Branch("reco1", &_muon1, 
-                   "isTracker/I:isStandAlone/I:isGlobal/I:"
-                   "isTightMuon/I:isMediumMuon/I:isLooseMuon/I:"
-                   "charge/I:pt/F:ptErr/F:eta/F:phi/F:"
-                   "trkPt/F:trkPtErr/F:trkEta/F:trkPhi/F:"
-                   "d0_BS/F:dz_BS/F:"
-                   "d0_PV/F:dz_PV/F:"
-                   "trackIsoSumPt/F:"
-                   "trackIsoSumPtCorr/F:"      
-                   "hcalIso/F:"
-                   "ecalIso/F:"
-                   "relCombIso/F:"
-                   "isPFMuon/I:"
-                   "pfPt/F:"
-                   "pfEta/F:"
-                   "pfPhi/F:"
-                   "sumChargedHadronPtR03/F:"
-                   "sumChargedParticlePtR03/F:"
-                   "sumNeutralHadronEtR03/F:"
-                   "sumPhotonEtR03/F:"
-                   "sumPUPtR03/F:"
-                   "sumChargedHadronPtR04/F:"
-                   "sumChargedParticlePtR04/F:"
-                   "sumNeutralHadronEtR04/F:"
-                   "sumPhotonEtR04/F:"
-                   "sumPUPtR04/F:"
-                   "isHltMatched[6]/I:"
-                   "hltPt[3]/F:"
-                   "hltEta[3]/F:"
-                   "hltPhi[3]/F");
-
-  _outTree->Branch("reco2", &_muon2, 
-                   "isTracker/I:isStandAlone/I:isGlobal/I:"
-                   "isTightMuon/I:isMediumMuon/I:isLooseMuon/I:"
-                   "charge/I:pt/F:ptErr/F:eta/F:phi/F:"
-                   "trkPt/F:trkPtErr/F:trkEta/F:trkPhi/F:"
-                   "d0_BS/F:dz_BS/F:"
-                   "d0_PV/F:dz_PV/F:"
-                   "trackIsoSumPt/F:"      
-                   "trackIsoSumPtCorr/F:"      
-                   "hcalIso/F:"
-                   "ecalIso/F:"
-                   "relCombIso/F:"      
-                   "isPFMuon/I:"
-                   "pfPt/F:"
-                   "pfEta/F:"
-                   "pfPhi/F:"
-                   "sumChargedHadronPtR03/F:"
-                   "sumChargedParticlePtR03/F:"
-                   "sumNeutralHadronEtR03/F:"
-                   "sumPhotonEtR03/F:"
-                   "sumPUPtR03/F:"
-                   "sumChargedHadronPtR04/F:"
-                   "sumChargedParticlePtR04/F:"
-                   "sumNeutralHadronEtR04/F:"
-                   "sumPhotonEtR04/F:"
-                   "sumPUPtR04/F:"
-                   "isHltMatched[6]/I:"
-                   "hltPt[3]/F:"
-                   "hltEta[3]/F:"
-                   "hltPhi[3]/F");
-
-  _outTree->Branch("reco1vc", &_muon1vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
-  _outTree->Branch("reco2vc", &_muon2vc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
-
-  _outTree->Branch("reco1pvc", &_muon1pvc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
-  _outTree->Branch("reco2pvc", &_muon2pvc, "charge/I:pt/F:ptErr/F:eta/F:phi/F");
+  _outTree->Branch("recoMuons", &_muonInfo, 
+                   "nMuons/I:nSelectedMuons/I:nMuonPairs/I:"
+                   "isTracker[10]/I:isStandAlone[10]/I:isGlobal[10]/I:"
+                   "isTightMuon[10]/I:isMediumMuon[10]/I:isLooseMuon[10]/I:"
+                   "charge[10]/I:pt[10]/F:ptErr[10]/F:eta[10]/F:phi[10]/F:"
+                   "trkPt[10]/F:trkPtErr[10]/F:trkEta[10]/F:trkPhi[10]/F:"
+                   "d0_BS[10]/F:dz_BS[10]/F:"
+                   "d0_PV[10]/F:dz_PV[10]/F:"
+                   "trackIsoSumPt[10]/F:"
+                   "trackIsoSumPtCorr[10]/F:"      
+                   "hcalIso[10]/F:"
+                   "ecalIso[10]/F:"
+                   "relCombIso[10]/F:"
+                   "isPFMuon[10]/I:"
+                   "pfPt[10]/F:"
+                   "pfEta[10]/F:"
+                   "pfPhi[10]/F:"
+                   "sumChargedHadronPtR03[10]/F:"
+                   "sumChargedParticlePtR03[10]/F:"
+                   "sumNeutralHadronEtR03[10]/F:"
+                   "sumPhotonEtR03[10]/F:"
+                   "sumPUPtR03[10]/F:"
+                   "sumChargedHadronPtR04[10]/F:"
+                   "sumChargedParticlePtR04[10]/F:"
+                   "sumNeutralHadronEtR04[10]/F:"
+                   "sumPhotonEtR04[10]/F:"
+                   "sumPUPtR04[10]/F:"
+                   "isHltMatched[10][6]/I:"
+                   "hltPt[10][6]/F:"
+                   "hltEta[10][6]/F:"
+                   "hltPhi[10][6]/F");
 
   _outTree->Branch("hltPaths",    &_triggerNames);
 
@@ -999,30 +583,7 @@ void UFDiMuonsAnalyzer::beginJob()
   _outTree->Branch("recoCandYPF"   , &_recoCandYPF   , "recoCandYPF/F");
   _outTree->Branch("recoCandPhiPF" , &_recoCandPhiPF , "recoCandPhiPF/F");
 
-  _outTree->Branch("recoCandMassVC", &_recoCandMassVC, "recoCandMassVC/F");
-  _outTree->Branch("recoCandMassResVC",   &_recoCandMassResVC,   "recoCandMassResVC/F");
-  _outTree->Branch("recoCandMassResCovVC",&_recoCandMassResCovVC,"recoCandMassResCovVC/F");
-  _outTree->Branch("recoCandPtVC"  , &_recoCandPtVC  , "recoCandPtVC/F");
-  _outTree->Branch("recoCandEtaVC" , &_recoCandEtaVC , "recoCandEtaVC/F");
-  _outTree->Branch("recoCandYVC"   , &_recoCandYVC   , "recoCandYVC/F");
-  _outTree->Branch("recoCandPhiVC" , &_recoCandPhiVC , "recoCandPhiVC/F");
-
-  _outTree->Branch("recoCandMassPVC", &_recoCandMassPVC, "recoCandMassPVC/F");
-  _outTree->Branch("recoCandMassResPVC",   &_recoCandMassResPVC,   "recoCandMassResPVC/F");
-  _outTree->Branch("recoCandMassResCovPVC",&_recoCandMassResCovPVC,"recoCandMassResCovPVC/F");
-  _outTree->Branch("recoCandPtPVC"  , &_recoCandPtPVC  , "recoCandPtPVC/F");
-  _outTree->Branch("recoCandEtaPVC" , &_recoCandEtaPVC , "recoCandEtaPVC/F");
-  _outTree->Branch("recoCandYPVC"   , &_recoCandYPVC   , "recoCandYPVC/F");
-  _outTree->Branch("recoCandPhiPVC" , &_recoCandPhiPVC , "recoCandPhiPVC/F");
-
   _outTree->Branch("angleDiMuons",        &_angleDiMuons       ,"angleDiMuons/F");
-  _outTree->Branch("vertexIsValid",       &_vertexIsValid      ,"vertexIsValid/I");          
-  _outTree->Branch("vertexNormChiSquare", &_vertexNormChiSquare,"vertexNormChiSquare/F");  
-  _outTree->Branch("vertexChiSquare",     &_vertexChiSquare    ,"vertexChiSquare/F");      
-  _outTree->Branch("vertexNDF",           &_vertexNDF          ,"vertexNDF/F");            
-  _outTree->Branch("vertexX",             &_vertexX            ,"vertexX/F");              
-  _outTree->Branch("vertexY",             &_vertexY            ,"vertexY/F");              
-  _outTree->Branch("vertexZ",             &_vertexZ            ,"vertexZ/F");              
 
   _outTree->Branch("met",    &_metInfo,   "px/F:py/F:pt/F:phi/F:sumEt/F");
   _outTree->Branch("pfJets", &_pfJetInfo, "nJets/I:px[10]/F:py[10]/F:pz[10]/F:pt[10]/F:eta[10]/F:phi[10]/F:mass[10]/F:charge[10]/I:partonFlavour[10]:chf[10]/F:nhf[10]/F:cef[10]/F:nef[10]/F:muf[10]/F:hfhf[10]/F:hfef[10]/F:cm[10]/I:chm[10]/I:nhm[10]/I:cem[10]/I:nem[10]/I:mum[10]/I:hfhm[10]/I:hfem[10]/I:jecFactor[10]/F:jecUnc[10]/F:csv[10]/F:genPx[10]/F:genPy[10]/F:genPz[10]/F:genPt[10]/F:genEta[10]/F:genPhi[10]/F:genMass[10]/F:genEMF[10]/F:genHadF[10]/F:genInvF[10]/F:genAux[10]/F");
@@ -1250,47 +811,11 @@ bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent, const edm::EventS
 
 ////////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------
-////////////////////////////////////////////////////////////////////////////
-
-bool UFDiMuonsAnalyzer::isPreselected(const pat::Muon& muon,
-                                      edm::Handle<reco::BeamSpot> beamSpotHandle)
-{
-// Most basic type cuts on the muons tested here
-// Currently only checks if the muon is at least a tracker muon
-
-  bool pass=false;
-
-  if (_isVerbose) {
-    std::cout<< "is Global?"     << muon.isGlobalMuon()     << std::endl;
-    std::cout<< "is Tracker?"    << muon.isTrackerMuon()    << std::endl;
-    std::cout<< "is StandAlone?" << muon.isStandAloneMuon() << std::endl;
-  }
-
-  // reconstruction cuts
-  if (!muon.isGlobalMuon()  && _isGlobal ) return pass; // gbl muon
-  if (!muon.isTrackerMuon() && _isTracker) return pass; // trk muon
-
-  // do not accept muons which are standalone only
-  // cannot get the cocktail fit which needs at least tracker...
-  if(!muon.isGlobalMuon() && !muon.isTrackerMuon()) return pass;
-  
-  // if all the cuts are passed
-  pass=true;
-  return pass;
-  
-}
-
-////////////////////////////////////////////////////////////////////////////
-//-------------------------------------------------------------------------
 /////////////////////////////////////////////////////////////////////////////
 
-bool UFDiMuonsAnalyzer::passKinCuts(const pat::Muon& muon,
-                                    edm::Handle<reco::BeamSpot> beamSpotHandle)
+bool UFDiMuonsAnalyzer::passBasicMuonSelection(const pat::Muon& muon, edm::Handle<reco::BeamSpot> beamSpotHandle)
 {
-// Most basic kinematic cuts on the muons tested here
-// Redundantly checks that the muon is at least a tracker muon
-// Check that pt is greater than ptmin specified in the python config file 
-// Check that the muon has eta less than eta max specified in python config file
+// Most basic cuts on the muons tested here: global mu, tracker mu, pt, eta
   
   bool passKinCuts=false;
   
@@ -1366,62 +891,248 @@ UFDiMuonsAnalyzer::MuonPairs const UFDiMuonsAnalyzer::GetMuonPairs(pat::MuonColl
 //-- ----------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////
 
-void UFDiMuonsAnalyzer::initMuon(_MuonInfo& muon) 
+void UFDiMuonsAnalyzer::initMuons(_MuonInfo& muons) 
 {
 // initialize values in the muon info data structure
+  for(unsigned int i=0; i<N_MU_INFO; i++)
+  {
+      muons.nMuons = -999;
+      muons.nSelectedMuons = -999;
+      muons.nMuonPairs = -999;
 
-  muon.isTracker    = -999;
-  muon.isStandAlone = -999;
-  muon.isGlobal     = -999;
-
-  muon.isTightMuon    = -999;
-  muon.isMediumMuon   = -999;
-  muon.isLooseMuon    = -999;
-
-  muon.charge = -999;
-  muon.pt     = -999;
-  muon.eta    = -999; 
-  muon.phi    = -999;
-  
-  muon.d0_BS= -999;
-  muon.dz_BS= -999;
-  
-  muon.d0_PV= -999;
-  muon.dz_PV= -999;
-  
-  muon.trackIsoSumPt     = -999;
-  muon.trackIsoSumPtCorr = -999;
-  muon.hcalIso           = -999;
-  muon.ecalIso           = -999;
-  muon.relCombIso        = -999;
-
-  muon.isPFMuon = -999;
-
-  muon.pfPt  = -999;
-  muon.pfEta = -999;
-  muon.pfPhi = -999;
-
-  muon.sumChargedHadronPtR03   = -999;
-  muon.sumChargedParticlePtR03 = -999;
-  muon.sumNeutralHadronEtR03   = -999;
-  muon.sumPhotonEtR03          = -999;
-  muon.sumPUPtR03              = -999;
-  
-  muon.sumChargedHadronPtR04   = -999;
-  muon.sumChargedParticlePtR04 = -999;
-  muon.sumNeutralHadronEtR04   = -999;
-  muon.sumPhotonEtR04          = -999;
-  muon.sumPUPtR04              = -999;
-
-  for (unsigned int iTrigger=0;iTrigger<3;iTrigger++) {
-    muon.isHltMatched[iTrigger] = -999;
-    muon.hltPt[iTrigger] = -999;
-    muon.hltEta[iTrigger] = -999;
-    muon.hltPhi[iTrigger] = -999;
+      muons.isTracker[i]    = -999;
+      muons.isStandAlone[i] = -999;
+      muons.isGlobal[i]     = -999;
+    
+      muons.isTightMuon[i]    = -999;
+      muons.isMediumMuon[i]   = -999;
+      muons.isLooseMuon[i]    = -999;
+    
+      muons.charge[i] = -999;
+      muons.pt[i]     = -999;
+      muons.eta[i]    = -999; 
+      muons.phi[i]    = -999;
+      
+      muons.d0_BS[i] = -999;
+      muons.dz_BS[i] = -999;
+      
+      muons.d0_PV[i] = -999;
+      muons.dz_PV[i] = -999;
+      
+      muons.trackIsoSumPt[i]     = -999;
+      muons.trackIsoSumPtCorr[i] = -999;
+      muons.hcalIso[i]           = -999;
+      muons.ecalIso[i]           = -999;
+      muons.relCombIso[i]        = -999;
+    
+      muons.isPFMuon[i] = -999;
+    
+      muons.pfPt[i]  = -999;
+      muons.pfEta[i] = -999;
+      muons.pfPhi[i] = -999;
+    
+      muons.sumChargedHadronPtR03[i]   = -999;
+      muons.sumChargedParticlePtR03[i] = -999;
+      muons.sumNeutralHadronEtR03[i]   = -999;
+      muons.sumPhotonEtR03[i]          = -999;
+      muons.sumPUPtR03[i]              = -999;
+      
+      muons.sumChargedHadronPtR04[i]   = -999;
+      muons.sumChargedParticlePtR04[i] = -999;
+      muons.sumNeutralHadronEtR04[i]   = -999;
+      muons.sumPhotonEtR04[i]          = -999;
+      muons.sumPUPtR04[i]              = -999;
+    
+      for (unsigned int iTrigger=0;iTrigger<N_TRIGGER_INFO;iTrigger++) {
+        muons.isHltMatched[i][iTrigger] = -999;
+        muons.hltPt[i][iTrigger] = -999;
+        muons.hltEta[i][iTrigger] = -999;
+        muons.hltPhi[i][iTrigger] = -999;
+      }
   }
-
 }
 
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+void UFDiMuonsAnalyzer::fillMuon(unsigned int i, pat::Muon& mu, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
+                                 const edm::Event& iEvent, const edm::EventSetup& iSetup) 
+{
+    _muonInfo.isGlobal[i]     = mu.isGlobalMuon(); 
+    _muonInfo.isTracker[i]    = mu.isTrackerMuon(); 
+    _muonInfo.isStandAlone[i] = mu.isStandAloneMuon(); 
+
+    reco::Track track;
+    if      (mu.isGlobalMuon())  track = *(mu.globalTrack());
+    else if (mu.isTrackerMuon()) track = *(mu.innerTrack());
+    else 
+    {
+      std::cout << "ERROR: The muon is NOT global NOR tracker ?!?\n";
+      return ;
+    }
+
+    if(i > N_MU_INFO)
+    {
+      std::cout << "ERROR: Tried to add muon info to an index that is out of bounds.";
+      return;
+    }
+
+    _muonInfo.charge[i] = mu.charge();
+    _muonInfo.pt[i]     = mu.pt();  
+    _muonInfo.ptErr[i]  = track.ptError(); 
+    _muonInfo.eta[i]    = mu.eta(); 
+    _muonInfo.phi[i]    = mu.phi();
+
+    // redundant if the muon is tracker-only muon
+    if (mu.isTrackerMuon()) {
+      _muonInfo.trkPt[i]   = mu.innerTrack()->pt();                    
+      _muonInfo.trkPtErr[i] = mu.innerTrack()->ptError();
+      _muonInfo.trketa[i]  = mu.innerTrack()->eta();                   
+      _muonInfo.trkPhi[i]  = mu.innerTrack()->phi();                   
+    }
+
+    _muonInfo.d0_BS[i]= mu.innerTrack()->dxy( beamSpotHandle->position() );
+    _muonInfo.dz_BS[i]= mu.innerTrack()->dz ( beamSpotHandle->position() );
+
+    reco::Vertex bestVtx1;
+    for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx!=vertices->end(); ++vtx)
+    {
+      if (!vtx->isValid()) continue;
+  
+      _muonInfo.d0_PV[i]= track.dxy( vtx->position() );
+      _muonInfo.dz_PV[i]= track.dz ( vtx->position() );
+      bestVtx1 = *vtx;
+    
+      //exit at the first available vertex
+      break;
+    }
+
+    // type of muon
+    _muonInfo.isTightMuon[i]  =  muon::isTightMuon(mu, bestVtx1);
+    _muonInfo.isMediumMuon[i] =  muon::isMediumMuon(mu);
+    _muonInfo.isLooseMuon[i]  =  muon::isLooseMuon(mu);
+
+    //isolation
+    _muonInfo.trackIsoSumPt[i]    = mu.isolationR03().sumPt;
+    _muonInfo.trackIsoSumPtCorr[i]= mu.isolationR03().sumPt; // no correction with only 1 muon
+    _muonInfo.ecalIso[i]          = mu.isolationR03().emEt;
+    _muonInfo.hcalIso[i]          = mu.isolationR03().hadEt;
+
+    double isovar = mu.isolationR03().sumPt;
+    isovar += mu.isolationR03().hadEt; //tracker + HCAL 
+    isovar /= mu.pt(); // relative combine isolation
+    _muonInfo.relCombIso[i]=isovar;
+
+  
+    // PF Isolation
+    _muonInfo.isPFMuon[i] = mu.isPFMuon();
+    
+    if ( mu.isPFMuon() ) {
+      
+      reco::Candidate::LorentzVector pfmuon = mu.pfP4();
+      
+      _muonInfo.pfPt[i]  = pfmuon.Pt();
+      _muonInfo.pfEta[i] = pfmuon.Eta();
+      _muonInfo.pfPhi[i] = pfmuon.Phi();
+
+      _muonInfo.sumChargedHadronPtR03[i]   = mu.pfIsolationR03().sumChargedHadronPt  ;
+      _muonInfo.sumChargedParticlePtR03[i] = mu.pfIsolationR03().sumChargedParticlePt;
+      _muonInfo.sumNeutralHadronEtR03[i]   = mu.pfIsolationR03().sumNeutralHadronEt  ;
+      _muonInfo.sumPhotonEtR03[i]          = mu.pfIsolationR03().sumPhotonEt         ;
+      _muonInfo.sumPUPtR03[i]              = mu.pfIsolationR03().sumPUPt             ;
+      
+      _muonInfo.sumChargedHadronPtR04[i]   = mu.pfIsolationR04().sumChargedHadronPt  ;
+      _muonInfo.sumChargedParticlePtR04[i] = mu.pfIsolationR04().sumChargedParticlePt;
+      _muonInfo.sumNeutralHadronEtR04[i]   = mu.pfIsolationR04().sumNeutralHadronEt  ;
+      _muonInfo.sumPhotonEtR04[i]          = mu.pfIsolationR04().sumPhotonEt         ;
+      _muonInfo.sumPUPtR04[i]              = mu.pfIsolationR04().sumPUPt             ;
+    }
+
+    // save trigger informations
+    for (unsigned int iTrigger=0;iTrigger<_triggerNames.size();iTrigger++) 
+      _muonInfo.isHltMatched[i][iTrigger] = isHltMatched(iEvent, iSetup, _triggerNames[iTrigger], *_triggerObjsHandle, mu);
+
+    std::cout << std::endl;
+    std::cout << "!!! muonInfo[" << i << "] ..." << std::endl;
+    std::cout << "charge: " << _muonInfo.charge[i] << std::endl;
+    std::cout << "pt: " << _muonInfo.pt[i] << std::endl;
+    std::cout << "eta: " << _muonInfo.eta[i] << std::endl;
+    std::cout << "phi: " << _muonInfo.phi[i] << std::endl;
+    std::cout << std::endl;
+    std::cout << "!!! pat::mu..." << std::endl;
+    std::cout << "charge: " << mu.charge() << std::endl;
+    std::cout << "pt: " << mu.pt() << std::endl;
+    std::cout << "eta: " << mu.eta() << std::endl;
+    std::cout << "phi: " << mu.phi() << std::endl;
+    std::cout << std::endl;
+   
+}
+
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+void UFDiMuonsAnalyzer::fillDimuonCandidate(const UFDiMuonsAnalyzer::MuonPair* pair, const edm::Handle<reco::VertexCollection>& vertices, 
+                                            const edm::Handle<reco::BeamSpot>& beamSpotHandle, const edm::Event& iEvent, const edm::EventSetup& iSetup) 
+{
+    pat::Muon mu1 = pair->first;
+    pat::Muon mu2 = pair->second;
+
+    fillMuon(0, mu1, vertices, beamSpotHandle, iEvent, iSetup);
+    fillMuon(1, mu2, vertices, beamSpotHandle, iEvent, iSetup);
+
+    if( mu1.innerTrack().isNonnull() ){
+      double dEta =      mu1.track()->eta() - mu2.track()->eta();
+      double dPhi = fabs(mu1.track()->phi() - mu2.track()->phi());
+      if( dPhi>3.1415927 ) dPhi = 2.*3.1415927 - dPhi;
+      if( sqrt(dEta*dEta+dPhi*dPhi)<0.3 && _muonInfo.trackIsoSumPt[1]>0.9*mu1.track()->pt() ) 
+        _muonInfo.trackIsoSumPtCorr[0] = _muonInfo.trackIsoSumPt[1] - mu1.track()->pt();
+    }
+
+    if( mu2.innerTrack().isNonnull() ){
+      double dEta =      mu2.track()->eta() - mu1.track()->eta();
+      double dPhi = fabs(mu2.track()->phi() - mu1.track()->phi());
+      if( dPhi>3.1415927 ) dPhi = 2.*3.1415927 - dPhi;
+      if( sqrt(dEta*dEta+dPhi*dPhi)<0.3 && _muonInfo.trackIsoSumPt[0]>0.9*mu2.track()->pt() ) 
+        _muonInfo.trackIsoSumPtCorr[1] = _muonInfo.trackIsoSumPt[0] - mu2.track()->pt();
+    }
+
+    // combine the info for the dimuon candidate
+    TLorentzVector mother=GetLorentzVector(pair); 
+
+    _recoCandMass = mother.M();
+    _recoCandPt   = mother.Pt();
+    _recoCandEta  = mother.PseudoRapidity();
+    _recoCandY    = mother.Rapidity();
+    _recoCandPhi  = mother.Phi();
+
+    _angleDiMuons = acos(-mu1.track()->momentum().Dot(mu2.track()->momentum()/
+                                                      mu1.track()->p()/mu2.track()->p())); 
+    
+    
+    if ( mu1.isPFMuon() && mu2.isPFMuon() ) {
+
+      TLorentzVector muon1_pf, muon2_pf, mother_pf;
+      double const MASS_MUON = 0.105658367; //GeV/c2
+
+      reco::Candidate::LorentzVector pfmuon1 = mu1.pfP4();
+      reco::Candidate::LorentzVector pfmuon2 = mu2.pfP4();
+      
+      muon1_pf.SetPtEtaPhiM(pfmuon1.Pt(), pfmuon1.Eta(), pfmuon1.Phi(), MASS_MUON);
+      muon2_pf.SetPtEtaPhiM(pfmuon2.Pt(), pfmuon2.Eta(), pfmuon2.Phi(), MASS_MUON);
+
+      mother_pf = muon1_pf+muon2_pf;
+      
+      _recoCandMassPF = mother_pf.M();
+      _recoCandPtPF   = mother_pf.Pt();
+                              
+      _recoCandEtaPF  = mother_pf.PseudoRapidity();
+      _recoCandYPF    = mother_pf.Rapidity();
+      _recoCandPhiPF  = mother_pf.Phi();
+    
+    }
+}
 ////////////////////////////////////////////////////////////////////////////
 //-- ----------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////
