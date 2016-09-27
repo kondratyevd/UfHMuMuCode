@@ -303,10 +303,16 @@ private:
   void initGenPart(_genPartInfo& part);
 
   // Methods to fill the structs
-  void fillMuon(unsigned int i, pat::Muon& mu, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
+  void fillMuon(unsigned int i, const pat::Muon& mu, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
                 const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
   void fillDimuonCandidate(const UFDiMuonsAnalyzer::MuonPair* pair, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
                            const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
+  void fillOtherMuons(const UFDiMuonsAnalyzer::MuonPair* pair, const edm::Handle<pat::MuonCollection>& muons,
+                                       const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
+                                       const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
   void fillBosonAndMuDaughters(const reco::Candidate* boson);
 
   // methods to select the muons
@@ -328,6 +334,7 @@ private:
   TLorentzVector const GetLorentzVector(TrackPair const* pair) ;//const; 
 
   static bool sortGenJetFunc(reco::GenJet i, reco::GenJet j);
+  static bool sortMuonFunc(pat::Muon i, pat::Muon j);
 
   //////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////

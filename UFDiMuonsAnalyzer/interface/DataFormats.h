@@ -1,7 +1,10 @@
 // The size of the different arrays
 const unsigned int N_TRIGGER_INFO = 6;
 const unsigned int N_VERTEX_INFO = 20;
+
 const unsigned int N_MU_INFO = 10;
+const unsigned int N_ELECTRON_INFO = 10;
+const unsigned int N_TAU_INFO = 10;
 const unsigned int N_JET_INFO = 10;
 
 

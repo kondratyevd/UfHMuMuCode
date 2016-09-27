@@ -501,6 +501,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
  
     _muonInfo.nMuonPairs++;
     fillDimuonCandidate(&*pair, vertices, beamSpotHandle, iEvent, iSetup);
+    fillOtherMuons(&*pair, muons, vertices, beamSpotHandle, iEvent, iSetup);
 
     // ===========================================================================
     // store everything in a ntuple
@@ -956,7 +957,7 @@ void UFDiMuonsAnalyzer::initMuons(_MuonInfo& muons)
 //-- ----------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////
 
-void UFDiMuonsAnalyzer::fillMuon(unsigned int i, pat::Muon& mu, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
+void UFDiMuonsAnalyzer::fillMuon(unsigned int i, const pat::Muon& mu, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
                                  const edm::Event& iEvent, const edm::EventSetup& iSetup) 
 {
     _muonInfo.isGlobal[i]     = mu.isGlobalMuon(); 
@@ -1053,19 +1054,19 @@ void UFDiMuonsAnalyzer::fillMuon(unsigned int i, pat::Muon& mu, const edm::Handl
     for (unsigned int iTrigger=0;iTrigger<_triggerNames.size();iTrigger++) 
       _muonInfo.isHltMatched[i][iTrigger] = isHltMatched(iEvent, iSetup, _triggerNames[iTrigger], *_triggerObjsHandle, mu);
 
-    std::cout << std::endl;
-    std::cout << "!!! muonInfo[" << i << "] ..." << std::endl;
-    std::cout << "charge: " << _muonInfo.charge[i] << std::endl;
-    std::cout << "pt: " << _muonInfo.pt[i] << std::endl;
-    std::cout << "eta: " << _muonInfo.eta[i] << std::endl;
-    std::cout << "phi: " << _muonInfo.phi[i] << std::endl;
-    std::cout << std::endl;
-    std::cout << "!!! pat::mu..." << std::endl;
-    std::cout << "charge: " << mu.charge() << std::endl;
-    std::cout << "pt: " << mu.pt() << std::endl;
-    std::cout << "eta: " << mu.eta() << std::endl;
-    std::cout << "phi: " << mu.phi() << std::endl;
-    std::cout << std::endl;
+    //std::cout << std::endl;
+    //std::cout << "!!! muonInfo[" << i << "] ..." << std::endl;
+    //std::cout << "charge: " << _muonInfo.charge[i] << std::endl;
+    //std::cout << "pt: " << _muonInfo.pt[i] << std::endl;
+    //std::cout << "eta: " << _muonInfo.eta[i] << std::endl;
+    //std::cout << "phi: " << _muonInfo.phi[i] << std::endl;
+    //std::cout << std::endl;
+    //std::cout << "!!! pat::mu..." << std::endl;
+    //std::cout << "charge: " << mu.charge() << std::endl;
+    //std::cout << "pt: " << mu.pt() << std::endl;
+    //std::cout << "eta: " << mu.eta() << std::endl;
+    //std::cout << "phi: " << mu.phi() << std::endl;
+    //std::cout << std::endl;
    
 }
 
@@ -1133,6 +1134,44 @@ void UFDiMuonsAnalyzer::fillDimuonCandidate(const UFDiMuonsAnalyzer::MuonPair* p
     
     }
 }
+
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+void UFDiMuonsAnalyzer::fillOtherMuons(const UFDiMuonsAnalyzer::MuonPair* pair, const edm::Handle<pat::MuonCollection>& muons, 
+                                       const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle, 
+                                       const edm::Event& iEvent, const edm::EventSetup& iSetup) 
+{
+// Fill the muons that aren't the reco dimuon candidate into the muon info spots other than [0] and [1]
+// Sort the other muons by pt
+
+  pat::Muon mu1 = pair->first;
+  pat::Muon mu2 = pair->second;
+
+  pat::MuonCollection sortedMuons = (*muons);
+  sort(sortedMuons.begin(), sortedMuons.end(), sortMuonFunc);
+
+  unsigned int i=2;
+
+  // pre-selection: just check the muons are at least tracker muons.
+  for (pat::MuonCollection::const_iterator muon = sortedMuons.begin(), muonsEnd = sortedMuons.end(); muon !=muonsEnd; ++muon)
+  {
+    // muon is the same as mu1
+    if (mu1.pt() == (*muon).pt() && mu1.phi() == (*muon).phi() && mu1.eta() == (*muon).eta())
+        continue;
+
+    // muon is the same as mu1
+    if (mu2.pt() == (*muon).pt() && mu2.phi() == (*muon).phi() && mu2.eta() == (*muon).eta())
+        continue;
+
+    // put this muons in the collection
+    if(i<N_MU_INFO) fillMuon(i, *muon, vertices, beamSpotHandle, iEvent, iSetup);
+    else return;
+    i++;
+  }
+}
+
 ////////////////////////////////////////////////////////////////////////////
 //-- ----------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////
@@ -1422,4 +1461,5 @@ void UFDiMuonsAnalyzer::displaySelection() {
 ////////////////////////////////////////////////////////////////////////////
 
 bool UFDiMuonsAnalyzer::sortGenJetFunc(reco::GenJet i, reco::GenJet j){ return (i.pt()>j.pt()); }
+bool UFDiMuonsAnalyzer::sortMuonFunc(pat::Muon i, pat::Muon j){ return (i.pt()>j.pt()); }
 
