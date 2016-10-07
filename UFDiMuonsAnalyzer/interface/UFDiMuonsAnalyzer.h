@@ -309,7 +309,7 @@ private:
   void fillDimuonCandidate(const UFDiMuonsAnalyzer::MuonPair* pair, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
                            const edm::Event& iEvent, const edm::EventSetup& iSetup);
 
-  void fillOtherMuons(const UFDiMuonsAnalyzer::MuonPair* pair, const edm::Handle<pat::MuonCollection>& muons,
+  void fillOtherMuons(const UFDiMuonsAnalyzer::MuonPair* pair, const pat::MuonCollection& muons,
                                        const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
                                        const edm::Event& iEvent, const edm::EventSetup& iSetup);
 

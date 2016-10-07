@@ -381,7 +381,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     sort(sortedGenJets.begin(), sortedGenJets.end(), sortGenJetFunc);
     for(unsigned int i=0; i<sortedGenJets.size(); i++){
       _genJetInfo.nJets++;
-      if( i<10 ){
+      if( i<N_JET_INFO ){
         _genJetInfo.px[i] = sortedGenJets[i].px();
         _genJetInfo.py[i] = sortedGenJets[i].py();
         _genJetInfo.pz[i] = sortedGenJets[i].pz();
@@ -489,6 +489,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   // distance to the Z mass PDG value: the closer the better
   MuonPairs dimuons = GetMuonPairs(&muonsSelected);
 
+  pat::MuonCollection sortedMuons = (*muons);
+  sort(sortedMuons.begin(), sortedMuons.end(), sortMuonFunc);
+
+
   // loop over the candidates
   for (MuonPairs::const_iterator pair= dimuons.begin(); pair != dimuons.end(); ++pair)
   {
@@ -501,7 +505,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
  
     _muonInfo.nMuonPairs++;
     fillDimuonCandidate(&*pair, vertices, beamSpotHandle, iEvent, iSetup);
-    fillOtherMuons(&*pair, muons, vertices, beamSpotHandle, iEvent, iSetup);
+    fillOtherMuons(&*pair, sortedMuons, vertices, beamSpotHandle, iEvent, iSetup);
 
     // ===========================================================================
     // store everything in a ntuple
@@ -1139,7 +1143,7 @@ void UFDiMuonsAnalyzer::fillDimuonCandidate(const UFDiMuonsAnalyzer::MuonPair* p
 //-- ----------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////
 
-void UFDiMuonsAnalyzer::fillOtherMuons(const UFDiMuonsAnalyzer::MuonPair* pair, const edm::Handle<pat::MuonCollection>& muons, 
+void UFDiMuonsAnalyzer::fillOtherMuons(const UFDiMuonsAnalyzer::MuonPair* pair, const pat::MuonCollection& sortedMuons, 
                                        const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle, 
                                        const edm::Event& iEvent, const edm::EventSetup& iSetup) 
 {
@@ -1149,9 +1153,8 @@ void UFDiMuonsAnalyzer::fillOtherMuons(const UFDiMuonsAnalyzer::MuonPair* pair, 
   pat::Muon mu1 = pair->first;
   pat::Muon mu2 = pair->second;
 
-  pat::MuonCollection sortedMuons = (*muons);
-  sort(sortedMuons.begin(), sortedMuons.end(), sortMuonFunc);
-
+  // dimuon candidate muons occupy muonInfo[0] and muonInfo[1]
+  // start adding the other muons at muonInfo[2]
   unsigned int i=2;
 
   // pre-selection: just check the muons are at least tracker muons.
@@ -1161,14 +1164,17 @@ void UFDiMuonsAnalyzer::fillOtherMuons(const UFDiMuonsAnalyzer::MuonPair* pair, 
     if (mu1.pt() == (*muon).pt() && mu1.phi() == (*muon).phi() && mu1.eta() == (*muon).eta())
         continue;
 
-    // muon is the same as mu1
+    // muon is the same as mu2
     if (mu2.pt() == (*muon).pt() && mu2.phi() == (*muon).phi() && mu2.eta() == (*muon).eta())
         continue;
 
-    // put this muons in the collection
-    if(i<N_MU_INFO) fillMuon(i, *muon, vertices, beamSpotHandle, iEvent, iSetup);
+    // put this muon in the collection if the collection is not full and the muon is at least a tracker muon
+    if(i<N_MU_INFO && (*muon).isTrackerMuon()) 
+    {
+        fillMuon(i, *muon, vertices, beamSpotHandle, iEvent, iSetup);
+        i++;
+    }
     else return;
-    i++;
   }
 }
 
@@ -1244,6 +1250,8 @@ void UFDiMuonsAnalyzer::fillBosonAndMuDaughters(const reco::Candidate* boson)
 
   TLorentzVector l1, l2, mother;
   bool moreThanOneLeptPair = false;
+
+  // check mass of particles for daughters to see if muon or not
 
   // Get the daughter muons for the boson 
   for(unsigned int i=0; i<boson->numberOfDaughters(); i++)
@@ -1346,6 +1354,24 @@ void UFDiMuonsAnalyzer::fillBosonAndMuDaughters(const reco::Candidate* boson)
           mu2postFSR = mu2preFSR;
       }
     
+  }
+
+  // no muons found, Z/gamma* decayed to other leptons
+  if(mu1preFSR.pt < 0 && mu1postFSR.pt < 0 && mu2preFSR.pt < 0 && mu2postFSR.pt < 0 && l1.M()!=0 && l2.M()!=0)
+  {
+          // use the mass to let us know what the Z/gamma* decayed to
+          mu1preFSR.pt = -l1.M();
+          mu1preFSR.eta = -l1.M();
+          mu1preFSR.phi = -l1.M();;
+          mu1preFSR.charge = -l1.M();
+
+          mu2preFSR.pt = -l2.M();
+          mu2preFSR.eta = -l2.M();
+          mu2preFSR.phi = -l2.M();;
+          mu2preFSR.charge = -l2.M();
+
+          mu1postFSR = mu1preFSR;
+          mu2postFSR = mu2preFSR;
   }
 
   // fill the appropriate boson and daughters

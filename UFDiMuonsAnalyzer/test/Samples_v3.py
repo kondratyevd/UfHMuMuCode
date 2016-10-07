@@ -141,7 +141,8 @@ background = []
 
 dy_jetsToLL = sample(name="dy_jetsToLL", 
                      dir="/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0-v1/MINIAODSIM",
-                     files = open('sample_file_lists/bg/dy_jetsToLL.files').read().splitlines(),
+                     #files = open('sample_file_lists/bg/dy_jetsToLL.files').read().splitlines(),
+                     files = [],
                      numevents=28696958,
                      globaltag = '80X_mcRun2_asymptotic_2016_miniAODv2_v0');
 
