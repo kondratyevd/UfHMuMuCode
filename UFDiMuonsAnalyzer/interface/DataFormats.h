@@ -107,6 +107,32 @@ typedef struct {
 
 } _MuonInfo;
 
+// electron info
+typedef struct {
+
+  int nElectrons;
+
+  // electron cut based IDs
+  int isTightElectron[N_ELECTRON_INFO];
+  int isMediumElectron[N_ELECTRON_INFO];
+  int isLooseElectron[N_ELECTRON_INFO];
+  int isVetoElectron[N_ELECTRON_INFO];
+
+  int charge[N_ELECTRON_INFO];
+  float pt[N_ELECTRON_INFO];
+  float eta[N_ELECTRON_INFO];
+  float phi[N_ELECTRON_INFO];
+
+  float d0_PV[N_ELECTRON_INFO];
+  float dz_PV[N_ELECTRON_INFO];
+  
+  float sumChargedHadronPtR03[N_ELECTRON_INFO];   // sum-pt of charged Hadron 
+  float sumNeutralHadronEtR03[N_ELECTRON_INFO];   // sum pt of neutral hadrons
+  float sumPhotonEtR03[N_ELECTRON_INFO];          // sum pt of PF photons
+  float sumPUPtR03[N_ELECTRON_INFO];              // sum pt of charged Particles not from PV  (for Pu corrections)
+
+} _ElectronInfo;
+
 //MET
 typedef struct {
   float px;

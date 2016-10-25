@@ -38,6 +38,12 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):_numEvent
   _genEvtInfoToken = consumes<GenEventInfoProduct>(edm::InputTag("generator"));
   _PupInfoToken = consumes< std::vector<PileupSummaryInfo> >(edm::InputTag("slimmedAddPileupInfo"));
 
+  _electronCollToken = consumes<pat::ElectronCollection>(iConfig.getParameter<edm::InputTag>("electronColl"));
+  _electronCutBasedIdVetoToken = consumes< edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("electronCutBasedIdVeto"));
+  _electronCutBasedIdLooseToken = consumes< edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("electronCutBasedIdLoose"));
+  _electronCutBasedIdMediumToken = consumes< edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("electronCutBasedIdMedium"));
+  _electronCutBasedIdTightToken = consumes< edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("electronCutBasedIdTight"));
+
   // Get boolean switches from config file
   _isVerbose	= iConfig.getUntrackedParameter<bool>("isVerbose", false);
   _isMonteCarlo	= iConfig.getParameter<bool>("isMonteCarlo");
@@ -412,7 +418,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     countMuons++;
 
     // basic cuts
-    if (!passBasicMuonSelection(*muon, beamSpotHandle)) {
+    if (!passBasicMuonSelection(*muon)) {
       if (_isVerbose) std::cout << "Muon NOT passing basic selections\n"; 
       continue;
     }
@@ -818,7 +824,7 @@ bool UFDiMuonsAnalyzer::isHltMatched(const edm::Event& iEvent, const edm::EventS
 //-------------------------------------------------------------------------
 /////////////////////////////////////////////////////////////////////////////
 
-bool UFDiMuonsAnalyzer::passBasicMuonSelection(const pat::Muon& muon, edm::Handle<reco::BeamSpot> beamSpotHandle)
+bool UFDiMuonsAnalyzer::passBasicMuonSelection(const pat::Muon& muon)
 {
 // Most basic cuts on the muons tested here: global mu, tracker mu, pt, eta
   

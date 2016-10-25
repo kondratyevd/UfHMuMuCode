@@ -201,6 +201,9 @@ public:
   // array of muons, 0,1 locations are the dimuon candidate
   _MuonInfo    _muonInfo;
 
+  // array of electrons
+  _ElectronInfo    _electronInfo;
+
   // generator level info Gamma pre-FSR
   _genPartInfo _genGpreFSR;
   _TrackInfo   _genM1GpreFSR,_genM2GpreFSR;
@@ -299,6 +302,7 @@ private:
 
   // init the structs, should make these into objects
   void initMuons(_MuonInfo& muon);
+  void initElectrons(_MuonInfo& muon);
   void initTrack(_TrackInfo& track);
   void initGenPart(_genPartInfo& part);
 
@@ -315,15 +319,17 @@ private:
 
   void fillBosonAndMuDaughters(const reco::Candidate* boson);
 
-  // methods to select the muons
+  void fillElectron(unsigned int i, const pat::Electron& e, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
+                    const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
+  // methods for selection
   bool isHltPassed (const edm::Event&, const edm::EventSetup&, const std::vector<std::string> triggerNames);
   bool isHltMatched(const edm::Event&, const edm::EventSetup&, 
                     const std::string& triggerName, 
                     const pat::TriggerObjectStandAloneCollection& triggerObjects,
                     const pat::Muon&);
 
-  bool passBasicMuonSelection(const pat::Muon& muon,
-                   edm::Handle<reco::BeamSpot> beamSpotHandle);
+  bool passBasicMuonSelection(const pat::Muon& muon);
 
   void displaySelection();
 
@@ -335,6 +341,7 @@ private:
 
   static bool sortGenJetFunc(reco::GenJet i, reco::GenJet j);
   static bool sortMuonFunc(pat::Muon i, pat::Muon j);
+  static bool sortElectronFunc(pat::Electron i, pat::Electron j);
 
   //////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////
@@ -372,11 +379,18 @@ private:
   edm::EDGetTokenT<std::vector<pat::Jet>> _pfJetsToken;
   edm::EDGetTokenT<reco::GenJetCollection> _genJetsToken;
 
+  // electrons
+  edm::EDGetTokenT<pat::ElectronCollection> _electronCollToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdVetoToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdLooseToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdMediumToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdTightToken;
+
   ///////////////////////////////////////////////////////////
   // Basic types  ===========================================
   //////////////////////////////////////////////////////////
 
-  // Selection Criteria given in config file
+  // Selection Criteria for dimuon pair muons given in config file
   double _isGlobal;
   double _isTracker;
   double _ptMin;

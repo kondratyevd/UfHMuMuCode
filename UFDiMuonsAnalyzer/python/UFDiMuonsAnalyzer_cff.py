@@ -17,7 +17,7 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          etaMax      = cms.double(2.4),
     
                          # HLT trigger info
-                         checkTrigger = cms.bool(True),    # For MC we don't require that at least one HLT trigger in the list fires
+                         checkTrigger = cms.bool(True),    # For Data we require that at least one HLT trigger in the list fires
                          processName  = cms.string("HLT"),
                          triggerNames = cms.vstring("HLT_IsoMu20", "HLT_IsoTkMu20","HLT_IsoMu22", "HLT_IsoTkMu22","HLT_IsoMu24","HLT_IsoTkMu24"), # up to 6 trigger names
 
@@ -41,11 +41,11 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          btagNames      = cms.untracked.vstring(["pfCombinedInclusiveSecondaryVertexV2BJetTags"]),
 
                          # Electrons
-                         electronColl              = cms.InputTag("slimmedElectrons"),
-                         electronCutBasedId_veto   = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-veto"),
-                         electronCutBasedId_loose  = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-loose"),
-                         electronCutBasedId_medium = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-medium"),
-                         electronCutBasedId_tight  = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-tight"),
+                         electronColl             = cms.InputTag("slimmedElectrons"),
+                         electronCutBasedIdVeto   = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-veto"),
+                         electronCutBasedIdLoose  = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-loose"),
+                         electronCutBasedIdMedium = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-medium"),
+                         electronCutBasedIdTight  = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-tight"),
 
                          # Taus
                          tauColl    = cms.InputTag("slimmedTaus"),
