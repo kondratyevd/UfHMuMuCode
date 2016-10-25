@@ -19,7 +19,7 @@ process = cms.Process("UFDiMuonsAnalyzer")
 
 process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 1
+process.MessageLogger.cerr.FwkReport.reportEvery = 100
 ##process.MessageLogger.destinations.append("detailedInfo")
 ##process.MessageLogger.detailedInfo = cms.untracked.PSet(
 ##    threshold = cms.untracked.string("INFO"),
@@ -148,11 +148,23 @@ else:
 process.dimuons = process.DiMuons.clone()
 #process.dimuons.pfJetsTag = cms.InputTag("cleanJets")
 
+# /////////////////////////////////////////////////////////////
+# Electron Cut Based IDs
+# /////////////////////////////////////////////////////////////
+
+from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+
+dataFormat = DataFormat.MiniAOD
+switchOnVIDElectronIdProducer(process, dataFormat)
+
+my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Summer16_80X_V1_cff'
+                ]
+
+for idmod in my_id_modules:
+    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
 # /////////////////////////////////////////////////////////////
 # Set the order of operations
 # /////////////////////////////////////////////////////////////
 
-process.p = cms.Path(
-                     process.dimuons
-                     )
+process.p = cms.Path(process.egmGsfElectronIDSequence*process.dimuons)
