@@ -37,6 +37,7 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):_numEvent
   _genJetsToken = consumes<reco::GenJetCollection>(iConfig.getParameter<edm::InputTag>("genJetsTag"));
   _genEvtInfoToken = consumes<GenEventInfoProduct>(edm::InputTag("generator"));
   _PupInfoToken = consumes< std::vector<PileupSummaryInfo> >(edm::InputTag("slimmedAddPileupInfo"));
+
   _btagNames = iConfig.getParameter<std::vector<std::string> >("btagNames");
 
   _electronCollToken = consumes< edm::View<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronColl"));
@@ -161,7 +162,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByToken(_primaryVertexToken, vertices);
  
-  for (unsigned int i=0;i<N_VERTEX_INFO;i++) {
+  for (unsigned int i=0;i<_vertexInfo.arraySize;i++) {
     _vertexInfo.isValid[i]  = 0;
     _vertexInfo.x[i]        = -999;     
     _vertexInfo.y[i]        = -999;     
@@ -284,7 +285,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     if( e->pt() < 10 ) // keep only electrons above 10 GeV
       continue;
 
-    if(i < N_ELECTRON_INFO)
+    if(i < _electronInfo.arraySize)
         fillElectron(i, e, vertices, iEvent);
     
     _electronInfo.nElectrons++; 
@@ -325,7 +326,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     for(unsigned int i=0; i<jets->size(); i++)
     {
       _pfJetInfo.nJets++;
-      if( i<N_JET_INFO )
+      if( i<_pfJetInfo.arraySize )
       {
         const pat::Jet& jet = jets->at(i);
         _pfJetInfo.px[i] = jet.px();
@@ -335,6 +336,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
         _pfJetInfo.eta[i]= jet.eta();
         _pfJetInfo.phi[i]= jet.phi();
         _pfJetInfo.mass[i]  = jet.mass();
+        _pfJetInfo.charge[i]  = jet.charge();
+        _pfJetInfo.isB[i]  = jet.bDiscriminator(_btagNames[0]);
         _pfJetInfo.partonFlavour[i] = jet.partonFlavour();
         // Energy Fractions
         _pfJetInfo.chf[i]  = jet.chargedHadronEnergyFraction();
@@ -366,7 +369,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
         //PAT matched Generator Jet
         const reco::GenJet* genJet = jet.genJet();
         if (genJet != NULL)
-          {
+        {
             _pfJetInfo.genMatched[i] = true;
             _pfJetInfo.genPx[i] = genJet->px();
             _pfJetInfo.genPy[i] = genJet->py();
@@ -381,9 +384,9 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
             _pfJetInfo.genInvF[i]  = genJet->invisibleEnergy()/genJetEnergy;
             _pfJetInfo.genAuxF[i]  = genJet->auxiliaryEnergy()/genJetEnergy;
 
-          }
+        }
         else
-          {
+        {
             _pfJetInfo.genMatched[i] = false;
             _pfJetInfo.genPx[i] =-1;
             _pfJetInfo.genPy[i] =-1;
@@ -396,7 +399,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
             _pfJetInfo.genHadF[i]  =-1;
             _pfJetInfo.genInvF[i]  =-1;
             _pfJetInfo.genAuxF[i]  =-1;
-          }
+        }
 
         //delete genJet;	  
       
@@ -415,7 +418,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     sort(sortedGenJets.begin(), sortedGenJets.end(), sortGenJetFunc);
     for(unsigned int i=0; i<sortedGenJets.size(); i++){
       _genJetInfo.nJets++;
-      if( i<N_JET_INFO ){
+      if( i<_genJetInfo.arraySize ){
         _genJetInfo.px[i] = sortedGenJets[i].px();
         _genJetInfo.py[i] = sortedGenJets[i].py();
         _genJetInfo.pz[i] = sortedGenJets[i].pz();
@@ -484,8 +487,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 
   _angleDiMuons = -999;
 
-  _muonInfo.nMuons = countMuons;
-  _muonInfo.nSelectedMuons = muonsSelected.size();
+  _muonInfo.nMuons = muonsSelected.size();
   _muonInfo.nMuonPairs = 0;
 
   // Zero Muons /////////////////////////////////////////////
@@ -562,61 +564,13 @@ void UFDiMuonsAnalyzer::beginJob()
 
   // eventInfo;
   // set up the _outTree branches
-  _outTree->Branch( "eventInfo",  &_eventInfo, "run/I:lumi/I:event/L:bx/I:orbit/I");
-  
-  // rho
-  _outTree->Branch("rho"  ,            &_rho,              "rho/F"             );
-  _outTree->Branch("rho25",            &_rho25,            "rho25/F"           );
-  _outTree->Branch("rho25asHtoZZto4l", &_rho25asHtoZZto4l, "rho25asHtoZZto4l/F");
+  _outTree->Branch("eventInfo",  &_eventInfo, _eventInfo.getVarString());
+  _outTree->Branch("vertexInfo", &_vertexInfo, _vertexInfo.getVarString());
+  _outTree->Branch("recoMuons", &_muonInfo, _muonInfo.getVarString()); 
 
-  _outTree->Branch("vertexInfo", &_vertexInfo, "nVertices/I:isValid[20]/I:"
-		   "x[20]/F:y[20]/F:z[20]/F:xErr[20]/F:yErr[20]/F:zErr[20]/F:"
-		   "chi2[20]/F:ndf[20]/I:normChi2[20]/F");
+  _outTree->Branch("recoElectrons", &_electronInfo, _electronInfo.getVarString()); 
 
-  _outTree->Branch("recoMuons", &_muonInfo, 
-                   "nMuons/I:nSelectedMuons/I:nMuonPairs/I:"
-                   "isTracker[10]/I:isStandAlone[10]/I:isGlobal[10]/I:"
-                   "isTightMuon[10]/I:isMediumMuon[10]/I:isLooseMuon[10]/I:"
-                   "charge[10]/I:pt[10]/F:ptErr[10]/F:eta[10]/F:phi[10]/F:"
-                   "trkPt[10]/F:trkPtErr[10]/F:trkEta[10]/F:trkPhi[10]/F:"
-                   "d0_BS[10]/F:dz_BS[10]/F:"
-                   "d0_PV[10]/F:dz_PV[10]/F:"
-                   "trackIsoSumPt[10]/F:"
-                   "trackIsoSumPtCorr[10]/F:"      
-                   "hcalIso[10]/F:"
-                   "ecalIso[10]/F:"
-                   "relCombIso[10]/F:"
-                   "isPFMuon[10]/I:"
-                   "pfPt[10]/F:"
-                   "pfEta[10]/F:"
-                   "pfPhi[10]/F:"
-                   "sumChargedHadronPtR03[10]/F:"
-                   "sumChargedParticlePtR03[10]/F:"
-                   "sumNeutralHadronEtR03[10]/F:"
-                   "sumPhotonEtR03[10]/F:"
-                   "sumPUPtR03[10]/F:"
-                   "sumChargedHadronPtR04[10]/F:"
-                   "sumChargedParticlePtR04[10]/F:"
-                   "sumNeutralHadronEtR04[10]/F:"
-                   "sumPhotonEtR04[10]/F:"
-                   "sumPUPtR04[10]/F:"
-                   "isHltMatched[10][6]/I:"
-                   "hltPt[10][6]/F:"
-                   "hltEta[10][6]/F:"
-                   "hltPhi[10][6]/F");
-
-  _outTree->Branch("recoElectrons", &_electronInfo, 
-                   "nElectrons/I:"
-                   "isTightElectron[10]/I:isMediumElectron[10]/I:isLooseElectron[10]/I:isVetoElectron[10]/I:"
-                   "charge[10]/I:pt[10]/F:eta[10]/F:phi[10]/F:"
-                   "d0_PV[10]/F:dz_PV[10]/F:"
-                   "isPFElectron[10]/I:"
-                   "sumChargedHadronPtR03[10]/F:"
-                   "sumNeutralHadronEtR03[10]/F:"
-                   "sumPhotonEtR03[10]/F:"
-                   "sumPUPtR03[10]/F");
-
-  _outTree->Branch("hltPaths",    &_triggerNames);
+  _outTree->Branch("hltPaths", &_triggerNames);
 
   // mass and pt for the fit
   _outTree->Branch("recoCandMass", &_recoCandMass, "recoCandMass/F");
@@ -630,49 +584,49 @@ void UFDiMuonsAnalyzer::beginJob()
   _outTree->Branch("recoCandEtaPF" , &_recoCandEtaPF , "recoCandEtaPF/F");
   _outTree->Branch("recoCandYPF"   , &_recoCandYPF   , "recoCandYPF/F");
   _outTree->Branch("recoCandPhiPF" , &_recoCandPhiPF , "recoCandPhiPF/F");
+  _outTree->Branch("angleDiMuons"  , &_angleDiMuons  , "angleDiMuons/F");
 
-  _outTree->Branch("angleDiMuons",        &_angleDiMuons       ,"angleDiMuons/F");
+  _outTree->Branch("met", &_metInfo, _metInfo.getVarString());
 
-  _outTree->Branch("met",    &_metInfo,   "px/F:py/F:pt/F:phi/F:sumEt/F");
-  _outTree->Branch("pfJets", &_pfJetInfo, "nJets/I:px[10]/F:py[10]/F:pz[10]/F:pt[10]/F:eta[10]/F:phi[10]/F:mass[10]/F:charge[10]/I:partonFlavour[10]:chf[10]/F:nhf[10]/F:cef[10]/F:nef[10]/F:muf[10]/F:hfhf[10]/F:hfef[10]/F:cm[10]/I:chm[10]/I:nhm[10]/I:cem[10]/I:nem[10]/I:mum[10]/I:hfhm[10]/I:hfem[10]/I:jecFactor[10]/F:jecUnc[10]/F:csv[10]/F:genPx[10]/F:genPy[10]/F:genPz[10]/F:genPt[10]/F:genEta[10]/F:genPhi[10]/F:genMass[10]/F:genEMF[10]/F:genHadF[10]/F:genInvF[10]/F:genAux[10]/F");
+  _outTree->Branch("pfJets", &_pfJetInfo, _pfJetInfo.getVarString());
 
   // MC information
   if (_isMonteCarlo) {
 
      // Off shell gamma block
-    _outTree->Branch("genGpreFSR",  &_genGpreFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
-    _outTree->Branch("genM1GpreFSR",&_genM1GpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
-    _outTree->Branch("genM2GpreFSR",&_genM2GpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genGpreFSR",  &_genGpreFSR,  _genGpreFSR.getVarString());
+    _outTree->Branch("genM1GpreFSR",&_genM1GpreFSR,_genM1GpreFSR.getVarString());
+    _outTree->Branch("genM2GpreFSR",&_genM2GpreFSR,_genM2GpreFSR.getVarString());
 
-    _outTree->Branch("genGpostFSR",  &_genGpostFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
-    _outTree->Branch("genM1GpostFSR",&_genM1GpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
-    _outTree->Branch("genM2GpostFSR",&_genM2GpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genGpostFSR",  &_genGpostFSR, _genGpostFSR.getVarString());
+    _outTree->Branch("genM1GpostFSR",&_genM1GpostFSR, _genM1GpostFSR.getVarString());
+    _outTree->Branch("genM2GpostFSR",&_genM2GpostFSR, _genM2GpostFSR.getVarString());
 
     // Z block
-    _outTree->Branch("genZpreFSR",  &_genZpreFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
-    _outTree->Branch("genM1ZpreFSR",&_genM1ZpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
-    _outTree->Branch("genM2ZpreFSR",&_genM2ZpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genZpreFSR",  &_genZpreFSR, _genZpreFSR.getVarString());
+    _outTree->Branch("genM1ZpreFSR",&_genM1ZpreFSR, _genM1ZpreFSR.getVarString());
+    _outTree->Branch("genM2ZpreFSR",&_genM2ZpreFSR, _genM2ZpreFSR.getVarString());
 
-    _outTree->Branch("genZpostFSR",  &_genZpostFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
-    _outTree->Branch("genM1ZpostFSR",&_genM1ZpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
-    _outTree->Branch("genM2ZpostFSR",&_genM2ZpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genZpostFSR",  &_genZpostFSR, _genZpostFSR.getVarString());
+    _outTree->Branch("genM1ZpostFSR",&_genM1ZpostFSR, _genM1ZpostFSR.getVarString());
+    _outTree->Branch("genM2ZpostFSR",&_genM2ZpostFSR, _genM2ZpostFSR.getVarString());
 
     // W block
-    _outTree->Branch("genWpreFSR",  &_genWpreFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
-    _outTree->Branch("genMWpreFSR", &_genMWpreFSR ,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
-    _outTree->Branch("genWpostFSR",  &_genWpostFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
-    _outTree->Branch("genMWpostFSR",&_genMWpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genWpreFSR",  &_genWpreFSR, _genWpreFSR.getVarString());
+    _outTree->Branch("genMWpreFSR", &_genMWpreFSR , _genMWpreFSR.getVarString());
+    _outTree->Branch("genWpostFSR",  &_genWpostFSR, _genWpostFSR.getVarString());
+    _outTree->Branch("genMWpostFSR",&_genMWpostFSR, _genMWpostFSR.getVarString());
 
     // H block
-    _outTree->Branch("genHpreFSR",  &_genHpreFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
-    _outTree->Branch("genM1HpreFSR",&_genM1HpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
-    _outTree->Branch("genM2HpreFSR",&_genM2HpreFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genHpreFSR",  &_genHpreFSR, _genHpreFSR.getVarString());
+    _outTree->Branch("genM1HpreFSR",&_genM1HpreFSR, _genM1HpreFSR.getVarString());
+    _outTree->Branch("genM2HpreFSR",&_genM2HpreFSR, _genM2HpreFSR.getVarString());
 
-    _outTree->Branch("genHpostFSR",  &_genHpostFSR  ,"charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
-    _outTree->Branch("genM1HpostFSR",&_genM1HpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
-    _outTree->Branch("genM2HpostFSR",&_genM2HpostFSR,"charge/I:pt/F:ptErr/F:eta/F:phi/F");
+    _outTree->Branch("genHpostFSR",  &_genHpostFSR, _genHpostFSR.getVarString());
+    _outTree->Branch("genM1HpostFSR",&_genM1HpostFSR, _genM1HpostFSR.getVarString());
+    _outTree->Branch("genM2HpostFSR",&_genM2HpostFSR, _genM2HpostFSR.getVarString());
 
-    _outTree->Branch("genJets", &_genJetInfo, "nJets/I:px[10]/F:py[10]/F:pz[10]/F:pt[10]/F:eta[10]/F:phi[10]/F:mass[10]/F:charge[10]/I");
+    _outTree->Branch("genJets", &_genJetInfo, _genJetInfo.getVarString());
 
     _outTree->Branch("nPU", 	  &_nPU   	,"nPU/I");              
     _outTree->Branch("genWeight", &_genWeight   ,"genWeight/I");              
@@ -942,12 +896,11 @@ UFDiMuonsAnalyzer::MuonPairs const UFDiMuonsAnalyzer::GetMuonPairs(pat::MuonColl
 void UFDiMuonsAnalyzer::initMuons(_MuonInfo& muons) 
 {
 // initialize values in the muon info data structure
-  for(unsigned int i=0; i<N_MU_INFO; i++)
-  {
-      muons.nMuons = -999;
-      muons.nSelectedMuons = -999;
-      muons.nMuonPairs = -999;
+  muons.nMuons = -999;
+  muons.nMuonPairs = -999;
 
+  for(unsigned int i=0; i<muons.arraySize; i++)
+  {
       muons.isTracker[i]    = -999;
       muons.isStandAlone[i] = -999;
       muons.isGlobal[i]     = -999;
@@ -991,7 +944,7 @@ void UFDiMuonsAnalyzer::initMuons(_MuonInfo& muons)
       muons.sumPhotonEtR04[i]          = -999;
       muons.sumPUPtR04[i]              = -999;
     
-      for (unsigned int iTrigger=0;iTrigger<N_TRIGGER_INFO;iTrigger++) {
+      for (unsigned int iTrigger=0;iTrigger<muons.triggerArraySize;iTrigger++) {
         muons.isHltMatched[i][iTrigger] = -999;
         muons.hltPt[i][iTrigger] = -999;
         muons.hltEta[i][iTrigger] = -999;
@@ -1036,7 +989,7 @@ void UFDiMuonsAnalyzer::initGenPart(_genPartInfo& part)
 void UFDiMuonsAnalyzer::initElectrons(_ElectronInfo& electrons) 
 {
 // initialize values in the muon info data structure
-  for(unsigned int i=0; i<N_ELECTRON_INFO; i++)
+  for(unsigned int i=0; i<electrons.arraySize; i++)
   {
       electrons.nElectrons = -999;
 
@@ -1044,6 +997,7 @@ void UFDiMuonsAnalyzer::initElectrons(_ElectronInfo& electrons)
       electrons.isMediumElectron[i]   = -999;
       electrons.isLooseElectron[i]    = -999;
       electrons.isVetoElectron[i]     = -999;
+      electrons.passConversionVeto[i] = -999;
     
       electrons.charge[i] = -999;
       electrons.pt[i]     = -999;
@@ -1053,6 +1007,8 @@ void UFDiMuonsAnalyzer::initElectrons(_ElectronInfo& electrons)
       electrons.d0_PV[i] = -999;
       electrons.dz_PV[i] = -999;
     
+      electrons.missingInnerHits[i] = -999;
+
       electrons.isPFElectron[i]            = -999;
       electrons.sumChargedHadronPtR03[i]   = -999;
       electrons.sumNeutralHadronEtR03[i]   = -999;
@@ -1081,7 +1037,7 @@ void UFDiMuonsAnalyzer::fillMuon(unsigned int i, const pat::Muon& mu, const edm:
       return ;
     }
 
-    if(i > N_MU_INFO)
+    if(i > _muonInfo.arraySize)
     {
       std::cout << "ERROR: Tried to add muon info to an index that is out of bounds.";
       return;
@@ -1273,7 +1229,7 @@ void UFDiMuonsAnalyzer::fillOtherMuons(const UFDiMuonsAnalyzer::MuonPair* pair, 
         continue;
 
     // put this muon in the collection if the collection is not full and the muon is at least a tracker muon
-    if(i<N_MU_INFO && (*muon).isTrackerMuon()) 
+    if(i<_muonInfo.arraySize && (*muon).isTrackerMuon()) 
     {
         fillMuon(i, *muon, vertices, beamSpotHandle, iEvent, iSetup);
         i++;
@@ -1556,6 +1512,8 @@ void UFDiMuonsAnalyzer::fillElectron(unsigned int i, const edm::Ptr<pat::Electro
     _electronInfo.isLooseElectron[i]  =  (*eLooseHandle)[e];
     _electronInfo.isVetoElectron[i]   =  (*eVetoHandle)[e];
 
+    _electronInfo.passConversionVeto[i] = e->passConversionVeto();
+
     reco::Vertex bestVtx1;
     for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx!=vertices->end(); ++vtx)
     {
@@ -1568,6 +1526,9 @@ void UFDiMuonsAnalyzer::fillElectron(unsigned int i, const edm::Ptr<pat::Electro
       //exit at the first available vertex
       break;
     }
+   
+    _electronInfo.missingInnerHits[i] = e->gsfTrack()->hitPattern().numberOfHits(reco::HitPattern::MISSING_INNER_HITS);
+
     // PF Isolation
     _electronInfo.isPFElectron[i] = e->isPF();
 
