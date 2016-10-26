@@ -38,19 +38,19 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          # Jets
                          pfJetsTag      = cms.InputTag("slimmedJets"),
                          genJetsTag     = cms.InputTag("slimmedGenJets"),
-                         btagNames      = cms.untracked.vstring(["pfCombinedInclusiveSecondaryVertexV2BJetTags"]),
+                         btagNames      = cms.vstring(["pfCombinedInclusiveSecondaryVertexV2BJetTags"]),
 
                          # Electrons
-                         electronColl              = cms.InputTag("slimmedElectrons"),
-                         electronCutBasedId_veto   = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-veto"),
-                         electronCutBasedId_loose  = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-loose"),
-                         electronCutBasedId_medium = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-medium"),
-                         electronCutBasedId_tight  = cms.untracked.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-tight"),
+                         electronColl             = cms.InputTag("slimmedElectrons"),
+                         electronCutBasedIdVeto   = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-veto"),
+                         electronCutBasedIdLoose  = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-loose"),
+                         electronCutBasedIdMedium = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-medium"),
+                         electronCutBasedIdTight  = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-tight"),
 
                          # Taus
                          tauColl    = cms.InputTag("slimmedTaus"),
-                         tauIDNames = cms.untracked.vstring(["byCombinedIsolationDeltaBetaCorrRaw3Hits", "againstElectronLooseMVA6", "againstElectronVLooseMVA6",
-                                                             "decayModeFindingNewDMs", "byLooseCombinedIsolationDeltaBetaCorr3Hits", 
-                                                             "byMediumCombinedIsolationDeltaBetaCorr3Hits", "byTightCombinedIsolationDeltaBetaCorr3Hits", "againstMuonLoose3", 
-                                                             "againstMuonTight3", "againstElectronVTightMVA6", "againstElectronTightMVA6", "againstElectronMediumMVA6"]),
+                         tauIDNames = cms.vstring(["byCombinedIsolationDeltaBetaCorrRaw3Hits", "againstElectronLooseMVA6", "againstElectronVLooseMVA6",
+                                                   "decayModeFindingNewDMs", "byLooseCombinedIsolationDeltaBetaCorr3Hits", 
+                                                   "byMediumCombinedIsolationDeltaBetaCorr3Hits", "byTightCombinedIsolationDeltaBetaCorr3Hits", "againstMuonLoose3", 
+                                                   "againstMuonTight3", "againstElectronVTightMVA6", "againstElectronTightMVA6", "againstElectronMediumMVA6"]),
                          )

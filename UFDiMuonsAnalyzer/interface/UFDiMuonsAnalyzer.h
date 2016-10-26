@@ -302,7 +302,7 @@ private:
 
   // init the structs, should make these into objects
   void initMuons(_MuonInfo& muon);
-  void initElectrons(_MuonInfo& muon);
+  void initElectrons(_ElectronInfo& electrons);
   void initTrack(_TrackInfo& track);
   void initGenPart(_genPartInfo& part);
 
@@ -319,8 +319,7 @@ private:
 
   void fillBosonAndMuDaughters(const reco::Candidate* boson);
 
-  void fillElectron(unsigned int i, const pat::Electron& e, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
-                    const edm::Event& iEvent, const edm::EventSetup& iSetup);
+  void fillElectron(unsigned int i, const edm::Ptr<pat::Electron>& e, const edm::Handle<reco::VertexCollection>& vertices, const edm::Event& iEvent);
 
   // methods for selection
   bool isHltPassed (const edm::Event&, const edm::EventSetup&, const std::vector<std::string> triggerNames);
@@ -380,7 +379,7 @@ private:
   edm::EDGetTokenT<reco::GenJetCollection> _genJetsToken;
 
   // electrons
-  edm::EDGetTokenT<pat::ElectronCollection> _electronCollToken;
+  edm::EDGetTokenT< edm::View<pat::Electron> > _electronCollToken;
   edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdVetoToken;
   edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdLooseToken;
   edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdMediumToken;
@@ -404,7 +403,10 @@ private:
 
   // More info loaded from the config file
   std::string   _processName;
-  std::vector < std::string > _triggerNames;
+  std::vector<std::string> _triggerNames;
+
+  std::vector<std::string> _btagNames;
+  std::vector<std::string> _tauIDNames;
 
   // Not currently used, since we don't use prescaled triggers with this analysis
   // Can probably delete these vars from the class

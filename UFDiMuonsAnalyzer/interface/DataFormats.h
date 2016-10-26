@@ -15,6 +15,12 @@ typedef struct {
   long long int event;
   int bx;
   int orbit;
+
+  //TString getVarString()
+  //{
+  //    return "run/I:lumi/I:event/L:bx/I:orbit/I";
+  //}
+
 } _EventInfo;
 
 
@@ -117,6 +123,7 @@ typedef struct {
   int isMediumElectron[N_ELECTRON_INFO];
   int isLooseElectron[N_ELECTRON_INFO];
   int isVetoElectron[N_ELECTRON_INFO];
+  int passConversionVeto[N_ELECTRON_INFO];
 
   int charge[N_ELECTRON_INFO];
   float pt[N_ELECTRON_INFO];
@@ -125,7 +132,10 @@ typedef struct {
 
   float d0_PV[N_ELECTRON_INFO];
   float dz_PV[N_ELECTRON_INFO];
-  
+  float missingInnerHits[N_ELECTRON_INFO];
+ 
+  int isPFElectron[N_ELECTRON_INFO]; 
+
   float sumChargedHadronPtR03[N_ELECTRON_INFO];   // sum-pt of charged Hadron 
   float sumNeutralHadronEtR03[N_ELECTRON_INFO];   // sum pt of neutral hadrons
   float sumPhotonEtR03[N_ELECTRON_INFO];          // sum pt of PF photons
