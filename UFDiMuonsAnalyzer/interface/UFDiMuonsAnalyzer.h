@@ -3,9 +3,8 @@
 // UFDiMuonsAnalyzer.h                                   //
 //=========================================================
 //                                                       //
-// v1 coded in 2010 by Gian Pierro. v2 revamps that code.//
-// v2 coded by Andrew Carnes in 2015.                    //
-//                                                       //
+// H->MuMu Analyzer for UF. Handed down and revamped     //
+// too many times.                                       //
 //                                                       //
 //========================================================
 ///////////////////////////////////////////////////////////
@@ -156,36 +155,18 @@ public:
   double static constexpr PDG_WIDTH_Z = 2.4952;       //GeV/c2
   double static constexpr MASS_MUON = 0.105658367;    //GeV/c2
 
+  // meta-data not given in python config file
+  // info gathered from py cfg defined later (py-cfg meta data: isMonteCarlo, triggerNames, tauIDNames, bTagNames)
   int _numEvents;
+  int _sumEventWeights;
 
   // tracks pairs, e.g. cocktail
   typedef std::pair<reco::Track,reco::Track> TrackPair;
   typedef std::vector<TrackPair> TrackPairs;
 
-  // rho
-  float _rho;
-  float _rho25;
-  float _rho25asHtoZZto4l;
-
-  // combined muon-muon info
-  float _recoCandMass;
-  float _recoCandPt;
-  float _recoCandEta; // pseudo rapidity
-  float _recoCandY;   // rapidity
-  float _recoCandPhi; // phi
-
-  // combined muon-muon info
-  float _recoCandMassPF;
-  float _recoCandPtPF;
-  float _recoCandEtaPF; 
-  float _recoCandYPF;   
-  float _recoCandPhiPF; 
-
-  float _angleDiMuons;
-
-  int _nPU;
-  int _genWeight;
-  int _sumEventWeights;
+  // gen info
+  int _nPU;        // true pileup
+  int _genWeight;  // +1 or -1 weight for nlo samples, -1 simulates interference when filling histos
 
 
   ///////////////////////////////////////////////////////////
@@ -199,10 +180,16 @@ public:
   _VertexInfo _vertexInfo;
 
   // array of muons, 0,1 locations are the dimuon candidate
-  _MuonInfo    _muonInfo;
+  _MuonInfo _muonInfo;
+
+  // info about the dimu candidate formed from the 0,1 muons in _muonInfo
+  _DimuCandInfo _dimuCandInfo;
 
   // array of electrons
-  _ElectronInfo    _electronInfo;
+  _ElectronInfo  _electronInfo;
+
+  // array of taus
+  _TauInfo  _tauInfo;
 
   // generator level info Gamma pre-FSR
   _genPartInfo _genGpreFSR;
@@ -300,12 +287,6 @@ private:
 
   edm::Service<TFileService> fs;
 
-  // init the structs, should make these into objects
-  void initMuons(_MuonInfo& muon);
-  void initElectrons(_ElectronInfo& electrons);
-  void initTrack(_TrackInfo& track);
-  void initGenPart(_genPartInfo& part);
-
   // Methods to fill the structs
   void fillMuon(unsigned int i, const pat::Muon& mu, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
                 const edm::Event& iEvent, const edm::EventSetup& iSetup);
@@ -320,6 +301,7 @@ private:
   void fillBosonAndMuDaughters(const reco::Candidate* boson);
 
   void fillElectron(unsigned int i, const edm::Ptr<pat::Electron>& e, const edm::Handle<reco::VertexCollection>& vertices, const edm::Event& iEvent);
+  void fillTau(unsigned int i, const pat::Tau& tau, const edm::Handle<reco::VertexCollection>& vertices, const edm::Event& iEvent);
 
   // methods for selection
   bool isHltPassed (const edm::Event&, const edm::EventSetup&, const std::vector<std::string> triggerNames);
@@ -341,6 +323,7 @@ private:
   static bool sortGenJetFunc(reco::GenJet i, reco::GenJet j);
   static bool sortMuonFunc(pat::Muon i, pat::Muon j);
   static bool sortElectronFunc(pat::Electron i, pat::Electron j);
+  static bool sortTauFunc(pat::Tau i, pat::Tau j);
 
   //////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////
@@ -355,28 +338,8 @@ private:
   // using the handle-token infrastructure. Get the name of the collection from the config
   // and load it into the token, then pass the token and the handle into the Event.
 
-  // Not sure why these are defined here rather than in the analyze function like all the other handles
-  // Should get rid of these handles and put them in the correct place
-  edm::Handle<edm::TriggerResults> _triggerResultsHandle;
-  edm::Handle<pat::TriggerObjectStandAloneCollection> _triggerObjsHandle;
-
-  // trigger
-  edm::EDGetTokenT<edm::TriggerResults> _triggerResultsToken;
-  edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> _triggerObjsToken;
-  
   // muons
   edm::EDGetTokenT<pat::MuonCollection> _muonCollToken;
-  edm::EDGetTokenT<reco::BeamSpot> _beamSpotToken;		
-  edm::EDGetTokenT<reco::GenParticleCollection> _prunedGenParticleToken;		
-  edm::EDGetTokenT<pat::PackedGenParticleCollection> _packedGenParticleToken;		
-  edm::EDGetTokenT<reco::VertexCollection> _primaryVertexToken;		
-  edm::EDGetTokenT<GenEventInfoProduct> _genEvtInfoToken;		
-  edm::EDGetTokenT< std::vector< PileupSummaryInfo > > _PupInfoToken;		
-
-  // jets
-  edm::EDGetTokenT<std::vector<pat::MET>> _metToken;
-  edm::EDGetTokenT<std::vector<pat::Jet>> _pfJetsToken;
-  edm::EDGetTokenT<reco::GenJetCollection> _genJetsToken;
 
   // electrons
   edm::EDGetTokenT< edm::View<pat::Electron> > _electronCollToken;
@@ -384,6 +347,33 @@ private:
   edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdLooseToken;
   edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdMediumToken;
   edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdTightToken;
+
+  // taus
+  edm::EDGetTokenT<pat::TauCollection> _tauCollToken;
+
+  // met, jets
+  edm::EDGetTokenT<std::vector<pat::MET>> _metToken;
+  edm::EDGetTokenT<std::vector<pat::Jet>> _pfJetsToken;
+
+  // Event info
+  edm::EDGetTokenT<reco::BeamSpot> _beamSpotToken;		
+  edm::EDGetTokenT<reco::VertexCollection> _primaryVertexToken;		
+  edm::EDGetTokenT< std::vector< PileupSummaryInfo > > _PupInfoToken;		
+
+  // Gen Info
+  edm::EDGetTokenT<reco::GenJetCollection> _genJetsToken;
+  edm::EDGetTokenT<reco::GenParticleCollection> _prunedGenParticleToken;		
+  edm::EDGetTokenT<pat::PackedGenParticleCollection> _packedGenParticleToken;		
+  edm::EDGetTokenT<GenEventInfoProduct> _genEvtInfoToken;		
+
+  // trigger
+  edm::EDGetTokenT<edm::TriggerResults> _triggerResultsToken;
+  edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> _triggerObjsToken;
+  
+  // Not sure why these are defined here rather than in the analyze function like all the other handles
+  // Should get rid of these handles and put them in the correct place
+  edm::Handle<edm::TriggerResults> _triggerResultsHandle;
+  edm::Handle<pat::TriggerObjectStandAloneCollection> _triggerObjsHandle;
 
   ///////////////////////////////////////////////////////////
   // Basic types  ===========================================
@@ -404,7 +394,6 @@ private:
   // More info loaded from the config file
   std::string   _processName;
   std::vector<std::string> _triggerNames;
-
   std::vector<std::string> _btagNames;
   std::vector<std::string> _tauIDNames;
 

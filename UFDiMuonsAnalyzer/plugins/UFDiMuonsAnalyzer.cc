@@ -27,26 +27,35 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):_numEvent
   _outTreeMetadata = fs->make<TTree>("metadata", "Metadata Tree");
 
   // Get the collections designated from the python config file and load them into the tokens
+  // muons
   _muonCollToken = consumes<pat::MuonCollection>(iConfig.getParameter<edm::InputTag>("muonColl"));
-  _beamSpotToken = consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("beamSpotTag"));
-  _prunedGenParticleToken = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("prunedGenParticleTag" ));
-  _packedGenParticleToken = consumes<pat::PackedGenParticleCollection>(iConfig.getParameter<edm::InputTag>("packedGenParticleTag" ));
-  _primaryVertexToken = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("primaryVertexTag"));
-  _metToken     = consumes<std::vector<pat::MET>>(iConfig.getParameter<edm::InputTag>("metTag"));
-  _pfJetsToken  = consumes<std::vector<pat::Jet>>(iConfig.getParameter<edm::InputTag>("pfJetsTag"));
-  _genJetsToken = consumes<reco::GenJetCollection>(iConfig.getParameter<edm::InputTag>("genJetsTag"));
-  _genEvtInfoToken = consumes<GenEventInfoProduct>(edm::InputTag("generator"));
-  _PupInfoToken = consumes< std::vector<PileupSummaryInfo> >(edm::InputTag("slimmedAddPileupInfo"));
 
-  _btagNames = iConfig.getParameter<std::vector<std::string> >("btagNames");
-
+  // electrons
   _electronCollToken = consumes< edm::View<pat::Electron> >(iConfig.getParameter<edm::InputTag>("electronColl"));
   _electronCutBasedIdVetoToken = consumes< edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("electronCutBasedIdVeto"));
   _electronCutBasedIdLooseToken = consumes< edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("electronCutBasedIdLoose"));
   _electronCutBasedIdMediumToken = consumes< edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("electronCutBasedIdMedium"));
   _electronCutBasedIdTightToken = consumes< edm::ValueMap<bool> >(iConfig.getParameter<edm::InputTag>("electronCutBasedIdTight"));
 
+  // taus
+  _tauCollToken = consumes<pat::TauCollection>(iConfig.getParameter<edm::InputTag>("tauColl"));
   _tauIDNames = iConfig.getParameter<std::vector<std::string> >("tauIDNames");
+
+   // jets
+  _metToken     = consumes<std::vector<pat::MET>>(iConfig.getParameter<edm::InputTag>("metTag"));
+  _pfJetsToken  = consumes<std::vector<pat::Jet>>(iConfig.getParameter<edm::InputTag>("pfJetsTag"));
+  _btagNames = iConfig.getParameter<std::vector<std::string> >("btagNames");
+
+  // event stuff
+  _beamSpotToken = consumes<reco::BeamSpot>(iConfig.getParameter<edm::InputTag>("beamSpotTag"));
+  _primaryVertexToken = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("primaryVertexTag"));
+  _PupInfoToken = consumes< std::vector<PileupSummaryInfo> >(edm::InputTag("slimmedAddPileupInfo"));
+
+  // gen info
+  _genJetsToken = consumes<reco::GenJetCollection>(iConfig.getParameter<edm::InputTag>("genJetsTag"));
+  _prunedGenParticleToken = consumes<reco::GenParticleCollection>(iConfig.getParameter<edm::InputTag>("prunedGenParticleTag" ));
+  _packedGenParticleToken = consumes<pat::PackedGenParticleCollection>(iConfig.getParameter<edm::InputTag>("packedGenParticleTag" ));
+  _genEvtInfoToken = consumes<GenEventInfoProduct>(edm::InputTag("generator"));
 
   // Get boolean switches from config file
   _isVerbose	= iConfig.getUntrackedParameter<bool>("isVerbose", false);
@@ -142,6 +151,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   // RUN/EVENT INFO
   // -----------------------------------------
   
+  _eventInfo.init();
+
   int theRun   = iEvent.id().run();
   int theLumi  = iEvent.luminosityBlock();
   long long int theEvent = iEvent.id().event();
@@ -161,31 +172,19 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByToken(_primaryVertexToken, vertices);
- 
-  for (unsigned int i=0;i<_vertexInfo.arraySize;i++) {
-    _vertexInfo.isValid[i]  = 0;
-    _vertexInfo.x[i]        = -999;     
-    _vertexInfo.y[i]        = -999;     
-    _vertexInfo.z[i]        = -999;     
-    _vertexInfo.xErr[i]     = -999;
-    _vertexInfo.yErr[i]     = -999;
-    _vertexInfo.zErr[i]     = -999;
-    _vertexInfo.chi2[i]     = -999;
-    _vertexInfo.ndf[i]      = -999;
-    _vertexInfo.normChi2[i] = -999;
-  }      
-  _vertexInfo.nVertices   = 0;
-  
-  // primary vertex
 
-  // init (vertices)
-  if (vertices.isValid()) {
-    
+  // init vertices
+  _vertexInfo.init();
+  _vertexInfo.nVertices   = 0;
+
+  if (vertices.isValid()) 
+  {
     //std::cout << "vertex->size():"<< vertices->size() << std::endl;
     int iVertex=0;
     for (reco::VertexCollection::const_iterator vtx = vertices->begin(); vtx!=vertices->end(); ++vtx){
 
-      if (!vtx->isValid()) {
+      if (!vtx->isValid()) 
+      {
         _vertexInfo.isValid[iVertex] = 0;
         continue;
       }
@@ -206,7 +205,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       _vertexInfo.nVertices++;
     }
   }
-  else std::cout << "VertexCollection is NOT valid -> vertex Info NOT filled!\n";
+  else std::cout << "VertexCollection is NOT valid -> vertex Info NOT filled!" << std::endl;
   
   // Get MC Truth Pileup and Generated Weights
   // addPileupInfo for miniAOD version 1 same for AOD
@@ -243,20 +242,20 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   if (_isMonteCarlo) {
 
     // initialize Gamma to default values
-    initGenPart(_genGpreFSR); initTrack(_genM1GpreFSR); initTrack(_genM2GpreFSR);
-    initGenPart(_genGpostFSR);initTrack(_genM1GpostFSR);initTrack(_genM2GpostFSR);
+    _genGpreFSR.init(); _genM1GpreFSR.init(); _genM2GpreFSR.init();
+    _genGpostFSR.init();_genM1GpostFSR.init();_genM2GpostFSR.init();
 
     // initialize Z to default values
-    initGenPart(_genZpreFSR); initTrack(_genM1ZpreFSR); initTrack(_genM2ZpreFSR);
-    initGenPart(_genZpostFSR);initTrack(_genM1ZpostFSR);initTrack(_genM2ZpostFSR);
+    _genZpreFSR.init(); _genM1ZpreFSR.init(); _genM2ZpreFSR.init();
+    _genZpostFSR.init();_genM1ZpostFSR.init();_genM2ZpostFSR.init();
 
     // initialize H to default values
-    initGenPart(_genHpreFSR); initTrack(_genM1HpreFSR); initTrack(_genM2HpreFSR);
-    initGenPart(_genHpostFSR);initTrack(_genM1HpostFSR);initTrack(_genM2HpostFSR);
+    _genHpreFSR.init(); _genM1HpreFSR.init(); _genM2HpreFSR.init();
+    _genHpostFSR.init();_genM1HpostFSR.init();_genM2HpostFSR.init();
 
     // initialize W to default values
-    initGenPart(_genWpreFSR); initTrack(_genMWpreFSR);
-    initGenPart(_genWpostFSR); initTrack(_genMWpostFSR);
+    _genWpreFSR.init(); _genMWpreFSR.init();
+    _genWpostFSR.init();_genMWpostFSR.init();
 
     edm::Handle<reco::GenParticleCollection> prunedGenParticles;
     iEvent.getByToken(_prunedGenParticleToken, prunedGenParticles);
@@ -273,7 +272,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   // -----------------------------------------
   // ELECTRONS
   // -----------------------------------------
-  initElectrons(_electronInfo);
+  _electronInfo.init();
   
   edm::Handle< edm::View<pat::Electron> > electrons;
   iEvent.getByToken(_electronCollToken, electrons);
@@ -285,8 +284,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     if( e->pt() < 10 ) // keep only electrons above 10 GeV
       continue;
 
-    if(i < _electronInfo.arraySize)
-        fillElectron(i, e, vertices, iEvent);
+    if((unsigned int)_electronInfo.nElectrons < _electronInfo.arraySize)
+        fillElectron(_electronInfo.nElectrons, e, vertices, iEvent);
     
     _electronInfo.nElectrons++; 
   }
@@ -294,14 +293,34 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   // TAUS
   // -----------------------------------------
   
+  edm::Handle<pat::TauCollection> taus;
+  iEvent.getByToken(_tauCollToken, taus);
+
+  _tauInfo.init();
+
+  _tauInfo.nTaus = 0;
+  for (pat::TauCollection::const_iterator tau = taus->begin(), tausEnd = taus->end(); tau !=tausEnd; ++tau)
+  {
+    if( tau->pt() < 20) // keep only taus above 20 GeV
+        continue;
+
+    if((unsigned int)_tauInfo.nTaus < _tauInfo.arraySize)
+        fillTau(_tauInfo.nTaus, *tau, vertices, iEvent);
+
+    _tauInfo.nTaus++;
+  }
+
   // -----------------------------------------
-  // JETS, GENJETS
+  // MET, JETS, GENJETS
   // -----------------------------------------
   
   edm::Handle < std::vector<pat::MET> > mets;
   if(!_metToken.isUninitialized()) iEvent.getByToken(_metToken, mets);
-  bzero(&_metInfo,sizeof(_MetInfo));
 
+  // init met, set values to -999
+  _metInfo.init();
+
+  // fill actual met values
   if( mets.isValid() ){
     _metInfo.px = (*mets)[0].px();
     _metInfo.py = (*mets)[0].py();
@@ -312,7 +331,9 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 
   edm::Handle < std::vector<pat::Jet> > jets;
   if(!_pfJetsToken.isUninitialized()) iEvent.getByToken(_pfJetsToken, jets);
-  bzero(&_pfJetInfo,sizeof(_PFJetInfo));
+
+  // init pfjets, set values to -999
+  _pfJetInfo.init();
 
   //// Get JEC Uncertainty Calculator
   //edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
@@ -320,6 +341,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   //JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
   //JetCorrectionUncertainty *jecUncCalculator = new JetCorrectionUncertainty(JetCorPar);
 
+  // fill actual jet values
   if( jets.isValid() )
   {
 
@@ -337,7 +359,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
         _pfJetInfo.phi[i]= jet.phi();
         _pfJetInfo.mass[i]  = jet.mass();
         _pfJetInfo.charge[i]  = jet.charge();
-        _pfJetInfo.isB[i]  = jet.bDiscriminator(_btagNames[0]);
         _pfJetInfo.partonFlavour[i] = jet.partonFlavour();
         // Energy Fractions
         _pfJetInfo.chf[i]  = jet.chargedHadronEnergyFraction();
@@ -364,7 +385,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
         _pfJetInfo.jecUnc[i] = -1.0;
         _pfJetInfo.jecFactor[i]  = jet.jecFactor("Uncorrected");
         // b-Tag
-        _pfJetInfo.csv[i]  = jet.bDiscriminator("combinedSecondaryVertexBJetTags");
+        _pfJetInfo.isB[i]  = jet.bDiscriminator(_btagNames[0]);
         _pfJetInfo.puid[i]  = jet.userFloat("pileupJetId:fullDiscriminant");
         //PAT matched Generator Jet
         const reco::GenJet* genJet = jet.genJet();
@@ -411,7 +432,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 
   edm::Handle < reco::GenJetCollection > genJets;
   if(!_genJetsToken.isUninitialized()) iEvent.getByToken(_genJetsToken, genJets);
-  bzero(&_genJetInfo,sizeof(_GenJetInfo));
+
+  _genJetInfo.init();
 
   if( genJets.isValid() ){
     reco::GenJetCollection sortedGenJets = (*genJets);
@@ -468,24 +490,11 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   if ( muonsSelected.size() < _nMuons  ) return;
 
   // -----------------------------------------
-  // INIT MUONS
+  // INIT MUONS & DIMUON CANDIDATE
   // -----------------------------------------
   
-  initMuons(_muonInfo);
-  
-  _recoCandMass = -999;
-  _recoCandPt   = -999;
-  _recoCandEta  = -999;
-  _recoCandY    = -999;
-  _recoCandPhi  = -999;
-
-  _recoCandMassPF = -999;
-  _recoCandPtPF   = -999;
-  _recoCandEtaPF  = -999;
-  _recoCandYPF    = -999;
-  _recoCandPhiPF  = -999;
-
-  _angleDiMuons = -999;
+  _muonInfo.init();
+  _dimuCandInfo.init();
 
   _muonInfo.nMuons = muonsSelected.size();
   _muonInfo.nMuonPairs = 0;
@@ -564,31 +573,18 @@ void UFDiMuonsAnalyzer::beginJob()
 
   // eventInfo;
   // set up the _outTree branches
-  _outTree->Branch("eventInfo",  &_eventInfo, _eventInfo.getVarString());
-  _outTree->Branch("vertexInfo", &_vertexInfo, _vertexInfo.getVarString());
-  _outTree->Branch("recoMuons", &_muonInfo, _muonInfo.getVarString()); 
-
+  _outTree->Branch("eventInfo",     &_eventInfo,    _eventInfo.getVarString());
+  _outTree->Branch("vertexInfo",    &_vertexInfo,   _vertexInfo.getVarString());
+  _outTree->Branch("recoMuons",     &_muonInfo,     _muonInfo.getVarString()); 
+  _outTree->Branch("dimuCand",      &_dimuCandInfo, _dimuCandInfo.getVarString());
   _outTree->Branch("recoElectrons", &_electronInfo, _electronInfo.getVarString()); 
+  _outTree->Branch("recoTaus",      &_tauInfo,      _tauInfo.getVarString()); 
+  _outTree->Branch("met",           &_metInfo,      _metInfo.getVarString());
+  _outTree->Branch("pfJets",        &_pfJetInfo,    _pfJetInfo.getVarString());
 
-  _outTree->Branch("hltPaths", &_triggerNames);
-
-  // mass and pt for the fit
-  _outTree->Branch("recoCandMass", &_recoCandMass, "recoCandMass/F");
-  _outTree->Branch("recoCandPt"  , &_recoCandPt  , "recoCandPt/F");
-  _outTree->Branch("recoCandEta" , &_recoCandEta , "recoCandEta/F");
-  _outTree->Branch("recoCandY"   , &_recoCandY   , "recoCandY/F");
-  _outTree->Branch("recoCandPhi" , &_recoCandPhi , "recoCandPhi/F");
-
-  _outTree->Branch("recoCandMassPF", &_recoCandMassPF, "recoCandMassPF/F");
-  _outTree->Branch("recoCandPtPF"  , &_recoCandPtPF  , "recoCandPtPF/F");
-  _outTree->Branch("recoCandEtaPF" , &_recoCandEtaPF , "recoCandEtaPF/F");
-  _outTree->Branch("recoCandYPF"   , &_recoCandYPF   , "recoCandYPF/F");
-  _outTree->Branch("recoCandPhiPF" , &_recoCandPhiPF , "recoCandPhiPF/F");
-  _outTree->Branch("angleDiMuons"  , &_angleDiMuons  , "angleDiMuons/F");
-
-  _outTree->Branch("met", &_metInfo, _metInfo.getVarString());
-
-  _outTree->Branch("pfJets", &_pfJetInfo, _pfJetInfo.getVarString());
+  _outTree->Branch("hltPaths",      &_triggerNames);
+  _outTree->Branch("btagNames",     &_btagNames);
+  _outTree->Branch("tauIDNames",    &_tauIDNames);
 
   // MC information
   if (_isMonteCarlo) {
@@ -650,11 +646,14 @@ void UFDiMuonsAnalyzer::endJob()
            <<_outTree->GetEntries()<<std::endl;
 
   // create the metadata tree branches
-  _outTreeMetadata->Branch("originalNumEvents"  ,            &_numEvents,            "originalNumEvents/I"             );
-  _outTreeMetadata->Branch("sumEventWeights"  ,            &_sumEventWeights,      "sumEventWeights/I"             );
-  _outTreeMetadata->Branch("isMonteCarlo"  ,            &_isMonteCarlo,              "isMonteCarlo/O"             );
-  std::vector <std::string> * triggerNamesPointer = &_triggerNames;
-  _outTreeMetadata->Branch("triggerNames"  ,"std::vector< std::string > >", &triggerNamesPointer);
+  _outTreeMetadata->Branch("originalNumEvents", &_numEvents,        "originalNumEvents/I");
+  _outTreeMetadata->Branch("sumEventWeights",   &_sumEventWeights,  "sumEventWeights/I");
+  _outTreeMetadata->Branch("isMonteCarlo",      &_isMonteCarlo,     "isMonteCarlo/O");
+
+  _outTreeMetadata->Branch("triggerNames"  ,"std::vector< std::string > >", &_triggerNames);
+  _outTreeMetadata->Branch("btagNames"     ,"std::vector< std::string > >", &_btagNames);
+  _outTreeMetadata->Branch("tauIDNames"    ,"std::vector< std::string > >", &_tauIDNames);
+
   _outTreeMetadata->Fill();
 
 }
@@ -893,134 +892,6 @@ UFDiMuonsAnalyzer::MuonPairs const UFDiMuonsAnalyzer::GetMuonPairs(pat::MuonColl
 //-- ----------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////
 
-void UFDiMuonsAnalyzer::initMuons(_MuonInfo& muons) 
-{
-// initialize values in the muon info data structure
-  muons.nMuons = -999;
-  muons.nMuonPairs = -999;
-
-  for(unsigned int i=0; i<muons.arraySize; i++)
-  {
-      muons.isTracker[i]    = -999;
-      muons.isStandAlone[i] = -999;
-      muons.isGlobal[i]     = -999;
-    
-      muons.isTightMuon[i]    = -999;
-      muons.isMediumMuon[i]   = -999;
-      muons.isLooseMuon[i]    = -999;
-    
-      muons.charge[i] = -999;
-      muons.pt[i]     = -999;
-      muons.eta[i]    = -999; 
-      muons.phi[i]    = -999;
-      
-      muons.d0_BS[i] = -999;
-      muons.dz_BS[i] = -999;
-      
-      muons.d0_PV[i] = -999;
-      muons.dz_PV[i] = -999;
-      
-      muons.trackIsoSumPt[i]     = -999;
-      muons.trackIsoSumPtCorr[i] = -999;
-      muons.hcalIso[i]           = -999;
-      muons.ecalIso[i]           = -999;
-      muons.relCombIso[i]        = -999;
-    
-      muons.isPFMuon[i] = -999;
-    
-      muons.pfPt[i]  = -999;
-      muons.pfEta[i] = -999;
-      muons.pfPhi[i] = -999;
-    
-      muons.sumChargedHadronPtR03[i]   = -999;
-      muons.sumChargedParticlePtR03[i] = -999;
-      muons.sumNeutralHadronEtR03[i]   = -999;
-      muons.sumPhotonEtR03[i]          = -999;
-      muons.sumPUPtR03[i]              = -999;
-      
-      muons.sumChargedHadronPtR04[i]   = -999;
-      muons.sumChargedParticlePtR04[i] = -999;
-      muons.sumNeutralHadronEtR04[i]   = -999;
-      muons.sumPhotonEtR04[i]          = -999;
-      muons.sumPUPtR04[i]              = -999;
-    
-      for (unsigned int iTrigger=0;iTrigger<muons.triggerArraySize;iTrigger++) {
-        muons.isHltMatched[i][iTrigger] = -999;
-        muons.hltPt[i][iTrigger] = -999;
-        muons.hltEta[i][iTrigger] = -999;
-        muons.hltPhi[i][iTrigger] = -999;
-      }
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////
-//-- ----------------------------------------------------------------------
-////////////////////////////////////////////////////////////////////////////
-
-void UFDiMuonsAnalyzer::initTrack(_TrackInfo& track) 
-{
-// Initialize track info data structure
-  track.charge = -999; 
-  track.pt     = -999; 
-  track.ptErr  = -999;
-  track.eta    = -999; 
-  track.phi    = -999;
-}
-
-////////////////////////////////////////////////////////////////////////////
-//-- ----------------------------------------------------------------------
-////////////////////////////////////////////////////////////////////////////
-
-void UFDiMuonsAnalyzer::initGenPart(_genPartInfo& part)
-{
-// Initialize gen info data structure
-  part.charge = -999;
-  part.mass = -999;
-  part.pt   = -999;
-  part.eta  = -999;
-  part.y    = -999;
-  part.phi  = -999;
-}
-
-////////////////////////////////////////////////////////////////////////////
-//-- ----------------------------------------------------------------------
-////////////////////////////////////////////////////////////////////////////
-
-void UFDiMuonsAnalyzer::initElectrons(_ElectronInfo& electrons) 
-{
-// initialize values in the muon info data structure
-  for(unsigned int i=0; i<electrons.arraySize; i++)
-  {
-      electrons.nElectrons = -999;
-
-      electrons.isTightElectron[i]    = -999;
-      electrons.isMediumElectron[i]   = -999;
-      electrons.isLooseElectron[i]    = -999;
-      electrons.isVetoElectron[i]     = -999;
-      electrons.passConversionVeto[i] = -999;
-    
-      electrons.charge[i] = -999;
-      electrons.pt[i]     = -999;
-      electrons.eta[i]    = -999; 
-      electrons.phi[i]    = -999;
-      
-      electrons.d0_PV[i] = -999;
-      electrons.dz_PV[i] = -999;
-    
-      electrons.missingInnerHits[i] = -999;
-
-      electrons.isPFElectron[i]            = -999;
-      electrons.sumChargedHadronPtR03[i]   = -999;
-      electrons.sumNeutralHadronEtR03[i]   = -999;
-      electrons.sumPhotonEtR03[i]          = -999;
-      electrons.sumPUPtR03[i]              = -999;
-  }
-}
-
-////////////////////////////////////////////////////////////////////////////
-//-- ----------------------------------------------------------------------
-////////////////////////////////////////////////////////////////////////////
-
 void UFDiMuonsAnalyzer::fillMuon(unsigned int i, const pat::Muon& mu, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
                                  const edm::Event& iEvent, const edm::EventSetup& iSetup) 
 {
@@ -1037,7 +908,7 @@ void UFDiMuonsAnalyzer::fillMuon(unsigned int i, const pat::Muon& mu, const edm:
       return ;
     }
 
-    if(i > _muonInfo.arraySize)
+    if(i >= _muonInfo.arraySize)
     {
       std::cout << "ERROR: Tried to add muon info to an index that is out of bounds.";
       return;
@@ -1166,13 +1037,13 @@ void UFDiMuonsAnalyzer::fillDimuonCandidate(const UFDiMuonsAnalyzer::MuonPair* p
     // combine the info for the dimuon candidate
     TLorentzVector mother=GetLorentzVector(pair); 
 
-    _recoCandMass = mother.M();
-    _recoCandPt   = mother.Pt();
-    _recoCandEta  = mother.PseudoRapidity();
-    _recoCandY    = mother.Rapidity();
-    _recoCandPhi  = mother.Phi();
+    _dimuCandInfo.recoCandMass = mother.M();
+    _dimuCandInfo.recoCandPt   = mother.Pt();
+    _dimuCandInfo.recoCandEta  = mother.PseudoRapidity();
+    _dimuCandInfo.recoCandY    = mother.Rapidity();
+    _dimuCandInfo.recoCandPhi  = mother.Phi();
 
-    _angleDiMuons = acos(-mu1.track()->momentum().Dot(mu2.track()->momentum()/
+    _dimuCandInfo.angleDiMuons = acos(-mu1.track()->momentum().Dot(mu2.track()->momentum()/
                                                       mu1.track()->p()/mu2.track()->p())); 
     
     
@@ -1189,12 +1060,12 @@ void UFDiMuonsAnalyzer::fillDimuonCandidate(const UFDiMuonsAnalyzer::MuonPair* p
 
       mother_pf = muon1_pf+muon2_pf;
       
-      _recoCandMassPF = mother_pf.M();
-      _recoCandPtPF   = mother_pf.Pt();
+      _dimuCandInfo.recoCandMassPF = mother_pf.M();
+      _dimuCandInfo.recoCandPtPF   = mother_pf.Pt();
                               
-      _recoCandEtaPF  = mother_pf.PseudoRapidity();
-      _recoCandYPF    = mother_pf.Rapidity();
-      _recoCandPhiPF  = mother_pf.Phi();
+      _dimuCandInfo.recoCandEtaPF  = mother_pf.PseudoRapidity();
+      _dimuCandInfo.recoCandYPF    = mother_pf.Rapidity();
+      _dimuCandInfo.recoCandPhiPF  = mother_pf.Phi();
     
     }
 }
@@ -1266,11 +1137,11 @@ void UFDiMuonsAnalyzer::fillBosonAndMuDaughters(const reco::Candidate* boson)
   _TrackInfo mu2preFSR;
   _TrackInfo mu2postFSR;
 
-  initGenPart(bosonInfo);
-  initTrack(mu1preFSR);
-  initTrack(mu1postFSR);
-  initTrack(mu2preFSR);
-  initTrack(mu2postFSR);
+  bosonInfo.init();
+  mu1preFSR.init();
+  mu1postFSR.init();
+  mu2preFSR.init();
+  mu2postFSR.init();
 
   bosonInfo.mass = boson->mass(); 
   bosonInfo.pt   = boson->pt();   
@@ -1536,30 +1407,33 @@ void UFDiMuonsAnalyzer::fillElectron(unsigned int i, const edm::Ptr<pat::Electro
     _electronInfo.sumNeutralHadronEtR03[i]   = e->pfIsolationVariables().sumNeutralHadronEt  ;
     _electronInfo.sumPhotonEtR03[i]          = e->pfIsolationVariables().sumPhotonEt         ;
     _electronInfo.sumPUPtR03[i]              = e->pfIsolationVariables().sumPUPt             ;
+}
 
-    // stuff I don't think I need to care about
-    //reco::GsfTrackRef theTrack = e->gsfTrack();
-    //_electronInfo.dz_BS[i] = theTrack->dz(hBS->position());
-    //_electronInfo.d0_BS[i] = theTrack->dxy(hBS->position());
-    //_electronInfo.trackIso[i] = e->trackIso();
-    //_electronInfo.ecalIso[i] = e->ecalIso();
-    //_electronInfo.hcalIso[i] = e->hcalIso();
-    //_electronInfo.convVeto[i] = !ConversionTools::hasMatchedConversion(*e, hConversions, hBS->position());
+////////////////////////////////////////////////////////////////////////////
+//-- ----------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
 
-    //std::cout << std::endl;
-    //std::cout << "!!! electronInfo[" << i << "] ..." << std::endl;
-    //std::cout << "charge: " << _electronInfo.charge[i] << std::endl;
-    //std::cout << "pt: " << _electronInfo.pt[i] << std::endl;
-    //std::cout << "eta: " << _electronInfo.eta[i] << std::endl;
-    //std::cout << "phi: " << _electronInfo.phi[i] << std::endl;
-    //std::cout << std::endl;
-    //std::cout << "!!! pat::e..." << std::endl;
-    //std::cout << "charge: " << e.charge() << std::endl;
-    //std::cout << "pt: " << e.pt() << std::endl;
-    //std::cout << "eta: " << e.eta() << std::endl;
-    //std::cout << "phi: " << e.phi() << std::endl;
-    //std::cout << std::endl;
-   
+void UFDiMuonsAnalyzer::fillTau(unsigned int i, const pat::Tau& tau, const edm::Handle<reco::VertexCollection>& vertices, const edm::Event& iEvent) 
+{
+
+    if(!tau.leadChargedHadrCand().isNull())
+    {
+        pat::PackedCandidate const* packedLeadTauCand = dynamic_cast<pat::PackedCandidate const*>(tau.leadChargedHadrCand().get());
+ 
+        _tauInfo.dz_PV[i] = packedLeadTauCand->dz();
+        _tauInfo.d0_PV[i] = packedLeadTauCand->dxy();
+    }
+
+    _tauInfo.charge[i]  = tau.charge();
+    _tauInfo.pt[i]      = tau.pt();
+    _tauInfo.eta[i]     = tau.eta();
+    _tauInfo.phi[i]     = tau.phi();
+    _tauInfo.isPFTau[i] = tau.isPFTau();
+
+    for(unsigned int id=0; id<_tauInfo.idArraySize && id<_tauIDNames.size(); id++)
+    {
+        _tauInfo.tauID[i][id] = tau.tauID(_tauIDNames[id]);
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -1593,4 +1467,6 @@ void UFDiMuonsAnalyzer::displaySelection() {
 
 bool UFDiMuonsAnalyzer::sortGenJetFunc(reco::GenJet i, reco::GenJet j){ return (i.pt()>j.pt()); }
 bool UFDiMuonsAnalyzer::sortMuonFunc(pat::Muon i, pat::Muon j){ return (i.pt()>j.pt()); }
+bool UFDiMuonsAnalyzer::sortElectronFunc(pat::Electron i, pat::Electron j){ return (i.pt()>j.pt()); }
+bool UFDiMuonsAnalyzer::sortTauFunc(pat::Tau i, pat::Tau j){ return (i.pt()>j.pt()); }
 
