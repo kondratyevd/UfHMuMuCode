@@ -344,6 +344,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   // fill actual jet values
   if( jets.isValid() )
   {
+    _pfJetInfo.nJets = 0;
 
     for(unsigned int i=0; i<jets->size(); i++)
     {

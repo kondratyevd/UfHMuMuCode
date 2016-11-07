@@ -18,7 +18,8 @@ class sample:
 
 # 25 ns
 # The jsonfiles details the valid lumi sections
-jsonlist2016 = ['sample_file_lists/data/json/Cert_271036-280385_13TeV_PromptReco_Collisions16_JSON_NoL1T_v2.txt']  #27.217/fb
+jsonlist2016 = ['sample_file_lists/data/json/Cert_271036-280385_13TeV_PromptReco_Collisions16_JSON_NoL1T_v2.txt', #27.217/fb
+                'sample_file_lists/data/json/Cert_271036-283685_13TeV_PromptReco_Collisions16_JSON_NoL1T.txt']    #33.598/fb 
 
 #//////////////////////////// Single Muon /////////////////////////////////////////////////////////////////////////////////////////////
 
