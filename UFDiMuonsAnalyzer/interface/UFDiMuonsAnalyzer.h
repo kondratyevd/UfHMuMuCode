@@ -1,0 +1,409 @@
+///////////////////////////////////////////////////////////
+//=========================================================
+// UFDiMuonsAnalyzer.h                                   //
+//=========================================================
+//                                                       //
+// H->MuMu Analyzer for UF. Handed down and revamped     //
+// too many times.                                       //
+//                                                       //
+//========================================================
+///////////////////////////////////////////////////////////
+
+#ifndef ADD_UDAV2
+#define ADD_UDAV2
+
+///////////////////////////////////////////////////////////
+// Includes ==============================================
+//////////////////////////////////////////////////////////
+// Tons and tons of includes or it wouldn't be CMSSW.
+
+// system include files
+#include <memory>
+#include <vector>
+#include <iostream>
+#include <sstream>
+#include <fstream>
+#include <string>
+#include <algorithm>
+#include <boost/regex.hpp>
+
+#include "TLorentzVector.h"
+#include "TTree.h"
+#include "TFile.h"
+#include "TH1F.h"
+#include "TH2F.h"
+#include "TBranch.h"
+
+// CMSSW includes
+#include "CommonTools/UtilAlgos/interface/TFileService.h"
+#include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+
+// FWCore General
+#include "FWCore/ServiceRegistry/interface/Service.h"
+#include "FWCore/MessageLogger/interface/MessageLogger.h"
+#include "FWCore/Framework/interface/Frameworkfwd.h"
+#include "FWCore/Framework/interface/EDAnalyzer.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/MakerMacros.h"
+#include "FWCore/Framework/interface/ESHandle.h"
+#include "FWCore/Framework/interface/Event.h"
+#include "FWCore/Framework/interface/EventSetup.h"
+#include "FWCore/ParameterSet/interface/ParameterSet.h"
+#include "FWCore/Common/interface/TriggerNames.h"
+
+
+// DataFormats General
+#include "DataFormats/Common/interface/View.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/MuonReco/interface/Muon.h"
+#include "DataFormats/MuonReco/interface/MuonFwd.h"
+#include "DataFormats/MuonReco/interface/MuonIsolation.h"
+#include "DataFormats/MuonReco/interface/MuonChamberMatch.h"
+#include "DataFormats/MuonReco/interface/MuonSegmentMatch.h"
+#include "DataFormats/MuonReco/interface/MuonSelectors.h"
+#include "DataFormats/MuonDetId/interface/MuonSubdetId.h"
+#include "DataFormats/MuonDetId/interface/DTWireId.h"
+#include "DataFormats/MuonDetId/interface/CSCDetId.h"
+#include "DataFormats/MuonDetId/interface/RPCDetId.h"
+#include "DataFormats/TrackReco/interface/Track.h"
+#include "DataFormats/TrackReco/interface/TrackFwd.h"
+#include "DataFormats/CSCRecHit/interface/CSCSegmentCollection.h"
+#include "DataFormats/CSCRecHit/interface/CSCRecHit2DCollection.h"
+#include "DataFormats/BeamSpot/interface/BeamSpot.h"
+#include "DataFormats/CSCRecHit/interface/CSCSegmentCollection.h"
+#include "DataFormats/DetId/interface/DetId.h"
+
+// Geometry
+#include <Geometry/Records/interface/MuonGeometryRecord.h>
+#include <Geometry/CSCGeometry/interface/CSCGeometry.h>
+#include <Geometry/CSCGeometry/interface/CSCLayer.h>
+#include <Geometry/CSCGeometry/interface/CSCLayerGeometry.h>
+#include "Geometry/CommonDetUnit/interface/GlobalTrackingGeometry.h"
+#include "Geometry/Records/interface/GlobalTrackingGeometryRecord.h"
+#include "MagneticField/Engine/interface/MagneticField.h"
+
+// math classes
+#include "DataFormats/Math/interface/deltaR.h"
+
+// trigger
+#include "FWCore/Common/interface/TriggerNames.h"
+#include "DataFormats/Common/interface/TriggerResults.h"
+#include "DataFormats/PatCandidates/interface/TriggerObjectStandAlone.h"
+#include "DataFormats/PatCandidates/interface/PackedTriggerPrescales.h"
+
+// vertexing
+#include "DataFormats/VertexReco/interface/Vertex.h"
+#include "DataFormats/VertexReco/interface/VertexFwd.h"
+
+// gen particles
+#include "DataFormats/HepMCCandidate/interface/GenParticle.h"
+#include "DataFormats/HepMCCandidate/interface/GenParticleFwd.h"
+#include "DataFormats/Candidate/interface/CompositePtrCandidate.h"
+#include "DataFormats/Candidate/interface/Candidate.h"
+#include "DataFormats/PatCandidates/interface/PackedGenParticle.h"
+
+// Adding the Muon Cocktail
+#include "DataFormats/MuonReco/interface/MuonCocktails.h"
+#include "DataFormats/Math/interface/deltaR.h"
+
+// pfJets and MET
+//#include "DataFormats/METReco/interface/PFMET.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/JetReco/interface/GenJetCollection.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
+#include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
+
+// PU Info
+#include "SimDataFormats/PileupSummaryInfo/interface/PileupSummaryInfo.h"
+#include "PhysicsTools/Utilities/interface/LumiReWeighting.h"
+
+// PAT objects
+#include "DataFormats/PatCandidates/interface/Muon.h"
+#include "DataFormats/PatCandidates/interface/Jet.h"
+#include "DataFormats/PatCandidates/interface/Electron.h"
+#include "DataFormats/PatCandidates/interface/Tau.h"
+#include "DataFormats/PatCandidates/interface/Photon.h"
+#include "DataFormats/PatCandidates/interface/MET.h"
+
+
+// Add the data formats that we store most of the info into
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/DataFormats.h"
+
+///////////////////////////////////////////////////////////
+// Class Definition ======================================
+//////////////////////////////////////////////////////////
+
+class UFDiMuonsAnalyzer : public edm::EDAnalyzer {
+
+public:
+
+  ///////////////////////////////////////////////////////////
+  // Constructors/Destructors===============================
+  //////////////////////////////////////////////////////////
+
+  explicit UFDiMuonsAnalyzer(const edm::ParameterSet&);
+  ~UFDiMuonsAnalyzer();
+
+  ///////////////////////////////////////////////////////////
+  // Basic types ===========================================
+  ///////////////////////////////////////////////////////////
+  
+  //Physical Constants
+  double static constexpr PDG_MASS_Z  = 91.1876;      //GeV/c2
+  double static constexpr PDG_WIDTH_Z = 2.4952;       //GeV/c2
+  double static constexpr MASS_MUON = 0.105658367;    //GeV/c2
+
+  // meta-data not given in python config file
+  // info gathered from py cfg defined later (py-cfg meta data: isMonteCarlo, triggerNames, tauIDNames, bTagNames)
+  int _numEvents;
+  int _sumEventWeights;
+
+  // tracks pairs, e.g. cocktail
+  typedef std::pair<reco::Track,reco::Track> TrackPair;
+  typedef std::vector<TrackPair> TrackPairs;
+
+  // gen info
+  int _nPU;        // true pileup
+  int _genWeight;  // +1 or -1 weight for nlo samples, -1 simulates interference when filling histos
+
+
+  ///////////////////////////////////////////////////////////
+  // Structs  ==============================================
+  //////////////////////////////////////////////////////////
+  
+  // general event information	
+  _EventInfo _eventInfo;
+
+  // array of vertex information
+  _VertexInfo _vertexInfo;
+
+  // array of muons, 0,1 locations are the dimuon candidate
+  _MuonInfo _muonInfo;
+
+  // info about the dimu candidate formed from the 0,1 muons in _muonInfo
+  _DimuCandInfo _dimuCandInfo;
+
+  // array of electrons
+  _ElectronInfo  _electronInfo;
+
+  // array of taus
+  _TauInfo  _tauInfo;
+
+  // generator level info Gamma pre-FSR
+  _genPartInfo _genGpreFSR;
+  _TrackInfo   _genM1GpreFSR,_genM2GpreFSR;
+
+  // generator level info Gamma post-FSR
+  _genPartInfo _genGpostFSR;
+  _TrackInfo   _genM1GpostFSR,_genM2GpostFSR;
+
+  // generator level info Z pre-FSR
+  _genPartInfo _genZpreFSR;
+  _TrackInfo   _genM1ZpreFSR,_genM2ZpreFSR;
+
+  // generator level info Z post-FSR
+  _genPartInfo _genZpostFSR;
+  _TrackInfo   _genM1ZpostFSR,_genM2ZpostFSR;
+
+  // generator level info W pre-FSR
+  _genPartInfo _genWpreFSR;
+  _TrackInfo   _genMWpreFSR;
+
+  // generator level info W post-FSR
+  _genPartInfo _genWpostFSR;
+  _TrackInfo   _genMWpostFSR;
+
+  // generator level info H pre-FSR
+  _genPartInfo _genHpreFSR;
+  _TrackInfo   _genM1HpreFSR,_genM2HpreFSR;
+
+  // generator level info H post-FSR
+  _genPartInfo _genHpostFSR;
+  _TrackInfo   _genM1HpostFSR,_genM2HpostFSR;
+
+  // Jets and MET
+  _MetInfo     _metInfo;
+  _PFJetInfo   _pfJetInfo;
+  _GenJetInfo  _genJetInfo;
+
+  // muons pairs for dimuon candidates
+  typedef std::pair<pat::Muon,pat::Muon> MuonPair;
+  typedef std::vector<MuonPair>          MuonPairs;
+
+  // sort the dimuons putting in front the candidates whose mass is 
+  // the closest to the Z PDG value
+  struct sortMuonsClass {
+    bool operator() (MuonPair pair1, 
+  		     MuonPair pair2) {
+
+      TLorentzVector muon11, muon12, dimuon1;
+
+      reco::Track const muon11Track = *(pair1.first . innerTrack());
+      reco::Track const muon12Track = *(pair1.second. innerTrack());
+
+      muon11.SetPtEtaPhiM(muon11Track.pt(), muon11Track.eta(), muon11Track.phi(), MASS_MUON);
+      muon12.SetPtEtaPhiM(muon12Track.pt(), muon12Track.eta(), muon12Track.phi(), MASS_MUON);
+
+      dimuon1 = muon11+muon12;
+
+      TLorentzVector muon21, muon22, dimuon2;
+
+      reco::Track const muon21Track = *(pair2.first . innerTrack());
+      reco::Track const muon22Track = *(pair2.second. innerTrack());
+
+      muon21.SetPtEtaPhiM(muon21Track.pt(), muon21Track.eta(), muon21Track.phi(), MASS_MUON);
+      muon22.SetPtEtaPhiM(muon22Track.pt(), muon22Track.eta(), muon22Track.phi(), MASS_MUON);
+
+      dimuon2 = muon21+muon22;
+
+      return ( fabs(dimuon1.M()-PDG_MASS_Z) < fabs(dimuon2.M()-PDG_MASS_Z) );
+    }
+  } sortMuonObject;
+
+  ///////////////////////////////////////////////////////////
+  // Trees  ================================================
+  //////////////////////////////////////////////////////////
+
+  // where to save all the info  
+  TTree* _outTree;
+  TTree* _outTreeMetadata;
+
+
+private:
+
+  ///////////////////////////////////////////////////////////
+  // Inheritance from EDAnalyzer ===========================
+  //////////////////////////////////////////////////////////
+
+  virtual void beginJob() ;
+  virtual void analyze(const edm::Event&, const edm::EventSetup&);
+  virtual void endJob() ;
+
+  ///////////////////////////////////////////////////////////
+  // Useful Functions ======================================
+  //////////////////////////////////////////////////////////
+
+  edm::Service<TFileService> fs;
+
+  // Methods to fill the structs
+  void fillMuon(unsigned int i, const pat::Muon& mu, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
+                const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
+  void fillDimuonCandidate(const UFDiMuonsAnalyzer::MuonPair* pair, const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
+                           const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
+  void fillOtherMuons(const UFDiMuonsAnalyzer::MuonPair* pair, const pat::MuonCollection& muons,
+                                       const edm::Handle<reco::VertexCollection>& vertices, const edm::Handle<reco::BeamSpot>& beamSpotHandle,
+                                       const edm::Event& iEvent, const edm::EventSetup& iSetup);
+
+  void fillBosonAndMuDaughters(const reco::Candidate* boson);
+
+  void fillElectron(unsigned int i, const edm::Ptr<pat::Electron>& e, const edm::Handle<reco::VertexCollection>& vertices, const edm::Event& iEvent);
+  void fillTau(unsigned int i, const pat::Tau& tau, const edm::Handle<reco::VertexCollection>& vertices, const edm::Event& iEvent);
+
+  // methods for selection
+  bool isHltPassed (const edm::Event&, const edm::EventSetup&, const std::vector<std::string> triggerNames);
+  bool isHltMatched(const edm::Event&, const edm::EventSetup&, 
+                    const std::string& triggerName, 
+                    const pat::TriggerObjectStandAloneCollection& triggerObjects,
+                    const pat::Muon&);
+
+  bool passBasicMuonSelection(const pat::Muon& muon);
+
+  void displaySelection();
+
+  MuonPairs  const GetMuonPairs(pat::MuonCollection  const* muons ) const;
+  TrackPairs const GetTrackPairs(reco::TrackCollection const* tracks) const;
+
+  TLorentzVector const GetLorentzVector(MuonPair  const* pair) ;//const; 
+  TLorentzVector const GetLorentzVector(TrackPair const* pair) ;//const; 
+
+  static bool sortGenJetFunc(reco::GenJet i, reco::GenJet j);
+  static bool sortMuonFunc(pat::Muon i, pat::Muon j);
+  static bool sortElectronFunc(pat::Electron i, pat::Electron j);
+  static bool sortTauFunc(pat::Tau i, pat::Tau j);
+
+  //////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////
+  // Gather info from the python config file ==============
+  //////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////
+
+  ///////////////////////////////////////////////////////////
+  // Handles/Tokens  =======================================
+  //////////////////////////////////////////////////////////
+  // you get access to the information from the collections designated by the python config file
+  // using the handle-token infrastructure. Get the name of the collection from the config
+  // and load it into the token, then pass the token and the handle into the Event.
+
+  // muons
+  edm::EDGetTokenT<pat::MuonCollection> _muonCollToken;
+
+  // electrons
+  edm::EDGetTokenT< edm::View<pat::Electron> > _electronCollToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdVetoToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdLooseToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdMediumToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >   _electronCutBasedIdTightToken;
+
+  // taus
+  edm::EDGetTokenT<pat::TauCollection> _tauCollToken;
+
+  // met, jets
+  edm::EDGetTokenT<std::vector<pat::MET>> _metToken;
+  edm::EDGetTokenT<std::vector<pat::Jet>> _pfJetsToken;
+
+  // Event info
+  edm::EDGetTokenT<reco::BeamSpot> _beamSpotToken;		
+  edm::EDGetTokenT<reco::VertexCollection> _primaryVertexToken;		
+  edm::EDGetTokenT< std::vector< PileupSummaryInfo > > _PupInfoToken;		
+
+  // Gen Info
+  edm::EDGetTokenT<reco::GenJetCollection> _genJetsToken;
+  edm::EDGetTokenT<reco::GenParticleCollection> _prunedGenParticleToken;		
+  edm::EDGetTokenT<pat::PackedGenParticleCollection> _packedGenParticleToken;		
+  edm::EDGetTokenT<GenEventInfoProduct> _genEvtInfoToken;		
+
+  // trigger
+  edm::EDGetTokenT<edm::TriggerResults> _triggerResultsToken;
+  edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> _triggerObjsToken;
+  
+  // Not sure why these are defined here rather than in the analyze function like all the other handles
+  // Should get rid of these handles and put them in the correct place
+  edm::Handle<edm::TriggerResults> _triggerResultsHandle;
+  edm::Handle<pat::TriggerObjectStandAloneCollection> _triggerObjsHandle;
+
+  ///////////////////////////////////////////////////////////
+  // Basic types  ===========================================
+  //////////////////////////////////////////////////////////
+
+  // Selection Criteria for dimuon pair muons given in config file
+  double _isGlobal;
+  double _isTracker;
+  double _ptMin;
+  double _etaMax;
+  unsigned int _nMuons;
+  bool _checkTrigger; 
+
+  // useful switches given in config file
+  bool _isVerbose;         // debug mode
+  bool _isMonteCarlo;      // save MC truth
+
+  // More info loaded from the config file
+  std::string   _processName;
+  std::vector<std::string> _triggerNames;
+  std::vector<std::string> _btagNames;
+  std::vector<std::string> _tauIDNames;
+
+  // Not currently used, since we don't use prescaled triggers with this analysis
+  // Can probably delete these vars from the class
+  std::vector < int > _l1Prescale;
+  std::vector < int > _hltPrescale;
+};
+
+DEFINE_FWK_MODULE(UFDiMuonsAnalyzer);
+#endif
+
+
