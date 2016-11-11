@@ -372,6 +372,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
         // Multiplicities
         _pfJetInfo.cm[i]  = jet.chargedMultiplicity();
         _pfJetInfo.chm[i]  = jet.chargedHadronMultiplicity();
+        _pfJetInfo.nm[i]  = jet.neutralMultiplicity();
         _pfJetInfo.nhm[i]  = jet.neutralHadronMultiplicity();
         _pfJetInfo.cem[i]  = jet.electronMultiplicity();
         _pfJetInfo.nem[i]  = jet.photonMultiplicity();
