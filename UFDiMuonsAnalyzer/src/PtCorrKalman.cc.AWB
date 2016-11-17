@@ -1,0 +1,59 @@
+
+#include "KaMuCa/Calibration/interface/KalmanMuonCalibrator.h"
+
+using namespace KalmanMuonCalibrator
+
+// Based off KaMuCa/Calibration/test/test.py
+std::array<double, 4> PtCorr(double pT_v0, double dPt_v0, double eta, double phi, int charge, bool isData) {
+
+  // Returns corrected pT, corrected dPt, and sum of up/down uncertainties in quadrature
+  std::array<double, 4> output;
+
+  KalmanMuonCalibrator calib;
+  if (isData) calib = ROOT.KalmanMuonCalibrator("DATA_80X_13TeV");
+  else        calib = ROOT.KalmanMuonCalibrator("MC_80X_13TeV");
+
+  // =========================================================
+  // Need to check that this is the right order - AWB 10.11.16
+  // Tracker-only: to be updated sometime?
+  // Corrects only to 200 GeV.  How much signal is above that?
+  // Which pT do we use as input? PF pT? tracker pT?
+  // =========================================================
+
+  // Initial correction
+  double pT_v1 = calib.getCorrectedPt( pT_v0, eta, phi, charge );
+
+  // Smear muon pT
+  // Apparently used for data, too?  Why?
+  double pT_v2 = calib.smear( pT_v1, eta );
+
+  // Corrected dPT - scale by pT_v0, v1, or v2? use v0, v1, or v2 as input?
+  double dPt_v2 = pT_v2 * calib.getCorrectedError( pT_v0, eta, (dPt_v0/pT_v0) );
+
+  std::array<std::pair<double, double>, calib.getN()> pT_up_down;
+  double sum_squares_up   = 0;
+  double sum_squares_down = 0;
+  for (uint i = 0; i < calib.getN(); i++) {
+    calib.vary(i, +1);
+    // Use v0, v1, or v2?  Smear afterwards?  Adjust dPt?
+    pT_up_down[i].first  = calib.getCorrectedPt( pT_v0, eta, phi, charge );
+    calib.vary(i, -1);
+    pT_up_down[i].second = calib.getCorrectedPt( pT_v0, eta, phi, charge );
+    calib.reset();
+    sum_squares_up   += math.pow(pT_up_down[i].first,  2);
+    sum_squares_down += math.pow(pT_up_down[i].second, 2);
+  }
+  
+  // pT after closure?  Use v0, v1, or v2?  Smear afterwards?  Adjust dPt?
+  calib.varyClosure(+1);
+  double pT_v3 = calib.getCorrectedPt( pT_v0, eta, phi, charge );
+
+  output[0] = pT_v3;
+  output[1] = dPt_v2;
+  output[2] = math.sqrt( sum_squares_up   );
+  output[3] = math.sqrt( sum_squares_down );
+
+  return output;
+
+}
+

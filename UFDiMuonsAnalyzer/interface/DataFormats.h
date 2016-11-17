@@ -1,699 +1,494 @@
-// event info
 
-struct _EventInfo{
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/CommonIncludes.h"
 
-  // data fields
-  int run;
-  int lumi;
-  long long int event;
-  int bx;
-  int orbit;
+#ifndef DATA_FORMATS
+#define DATA_FORMATS
 
-  // tell the ttree how to save the struct
-  static TString getVarString()
-  {
-      return TString("run/I:lumi/I:event/L:bx/I:orbit/I");
+////////////////////////////////////////////////
+////   WARNING!!! CONSTRUCTION OF STRUCTS   ////
+////////////////////////////////////////////////
+// All variables in the struct must have the same length
+// e.g. Int_t and Float_t have 4 bytes, Long64_t and Double_t have 8 bytes
+// https://twiki.cern.ch/twiki/bin/view/Main/RootNotes#Conventions_and_Types
+// https://root.cern.ch/root/html534/guides/users-guide/Trees.html#adding-a-branch-to-hold-a-list-of-variables
+
+// Event info
+struct _EventInfo {
+  
+  // Data fields
+  Long64_t run;
+  Long64_t lumi;
+  Long64_t event;
+  Long64_t bx;
+  Long64_t orbit;
+  
+  // Tell the ttree how to save the struct
+  static TString getVarString() {
+    return TString("run/L:lumi/L:event/L:bx/L:orbit/L");
   };
-
-  void init()
-  {
-      run = -999;
-      lumi = -999;
-      event = -999;
-      bx = -999;
-      orbit = -999;
-  };
+  
+  // Fill the data fields
+  void init();
+  void fill(const edm::Event& iEvent);
 
 };
 
-// vertex info
-struct _VertexInfo{
+// Vertex info
+struct _VertexInfo {
 
-  // data fields
-  const static unsigned int arraySize = 20;
-  int nVertices;
-  int isValid[arraySize];
-  float x[arraySize];	
-  float y[arraySize];	
-  float z[arraySize];	
-  float xErr[arraySize];	
-  float yErr[arraySize];	
-  float zErr[arraySize];	
-  float chi2[arraySize];
-  int ndf[arraySize];
-  float normChi2[arraySize];
+  const static unsigned int arraySize = 1; // Make variable - AWB 08.11.16
+  Long64_t nVertices;
 
-  // tell the ttree how to save the struct
-  static TString getVarString()
-  {
-      TString r =   TString("nVertices/I:isValid[N]/I:")+
-                    TString("x[N]/F:y[N]/F:z[N]/F:xErr[N]/F:yErr[N]/F:zErr[N]/F:")+
-                    TString("chi2[N]/F:ndf[N]/I:normChi2[N]/F");
-      r.ReplaceAll("[N]",Form("[%d]", arraySize));
-      return r;
+  Long64_t isValid [arraySize];
+  Double_t x       [arraySize];	
+  Double_t y       [arraySize];	
+  Double_t z       [arraySize];	
+  Double_t xErr    [arraySize];	
+  Double_t yErr    [arraySize];	
+  Double_t zErr    [arraySize];	
+  Double_t chi2    [arraySize];
+  Long64_t ndof    [arraySize];
+  Double_t normChi2[arraySize];
+
+  static TString getVarString() {
+    TString r = 
+      TString("nVertices/L:isValid[N]/L:") +
+      TString("x[N]/D:y[N]/D:z[N]/D:xErr[N]/D:yErr[N]/D:zErr[N]/D:") +
+      TString("chi2[N]/D:ndof[N]/L:normChi2[N]/D");
+    r.ReplaceAll("[N]",Form("[%d]", arraySize));
+    return r;
   };
-
-  void init()
-  {
-      nVertices = -999;
-      for (unsigned int i=0;i<arraySize;i++) 
-      {
-          isValid[i]  = -999;
-          x[i]        = -999;
-          y[i]        = -999;
-          z[i]        = -999;
-          xErr[i]     = -999;
-          yErr[i]     = -999;
-          zErr[i]     = -999;
-          chi2[i]     = -999;
-          ndf[i]      = -999;
-          normChi2[i] = -999;
-      }
-  };
+  
+  void init();
+  void fill( const reco::VertexCollection verticesSelected );
+  reco::VertexCollection select( const edm::Handle<reco::VertexCollection>& vertices, const double _vertex_ndof_min,
+				 const double _vertex_rho_max, const double _vertex_z_max );
+  
 };
 
 
-struct _DimuCandInfo{
+// Muon info
+struct _MuonInfo {
 
-  float recoCandMass;
-  float recoCandPt;
-  float recoCandEta;
-  float recoCandY;
-  float recoCandPhi;
+  const static unsigned int arraySize        = 10;
+  const static unsigned int triggerArraySize =  6;
+  Long64_t nMuons;
 
-  float recoCandMassPF;
-  float recoCandPtPF;
-  float recoCandEtaPF;
-  float recoCandYPF;
-  float recoCandPhiPF;
+  Long64_t isTracker   [arraySize];
+  Long64_t isStandAlone[arraySize];
+  Long64_t isGlobal    [arraySize];
 
-  float angleDiMuons;
+  Long64_t isTightID [arraySize];
+  Long64_t isMediumID[arraySize];
+  Long64_t isLooseID [arraySize];
 
-  // tell the ttree how to save the struct
-  static TString getVarString()
-  {
-      return TString("recoCandMass/F:recoCandPt/F:recoCandEta/F:recoCandY/F:recoCandPhi/F:")+
-             TString("recoCandMassPF/F:recoCandPtPF/F:recoCandEtaPF/F:recoCandYPF/F:recoCandPhiPF/F:angleDiMuons/F");
-  };
+  Long64_t charge[arraySize];
+  Double_t pt    [arraySize];
+  Double_t ptErr [arraySize];
+  Double_t eta   [arraySize];
+  Double_t phi   [arraySize];
 
-  void init()
-  {
-      recoCandMass = -999;
-      recoCandPt   = -999;
-      recoCandEta  = -999;
-      recoCandY    = -999;
-      recoCandPhi  = -999;
+  Double_t trkPt   [arraySize];
+  Double_t trkPtErr[arraySize];
+  Double_t trketa  [arraySize];
+  Double_t trkPhi  [arraySize];
 
-      recoCandMassPF = -999;
-      recoCandPtPF   = -999;
-      recoCandEtaPF  = -999;
-      recoCandYPF    = -999;
-      recoCandPhiPF  = -999;
+  Double_t d0_BS[arraySize];
+  Double_t dz_BS[arraySize];
 
-      angleDiMuons = -999;
-  };
+  Double_t d0_PV[arraySize];
+  Double_t dz_PV[arraySize];
 
-};
-
-// muon info
-struct _MuonInfo{
-
-  const static unsigned int arraySize = 10;
-  const static unsigned int triggerArraySize = 6;
-  int nMuons;
-  int nMuonPairs;
-
-  int isTracker[arraySize];
-  int isStandAlone[arraySize];
-  int isGlobal[arraySize];
-
-  int isTightMuon[arraySize];
-  int isMediumMuon[arraySize];
-  int isLooseMuon[arraySize];
-
-  int charge[arraySize];
-  float pt[arraySize];
-  float ptErr[arraySize];
-  float eta[arraySize];
-  float phi[arraySize];
-
-  float trkPt[arraySize];
-  float trkPtErr[arraySize];
-  float trketa[arraySize];
-  float trkPhi[arraySize];
-
-  float d0_BS[arraySize];
-  float dz_BS[arraySize];
-
-  float d0_PV[arraySize];
-  float dz_PV[arraySize];
-
-  float trackIsoSumPt[arraySize];
-  float trackIsoSumPtCorr[arraySize];
-  float hcalIso[arraySize];
-  float ecalIso[arraySize];
-  float relCombIso[arraySize];
+  Double_t relIso           [arraySize];
+  Double_t relCombIso       [arraySize];
+  Double_t trackIsoSumPt    [arraySize];
+  Double_t trackIsoSumPtCorr[arraySize];
+  Double_t hcalIso          [arraySize];
+  Double_t ecalIso          [arraySize];
 
   // PF information
-  int isPFMuon[arraySize];
+  Long64_t isPF[arraySize];
 
-  float pfPt[arraySize];
-  float pfEta[arraySize];
-  float pfPhi[arraySize];
+  Double_t pfPt [arraySize];
+  Double_t pfEta[arraySize];
+  Double_t pfPhi[arraySize];
   
-  float sumChargedHadronPtR03[arraySize];   // sum-pt of charged Hadron 
-  float sumChargedParticlePtR03[arraySize]; // sum-pt of charged Particles(inludes e/mu) 
-  float sumNeutralHadronEtR03[arraySize];   // sum pt of neutral hadrons
-  float sumPhotonEtR03[arraySize];          // sum pt of PF photons
-  float sumPUPtR03[arraySize];              // sum pt of charged Particles not from PV  (for Pu corrections)
+  Double_t sumChargedHadronPtR03  [arraySize];  // sum-pt of charged Hadron
+  Double_t sumChargedParticlePtR03[arraySize];  // sum-pt of charged Particles(inludes e/mu)
+  Double_t sumNeutralHadronEtR03  [arraySize];  // sum pt of neutral hadrons
+  Double_t sumPhotonEtR03         [arraySize];  // sum pt of PF photons
+  Double_t sumPUPtR03             [arraySize];  // sum pt of charged Particles not from PV  (for Pu corrections)
 
-  float sumChargedHadronPtR04[arraySize]; 
-  float sumChargedParticlePtR04[arraySize];
-  float sumNeutralHadronEtR04[arraySize];  
-  float sumPhotonEtR04[arraySize];
-  float sumPUPtR04[arraySize];
+  Double_t sumChargedHadronPtR04  [arraySize];
+  Double_t sumChargedParticlePtR04[arraySize];
+  Double_t sumNeutralHadronEtR04  [arraySize];
+  Double_t sumPhotonEtR04         [arraySize];
+  Double_t sumPUPtR04             [arraySize];
 
-  int isHltMatched[arraySize][triggerArraySize];
-  float hltPt[arraySize][triggerArraySize];
-  float hltEta[arraySize][triggerArraySize];
-  float hltPhi[arraySize][triggerArraySize];
+  Long64_t isHltMatched[arraySize][triggerArraySize];
+  Double_t hltEff      [arraySize][triggerArraySize];
+  Double_t hltPt       [arraySize][triggerArraySize];
+  Double_t hltEta      [arraySize][triggerArraySize];
+  Double_t hltPhi      [arraySize][triggerArraySize];
 
-  // tell the ttree how to save the struct
-  static TString getVarString()
-  {
-      TString r =  TString("nMuons/I:nMuonPairs/I:")+
-                   TString("isTracker[N]/I:isStandAlone[N]/I:isGlobal[N]/I:")+
-                   TString("isTightMuon[N]/I:isMediumMuon[N]/I:isLooseMuon[N]/I:")+
-                   TString("charge[N]/I:pt[N]/F:ptErr[N]/F:eta[N]/F:phi[N]/F:")+
-                   TString("trkPt[N]/F:trkPtErr[N]/F:trkEta[N]/F:trkPhi[N]/F:")+
-                   TString("d0_BS[N]/F:dz_BS[N]/F:")+
-                   TString("d0_PV[N]/F:dz_PV[N]/F:")+
-                   TString("trackIsoSumPt[N]/F:")+
-                   TString("trackIsoSumPtCorr[N]/F:")+
-                   TString("hcalIso[N]/F:")+
-                   TString("ecalIso[N]/F:")+
-                   TString("relCombIso[N]/F:")+
-                   TString("isPFMuon[N]/I:")+
-                   TString("pfPt[N]/F:")+
-                   TString("pfEta[N]/F:")+
-                   TString("pfPhi[N]/F:")+
-                   TString("sumChargedHadronPtR03[N]/F:")+
-                   TString("sumChargedParticlePtR03[N]/F:")+
-                   TString("sumNeutralHadronEtR03[N]/F:")+
-                   TString("sumPhotonEtR03[N]/F:")+
-                   TString("sumPUPtR03[N]/F:")+
-                   TString("sumChargedHadronPtR04[N]/F:")+
-                   TString("sumChargedParticlePtR04[N]/F:")+
-                   TString("sumNeutralHadronEtR04[N]/F:")+
-                   TString("sumPhotonEtR04[N]/F:")+
-                   TString("sumPUPtR04[N]/F:")+
-                   TString("isHltMatched[N][T]/I:")+
-                   TString("hltPt[N][T]/F:")+
-                   TString("hltEta[N][T]/F:")+
-                   TString("hltPhi[N][T]/F");
-
-      r.ReplaceAll("[N]",Form("[%d]", arraySize));
-      r.ReplaceAll("[T]",Form("[%d]", triggerArraySize));
-      return r;
+  static TString getVarString() {
+    TString r =
+      TString("nMuons/L:") +
+      TString("isTracker[N]/L:isStandAlone[N]/L:isGlobal[N]/L:") +
+      TString("isTightID[N]/L:isMediumID[N]/L:isLooseID[N]/L:") +
+      TString("charge[N]/L:pt[N]/D:ptErr[N]/D:eta[N]/D:phi[N]/D:") +
+      TString("trkPt[N]/D:trkPtErr[N]/D:trkEta[N]/D:trkPhi[N]/D:") +
+      TString("d0_BS[N]/D:dz_BS[N]/D:") +
+      TString("d0_PV[N]/D:dz_PV[N]/D:") +
+      TString("relIso[N]/D:") +
+      TString("relCombIso[N]/D:") +
+      TString("trackIsoSumPt[N]/D:") +
+      TString("trackIsoSumPtCorr[N]/D:") +
+      TString("hcalIso[N]/D:") +
+      TString("ecalIso[N]/D:") +
+      TString("isPF[N]/L:") +
+      TString("pfPt[N]/D:") +
+      TString("pfEta[N]/D:") +
+      TString("pfPhi[N]/D:") +
+      TString("sumChargedHadronPtR03[N]/D:") +
+      TString("sumChargedParticlePtR03[N]/D:") +
+      TString("sumNeutralHadronEtR03[N]/D:") +
+      TString("sumPhotonEtR03[N]/D:") +
+      TString("sumPUPtR03[N]/D:") +
+      TString("sumChargedHadronPtR04[N]/D:") +
+      TString("sumChargedParticlePtR04[N]/D:") +
+      TString("sumNeutralHadronEtR04[N]/D:") +
+      TString("sumPhotonEtR04[N]/D:") +
+      TString("sumPUPtR04[N]/D:") +
+      TString("isHltMatched[N][T]/L:") +
+      TString("hltEff[N][T]/D:") +
+      TString("hltPt[N][T]/D:") +
+      TString("hltEta[N][T]/D:") +
+      TString("hltPhi[N][T]/D");
+    
+    r.ReplaceAll("[N]",Form("[%d]", arraySize));
+    r.ReplaceAll("[T]",Form("[%d]", triggerArraySize));
+    return r;
   };
 
-  void init()
-  {
-    nMuons = -999;
-    nMuonPairs = -999;
+  void init();
+  void fill( const pat::MuonCollection muonsSelected,
+	     const reco::Vertex primaryVertex, const int _nPV,
+	     const edm::Handle<reco::BeamSpot>& beamSpotHandle,
+	     const edm::Event& iEvent, const edm::EventSetup& iSetup,
+	     const edm::Handle<pat::TriggerObjectStandAloneCollection>& _triggerObjsHandle,
+	     const edm::Handle<edm::TriggerResults>& _triggerResultsHandle,
+	     const std::vector<std::string> _triggerNames, const double _muon_trig_dR,
+	     const bool _muon_use_pfIso, const double _muon_iso_dR );
 
-    for(unsigned int i=0; i<arraySize; i++)
-    {
-      isTracker[i]    = -999;
-      isStandAlone[i] = -999;
-      isGlobal[i]     = -999;
+  pat::MuonCollection select( const edm::Handle<pat::MuonCollection>& muons,
+			      const reco::Vertex primaryVertex, const std::string _muon_ID,
+			      const double _muon_pT_min, const double _muon_eta_max, const double _muon_trig_dR,
+			      const bool _muon_use_pfIso, const double _muon_iso_dR, const double _muon_iso_max );
 
-      isTightMuon[i]    = -999;
-      isMediumMuon[i]   = -999;
-      isLooseMuon[i]    = -999;
+  bool IsLoose ( const pat::Muon muon );
+  bool IsMedium( const pat::Muon muon );
+  bool IsTight ( const pat::Muon muon, const reco::Vertex primaryVertex );
 
-      charge[i] = -999;
-      pt[i]     = -999;
-      eta[i]    = -999;
-      phi[i]    = -999;
+  double CalcRelIsoPF ( const pat::Muon muon, const double _muon_iso_dR );
+  double CalcRelIsoTrk( const pat::Muon muon, const double _muon_iso_dR );
+  double CalcTrigEff  ( const pat::Muon muon, const int _nPV, const std::string _triggerName );
+  
+  bool IsHltMatched( const pat::Muon& mu, const edm::Event& iEvent, const edm::EventSetup& iSetup,
+		     const edm::Handle<pat::TriggerObjectStandAloneCollection>& _triggerObjsHandle,
+		     const edm::Handle<edm::TriggerResults>& _triggerResultsHandle,
+		     const std::string _desiredTriggerName, const double _muon_trig_dR );
+  
+};
 
-      d0_BS[i] = -999;
-      dz_BS[i] = -999;
 
-      d0_PV[i] = -999;
-      dz_PV[i] = -999;
+struct _DiMuonInfo {
 
-      trackIsoSumPt[i]     = -999;
-      trackIsoSumPtCorr[i] = -999;
-      hcalIso[i]           = -999;
-      ecalIso[i]           = -999;
-      relCombIso[i]        = -999;
+  const static unsigned int arraySize = 6; // With 4 muons
+  Long64_t nPairs;
 
-      isPFMuon[i] = -999;
+  Long64_t iMu1[arraySize];
+  Long64_t iMu2[arraySize];
 
-      pfPt[i]  = -999;
-      pfEta[i] = -999;
-      pfPhi[i] = -999;
+  Double_t mass[arraySize];
+  Double_t pt  [arraySize];
+  Double_t eta [arraySize];
+  Double_t y   [arraySize];
+  Double_t phi [arraySize];
 
-      sumChargedHadronPtR03[i]   = -999;
-      sumChargedParticlePtR03[i] = -999;
-      sumNeutralHadronEtR03[i]   = -999;
-      sumPhotonEtR03[i]          = -999;
-      sumPUPtR03[i]              = -999;
+  Double_t pfMass[arraySize];
+  Double_t pfPt  [arraySize];
+  Double_t pfEta [arraySize];
+  Double_t pfY   [arraySize];
+  Double_t pfPhi [arraySize];
 
-      sumChargedHadronPtR04[i]   = -999;
-      sumChargedParticlePtR04[i] = -999;
-      sumNeutralHadronEtR04[i]   = -999;
-      sumPhotonEtR04[i]          = -999;
-      sumPUPtR04[i]              = -999;
+  Double_t angle [arraySize];
 
-      for (unsigned int iTrigger=0;iTrigger<triggerArraySize;iTrigger++) 
-      {
-        isHltMatched[i][iTrigger] = -999;
-        hltPt[i][iTrigger] = -999;
-        hltEta[i][iTrigger] = -999;
-        hltPhi[i][iTrigger] = -999;
-      }
-    }
-
+  static TString getVarString() {
+    TString r = TString("nPairs/L:iMu1[N]/L:iMu2[N]/L:") + 
+      TString("mass[N]/D:pt[N]/D:eta[N]/D:y[N]/D:phi[N]/D:") +
+      TString("pfMass[N]/D:pfPt[N]/D:pfEta[N]/D:pfY[N]/D:pfPhi[N]/D:angle[N]/D");
+    
+    r.ReplaceAll("[N]",Form("[%d]", arraySize));
+    return r;
   };
+  
+  void init();
+  void fill(const _MuonInfo _muonInfo);
+  static bool smaller_dMass(std::pair< double, std::pair<int, int> > i,
+			    std::pair< double, std::pair<int, int> > j);
 
 };
 
-// electron info
-struct _ElectronInfo{
+
+// Electron info
+struct _ElectronInfo {
 
   const static unsigned int arraySize = 10;
-  int nElectrons;
+  Long64_t nElectrons;
+  
+  // Electron cut based IDs
+  Long64_t isTightID         [arraySize];
+  Long64_t isMediumID        [arraySize];
+  Long64_t isLooseID         [arraySize];
+  Long64_t isVetoID          [arraySize];
+  Long64_t passConversionVeto[arraySize];
 
-  // electron cut based IDs
-  int isTightElectron[arraySize];
-  int isMediumElectron[arraySize];
-  int isLooseElectron[arraySize];
-  int isVetoElectron[arraySize];
-  int passConversionVeto[arraySize];
+  Long64_t charge[arraySize];
+  Double_t pt    [arraySize];
+  Double_t eta   [arraySize];
+  Double_t phi   [arraySize];
 
-  int charge[arraySize];
-  float pt[arraySize];
-  float eta[arraySize];
-  float phi[arraySize];
-
-  float d0_PV[arraySize];
-  float dz_PV[arraySize];
-  float missingInnerHits[arraySize];
+  Double_t d0_PV           [arraySize];
+  Double_t dz_PV           [arraySize];
+  Double_t missingInnerHits[arraySize];
  
-  int isPFElectron[arraySize]; 
+  Long64_t isPF[arraySize]; 
 
-  float sumChargedHadronPtR03[arraySize];   // sum-pt of charged Hadron 
-  float sumNeutralHadronEtR03[arraySize];   // sum pt of neutral hadrons
-  float sumPhotonEtR03[arraySize];          // sum pt of PF photons
-  float sumPUPtR03[arraySize];              // sum pt of charged Particles not from PV  (for Pu corrections)
+  Double_t relIso               [arraySize];
+  Double_t sumChargedHadronPtR03[arraySize];  // sum-pt of charged Hadron 
+  Double_t sumNeutralHadronEtR03[arraySize];  // sum pt of neutral hadrons
+  Double_t sumPhotonEtR03       [arraySize];  // sum pt of PF photons
+  Double_t sumPUPtR03           [arraySize];  // sum pt of charged Particles not from PV (for Pu corrections)
 
-  // tell the ttree how to save the struct
-  static TString getVarString()
-  {
-      TString r = TString("nElectrons/I:")+
-                  TString("isTightElectron[N]/I:isMediumElectron[N]/I:isLooseElectron[N]/I:isVetoElectron[N]/I:")+
-                  TString("passConversionVeto[N]/I:charge[N]/I:pt[N]/F:eta[N]/F:phi[N]/F:")+
-                  TString("d0_PV[N]/F:dz_PV[N]/F:missingInnerHits[N]/F:")+
-                  TString("isPFElectron[N]/I:")+
-                  TString("sumChargedHadronPtR03[N]/F:")+
-                  TString("sumNeutralHadronEtR03[N]/F:")+
-                  TString("sumPhotonEtR03[N]/F:")+
-                  TString("sumPUPtR03[N]/F");
-
-      r.ReplaceAll("[N]",Form("[%d]", arraySize));
-      return r;
-  };
-
-  void init()
-  {
-    nElectrons = -999;
-
-    for(unsigned int i=0; i<arraySize; i++)
-    {
-        isTightElectron[i]    = -999;
-        isMediumElectron[i]   = -999;
-        isLooseElectron[i]    = -999;
-        isVetoElectron[i]     = -999;
-        passConversionVeto[i] = -999;
-
-        charge[i] = -999;
-        pt[i]     = -999;
-        eta[i]    = -999;
-        phi[i]    = -999;
-
-        d0_PV[i] = -999;
-        dz_PV[i] = -999;
-
-        missingInnerHits[i] = -999;
-
-        isPFElectron[i]            = -999;
-        sumChargedHadronPtR03[i]   = -999;
-        sumNeutralHadronEtR03[i]   = -999;
-        sumPhotonEtR03[i]          = -999;
-        sumPUPtR03[i]              = -999;
-    }
-
-  };
-
-};
-
-// tau info
-struct _TauInfo{
-
-  const static unsigned int arraySize = 10;
-  const static unsigned int idArraySize = 16;
-  int nTaus;
-
-  // tau IDs
-  // accessed like so in CMSSW, pat::Tau::tauID("name")
-  float tauID[arraySize][idArraySize];
-
-  int charge[arraySize];
-  float pt[arraySize];
-  float eta[arraySize];
-  float phi[arraySize];
-
-  float d0_PV[arraySize];
-  float dz_PV[arraySize];
- 
-  int isPFTau[arraySize]; 
-
-  // tell the ttree how to save the struct
-  static TString getVarString()
-  {
-      TString r = TString("nTaus/I:tauID[N][I]/F:")+
-                  TString("charge[N]/I:pt[N]/F:eta[N]/F:phi[N]/F:")+
-                  TString("d0_PV[N]/F:dz_PV[N]/F:")+
-                  TString("isPFTau[N]/I");
-
-      r.ReplaceAll("[N]",Form("[%d]", arraySize));
-      r.ReplaceAll("[I]",Form("[%d]", idArraySize));
-      return r;
-  };
-
-  void init()
-  {
-      nTaus = -999;
-      for(unsigned int i=0; i<arraySize; i++)
-      {
-          for(unsigned int id=0; id<idArraySize; id++)
-          { 
-              tauID[i][id] = -999;
-          }
-
-          charge[i] = -999;
-          pt[i] = -999;
-          eta[i] = -999;
-          phi[i] = -999;
-
-          d0_PV[i] = -999;
-          dz_PV[i] = -999;
- 
-          isPFTau[i] = -999; 
-      };
-  };
-};
-
-//MET
-struct _MetInfo{
-  float px;
-  float py;
-  float pt;
-  float phi;
-  float sumEt;
-
-  static TString getVarString()
-  {
-      return TString("px/F:py/F:pt/F:phi/F:sumEt/F");
-  };
-
-  void init()
-  {
-      px = -999;
-      py = -999;
-      pt = -999;
-      phi = -999;
-      sumEt = -999;
-  };
-
-};
-
-
-// pf Jets
-struct _PFJetInfo{
-
-  const static unsigned int arraySize = 10;
-  int   nJets;
-  float px[arraySize];
-  float py[arraySize];
-  float pz[arraySize];
-  float pt[arraySize];
-  float eta[arraySize];
-  float phi[arraySize];
-  float mass[arraySize];
-  int   charge[arraySize];
-  float isB[arraySize];
-  int   partonFlavour[arraySize];
-  /////// Energy Fractions //////
-  //Charged Hadron
-  float chf[arraySize];
-  //NeutralHadron
-  float nhf[arraySize];
-  //Charged EM
-  float cef[arraySize];
-  //Neutral EM
-  float nef[arraySize];
-  //Mu
-  float muf[arraySize];
-  // HF Hadron Fraction
-  float hfhf[arraySize];
-  // HF EM Fraction
-  float hfef[arraySize];
-  /////// Multiplicities //////
-  // Total Charged Mult
-  int cm[arraySize];
-  //Charged Hadron Mult
-  int chm[arraySize];
-  //NeutralHadron Mult
-  int nhm[arraySize];
-  //Charged EM Mult
-  int cem[arraySize];
-  //Neutral EM Mult
-  int nem[arraySize];
-  //Mu Mult
-  int mum[arraySize];
-  // HF Hadron Mult
-  int hfhm[arraySize];
-  // HF EM Mult
-  int hfem[arraySize];
-  // Jet Correction Factor--Above momentum is already corrected!!
-  // This factor will return momentum to uncorrected value!!
-  float jecFactor[arraySize];
-  // Jet Energy Correction Uncertainty
-  float jecUnc[arraySize];
-  // Gen Jet Values
-  int genMatched[arraySize];
-  float genPx[arraySize];
-  float genPy[arraySize];
-  float genPz[arraySize];
-  float genPt[arraySize];
-  float genEta[arraySize];
-  float genPhi[arraySize];
-  float genMass[arraySize];
-  ///// Gen Jet Energy Fractions ///////
-  // EM Fraction
-  float genEMF[arraySize];
-  // Had Fraction
-  float genHadF[arraySize];
-  // Invisible Fraction
-  float genInvF[arraySize];
-  // Auxiliary Fraction (Undecayed Sigmas, etc.)
-  float genAuxF[arraySize];
-  // PUID
-  float puid[arraySize];
-
-  static TString getVarString()
-  {
-       TString r = TString("nJets/I:px[N]/F:py[N]/F:pz[N]/F:pt[N]/F:eta[N]/F:")+
-                   TString("phi[N]/F:mass[N]/F:charge[N]/I:isB[N]/F:partonFlavour[N]/I:chf[N]/F:")+
-                   TString("nhf[N]/F:cef[N]/F:nef[N]/F:muf[N]/F:hfhf[N]/F:hfef[N]/F:")+
-                   TString("cm[N]/I:chm[N]/I:nhm[N]/I:cem[N]/I:nem[N]/I:mum[N]/I:hfhm[N]/I:")+
-                   TString("hfem[N]/I:jecFactor[N]/F:jecUnc[N]/F:genMatched[N]/I:genPx[N]/F:genPy[N]/F:")+
-                   TString("genPz[N]/F:genPt[N]/F:genEta[N]/F:genPhi[N]/F:genMass[N]/F:genEMF[N]/F:")+
-                   TString("genHadF[N]/F:genInvF[N]/F:genAux[N]/F:puid[N]:F");
-
-      r.ReplaceAll("[N]",Form("[%d]", arraySize));
-      return r;
-  };
-
-  void init()
-  {
-
-      nJets = -999;
-
-      for(unsigned int i=0; i<arraySize; i++)
-      { 
-          px[i] = -999;
-          py[i] = -999;
-          pz[i] = -999;
-          pt[i] = -999;
-          eta[i] = -999;
-          phi[i] = -999;
-          mass[i] = -999;
-          charge[i] = -999;
-          isB[i] = -999;
-          partonFlavour[i] = -999;
-          /////// Energy Fractions //////
-          //Charged Hadron
-          chf[i] = -999;
-          //NeutralHadron
-          nhf[i] = -999;
-          //Charged EM
-          cef[i] = -999;
-          //Neutral EM
-          nef[i] = -999;
-          //Mu
-          muf[i] = -999;
-          // HF Hadron Fraction
-          hfhf[i] = -999;
-          // HF EM Fraction
-          hfef[i] = -999;
-          /////// Multiplicities //////
-          // Total Charged Mult
-          cm[i] = -999;
-          //Charged Hadron Mult
-          chm[i] = -999;
-          //NeutralHadron Mult
-          nhm[i] = -999;
-          //Charged EM Mult
-          cem[i] = -999;
-          //Neutral EM Mult
-          nem[i] = -999;
-          //Mu Mult
-          mum[i] = -999;
-          // HF Hadron Mult
-          hfhm[i] = -999;
-          // HF EM Mult
-          hfem[i] = -999;
-          // Jet Correction Factor--Above momentum is already corrected!!
-          // This factor will return momentum to uncorrected value!!
-          jecFactor[i] = -999;
-          // Jet Energy Correction Uncertainty
-          jecUnc[i] = -999;
-          // Gen Jet Values
-          genMatched[i] = -999;
-          genPx[i] = -999;
-          genPy[i] = -999;
-          genPz[i] = -999;
-          genPt[i] = -999;
-          genEta[i] = -999;
-          genPhi[i] = -999;
-          genMass[i] = -999;
-          ///// Gen Jet Energy Fractions ///////
-          // EM Fraction
-          genEMF[i] = -999;
-          // Had Fraction
-          genHadF[i] = -999;
-          // Invisible Fraction
-          genInvF[i] = -999;
-          // Auxiliary Fraction (Undecayed Sigmas, etc.)
-          genAuxF[i] = -999;
-          // PUID
-          puid[i] = -999;
-      }
-
-  };
-};
-
-// generator level jets
-struct _GenJetInfo{
-  const static unsigned int arraySize = 10;
-  int nJets;
-  float px[arraySize];
-  float py[arraySize];
-  float pz[arraySize];
-  float pt[arraySize];
-  float eta[arraySize];
-  float phi[arraySize];
-  float mass[arraySize];
-  int   charge[arraySize];
-
-  static TString getVarString()
-  {
-    TString r = TString("nJets/I:px[N]/F:py[N]/F:pz[N]/F:pt[N]/F:eta[N]/F:phi[N]/F:mass[N]/F:charge[N]/I");
+  static TString getVarString() {
+    TString r = 
+      TString("nElectrons/L:") +
+      TString("isTightID[N]/L:isMediumID[N]/L:isLooseID[N]/L:isVetoID[N]/L:") +
+      TString("passConversionVeto[N]/L:charge[N]/L:pt[N]/D:eta[N]/D:phi[N]/D:") +
+      TString("d0_PV[N]/D:dz_PV[N]/D:missingInnerHits[N]/D:") +
+      TString("isPF[N]/L:") +
+      TString("relIso[N]/D:") + 
+      TString("sumChargedHadronPtR03[N]/D:") +
+      TString("sumNeutralHadronEtR03[N]/D:") +
+      TString("sumPhotonEtR03[N]/D:") +
+      TString("sumPUPtR03[N]/D");
+    
     r.ReplaceAll("[N]",Form("[%d]", arraySize));
     return r;
   };
 
-  void init()
-  {
-      nJets = -999;
-      for(unsigned int i=0; i<arraySize; i++)
-      {
-          px[i] = -999;
-          py[i] = -999;
-          pz[i] = -999;
-          pt[i] = -999;
-          eta[i] = -999;
-          phi[i] = -999;
-          mass[i] = -999;
-          charge[i] = -999;
-      }
+  void init();
+  void fill( const pat::ElectronCollection electronsSelected,
+	     const reco::Vertex primaryVertex, const edm::Event& iEvent,
+	     const edm::Handle< edm::ValueMap<bool> >& ele_id_veto, const edm::Handle< edm::ValueMap<bool> >& ele_id_loose,
+	     const edm::Handle< edm::ValueMap<bool> >& ele_id_medium, const edm::Handle< edm::ValueMap<bool> >& ele_id_tight );
 
-  };
+  pat::ElectronCollection select( const edm::Handle<edm::View<pat::Electron>>& electrons, const reco::Vertex primaryVertex,
+				  const edm::Handle< edm::ValueMap<bool> >& ele_id_veto, const edm::Handle< edm::ValueMap<bool> >& ele_id_loose,
+				  const edm::Handle< edm::ValueMap<bool> >& ele_id_medium, const edm::Handle< edm::ValueMap<bool> >& ele_id_tight,
+				  const std::string _electron_ID, const double _electron_pT_min, const double _electron_eta_max );
+
+  bool   PassKinematics( const pat::Electron ele, const reco::Vertex primaryVertex );
+  double CalcRelIsoPF_DeltaBeta( const pat::Electron ele );
 
 };
 
-// used for gen particles that aren't composite
-// not sure why we have two objects for gen particles ...
-struct _TrackInfo{
-  int charge;
-  float pt;
-  float ptErr;
-  float eta;
-  float phi;
+// Tau info
+struct _TauInfo {
 
-  // tell the ttree how to save the struct
-  static TString getVarString()
-  {
-      return TString("charge/I:pt/F:ptErr/F:eta/F:phi/F");
+  const static unsigned int arraySize   = 10;
+  const static unsigned int idArraySize = 16;
+  Long64_t nTaus;
+
+  // Tau IDs
+  Double_t tauID[arraySize][idArraySize];
+  
+  Long64_t charge[arraySize];
+  Double_t pt    [arraySize];
+  Double_t eta   [arraySize];
+  Double_t phi   [arraySize];
+
+  Double_t d0_PV[arraySize];
+  Double_t dz_PV[arraySize];
+ 
+  Long64_t isPF[arraySize]; 
+
+  static TString getVarString() {
+    TString r = 
+      TString("nTaus/L:tauID[N][I]/D:") +
+      TString("charge[N]/L:pt[N]/D:eta[N]/D:phi[N]/D:") +
+      TString("d0_PV[N]/D:dz_PV[N]/D:") +
+      TString("isPF[N]/L");
+    
+    r.ReplaceAll("[N]",Form("[%d]", arraySize));
+    r.ReplaceAll("[I]",Form("[%d]", idArraySize));
+    return r;
   };
 
-  void init()
-  {
-      charge = -999;
-      pt = -999;
-      ptErr = -999;
-      eta = -999;
-      phi = -999;  
+  void init();
+  void fill( const pat::TauCollection tausSelected,
+	     const std::vector<std::string> _tauIDNames);
+  
+  pat::TauCollection select( const edm::Handle<pat::TauCollection>& taus,
+			     const double _tau_pT_min, const double _tau_eta_max );
+  
+  
+};
+
+// MET
+struct _MetInfo {
+  Double_t px;
+  Double_t py;
+  Double_t pt;
+  Double_t phi;
+  Double_t sumEt;
+
+  static TString getVarString() {
+    return TString("px/D:py/D:pt/D:phi/D:sumEt/D");
   };
+
+  void init();
+  void fill( const edm::Handle < pat::METCollection >& mets, const edm::Event& iEvent );
+  
+};
+
+
+// Jets
+struct _JetInfo {
+
+  const static unsigned int arraySize = 10;
+  Long64_t nJets;
+  Long64_t nJetsCent;
+  Long64_t nJetsFwd;
+  Double_t px           [arraySize];
+  Double_t py           [arraySize];
+  Double_t pz           [arraySize];
+  Double_t pt           [arraySize];
+  Double_t eta          [arraySize];
+  Double_t phi          [arraySize];
+  Double_t mass         [arraySize];
+  Double_t charge       [arraySize];
+  Double_t isB          [arraySize];
+  Long64_t partonFlavour[arraySize];
+
+  /////// Energy Fractions //////
+  Double_t chf [arraySize];  // Charged Hadron
+  Double_t nhf [arraySize];  // NeutralHadron
+  Double_t cef [arraySize];  // Charged EM
+  Double_t nef [arraySize];  // Neutral EM
+  Double_t muf [arraySize];  // Mu
+  Double_t hfhf[arraySize];  // HF Hadron Fraction
+  Double_t hfef[arraySize];  // HF EM Fraction
+
+  /////// Multiplicities //////
+  Long64_t cm  [arraySize];  // Total Charged Mult
+  Long64_t chm [arraySize];  // Charged Hadron Mult
+  Long64_t nhm [arraySize];  // NeutralHadron Mult
+  Long64_t cem [arraySize];  // Charged EM Mult
+  Long64_t nem [arraySize];  // Neutral EM Mult
+  Long64_t mum [arraySize];  // Mu Mult
+  Long64_t hfhm[arraySize];  // HF Hadron Mult
+  Long64_t hfem[arraySize];  // HF EM Mult
+
+  // Jet Correction Factor--Above momentum is already corrected!!
+  // This factor will return momentum to uncorrected value!!
+  Double_t jecFactor[arraySize];
+  Double_t jecUnc   [arraySize];  // Jet Energy Correction Uncertainty
+
+  // Gen Jet Values
+  Long64_t genMatched[arraySize];
+  Double_t genPx     [arraySize];
+  Double_t genPy     [arraySize];
+  Double_t genPz     [arraySize];
+  Double_t genPt     [arraySize];
+  Double_t genEta    [arraySize];
+  Double_t genPhi    [arraySize];
+  Double_t genMass   [arraySize];
+
+  ///// Gen Jet Energy Fractions ///////
+  Double_t genEMF [arraySize];  // EM Fraction
+  Double_t genHadF[arraySize];  // Had Fraction
+  Double_t genInvF[arraySize];  // Invisible Fraction
+  Double_t genAuxF[arraySize];  // Auxiliary Fraction (Undecayed Sigmas, etc.)
+
+  Double_t puid[arraySize];  // PUID
+
+  static TString getVarString() {
+    TString r = 
+      TString("nJets/L:nJetsCent/L:nJetsFwd/L:px[N]/D:py[N]/D:pz[N]/D:pt[N]/D:eta[N]/D:") +
+      TString("phi[N]/D:mass[N]/D:charge[N]/D:isB[N]/D:partonFlavour[N]/L:chf[N]/D:") +
+      TString("nhf[N]/D:cef[N]/D:nef[N]/D:muf[N]/D:hfhf[N]/D:hfef[N]/D:") +
+      TString("cm[N]/L:chm[N]/L:nhm[N]/L:cem[N]/L:nem[N]/L:mum[N]/L:hfhm[N]/L:") +
+      TString("hfem[N]/L:jecFactor[N]/D:jecUnc[N]/D:genMatched[N]/L:genPx[N]/D:genPy[N]/D:") +
+      TString("genPz[N]/D:genPt[N]/D:genEta[N]/D:genPhi[N]/D:genMass[N]/D:genEMF[N]/D:") +
+      TString("genHadF[N]/D:genInvF[N]/D:genAux[N]/D:puid[N]/D");
+    
+    r.ReplaceAll("[N]",Form("[%d]", arraySize));
+    return r;
+  };
+
+  void init();
+  void fill(const pat::JetCollection jetsSelected, const std::vector<std::string> _btagNames);
+
+  pat::JetCollection select( const edm::Handle<pat::JetCollection>& jets,
+			     const JetCorrectorParameters& JetCorPar, const std::string _JES_syst,
+			     const std::string _jet_ID, const double _jet_pT_min, const double _jet_eta_max );
+    
+};
+
+// Generator level jets
+struct _GenJetInfo {
+  const static unsigned int arraySize = 10;
+  Long64_t nJets;
+  Double_t px    [arraySize];
+  Double_t py    [arraySize];
+  Double_t pz    [arraySize];
+  Double_t pt    [arraySize];
+  Double_t eta   [arraySize];
+  Double_t phi   [arraySize];
+  Double_t mass  [arraySize];
+  Double_t charge[arraySize];
+
+  static TString getVarString() {
+    TString r = TString("nJets/L:px[N]/D:py[N]/D:pz[N]/D:pt[N]/D:eta[N]/D:phi[N]/D:mass[N]/D:charge[N]/D");
+    r.ReplaceAll("[N]",Form("[%d]", arraySize));
+    return r;
+  };
+
+  void init();
+  void fill(const edm::Handle < reco::GenJetCollection >& genJets, bool isMC);
+  static bool sortByPt(reco::GenJet i, reco::GenJet j);
 
 };
 
-// generator level composite Candidate
-struct _genPartInfo{
-  int charge;
-  float mass;
-  float pt;
-  float eta;  // pseudo rapidity
-  float y;    // rapidity
-  float phi;  // phi
+// Generator level candidate
+struct _GenPartInfo {
+  Double_t charge;
+  Double_t mass;
+  Double_t pt;
+  Double_t ptErr;
+  Double_t eta;  // pseudo rapidity
+  Double_t y;    // rapidity
+  Double_t phi;  // phi
 
-  static TString getVarString()
-  {
-      return TString("charge/I:mass/F:pt/F:eta/F:y/F:phi/F");
+  static TString getVarString() {
+    return TString("charge/D:mass/D:pt/D:ptErr/D:eta/D:y/D:phi/D");
   };
 
-  void init()
-  {
-      charge = -999;
-      mass = -999;
-      pt = -999;
-      eta = -999;
-      y = -999;
-      phi = -999;  
-  };
+  void init();
+  void fill(const reco::Candidate& genPart);
 
 };
+
+#endif  // #ifndef DATA_FORMATS
