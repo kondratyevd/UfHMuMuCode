@@ -1,15 +1,32 @@
 
-#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/FillGenHelper.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenPartHelper.h"
 
-void fillBosonAndMuDaughters(const reco::Candidate& boson,
-			     _GenPartInfo& _genGpreFSR,  _GenPartInfo& _genM1GpreFSR,  _GenPartInfo& _genM2GpreFSR,
-			     _GenPartInfo& _genGpostFSR, _GenPartInfo& _genM1GpostFSR, _GenPartInfo& _genM2GpostFSR,
-			     _GenPartInfo& _genZpreFSR,  _GenPartInfo& _genM1ZpreFSR,  _GenPartInfo& _genM2ZpreFSR,
-			     _GenPartInfo& _genZpostFSR, _GenPartInfo& _genM1ZpostFSR, _GenPartInfo& _genM2ZpostFSR,
-			     _GenPartInfo& _genHpreFSR,  _GenPartInfo& _genM1HpreFSR,  _GenPartInfo& _genM2HpreFSR,
-			     _GenPartInfo& _genHpostFSR, _GenPartInfo& _genM1HpostFSR, _GenPartInfo& _genM2HpostFSR,
-			     _GenPartInfo& _genWpreFSR,  _GenPartInfo& _genMWpreFSR,
-			     _GenPartInfo& _genWpostFSR, _GenPartInfo& _genMWpostFSR ) {
+void FillGenPartInfo( GenPartInfo& _genPartInfo,
+                      const reco::Candidate& genPart ) {
+
+  _genPartInfo.init();
+
+  _genPartInfo.charge = genPart.charge();
+  _genPartInfo.mass   = genPart.mass();
+  _genPartInfo.pt     = genPart.pt();
+  // _genPartInfo.ptErr would need to be filled with pat::Track
+  _genPartInfo.eta    = genPart.eta();
+  _genPartInfo.y      = genPart.rapidity();
+  _genPartInfo.phi    = genPart.phi();
+
+}
+
+
+
+void FillBosonAndMuDaughters( const reco::Candidate& boson,
+			      GenPartInfo& _genGpreFSR,  GenPartInfo& _genM1GpreFSR,  GenPartInfo& _genM2GpreFSR,
+			      GenPartInfo& _genGpostFSR, GenPartInfo& _genM1GpostFSR, GenPartInfo& _genM2GpostFSR,
+			      GenPartInfo& _genZpreFSR,  GenPartInfo& _genM1ZpreFSR,  GenPartInfo& _genM2ZpreFSR,
+			      GenPartInfo& _genZpostFSR, GenPartInfo& _genM1ZpostFSR, GenPartInfo& _genM2ZpostFSR,
+			      GenPartInfo& _genHpreFSR,  GenPartInfo& _genM1HpreFSR,  GenPartInfo& _genM2HpreFSR,
+			      GenPartInfo& _genHpostFSR, GenPartInfo& _genM1HpostFSR, GenPartInfo& _genM2HpostFSR,
+			      GenPartInfo& _genWpreFSR,  GenPartInfo& _genMWpreFSR,
+			      GenPartInfo& _genWpostFSR, GenPartInfo& _genMWpostFSR ) {
   
   // photon, Z, W, H
   if (boson.status() == 62) {
@@ -24,19 +41,19 @@ void fillBosonAndMuDaughters(const reco::Candidate& boson,
   else if (boson.status() != 21)
     return;
 
-  _GenPartInfo bosonInfo;
-  _GenPartInfo mu1preFSR;
-  _GenPartInfo mu1postFSR;
-  _GenPartInfo mu2preFSR;
-  _GenPartInfo mu2postFSR;
-
+  GenPartInfo bosonInfo;
+  GenPartInfo mu1preFSR;
+  GenPartInfo mu1postFSR;
+  GenPartInfo mu2preFSR;
+  GenPartInfo mu2postFSR;
+  
   bosonInfo.init();
   mu1preFSR.init();
   mu1postFSR.init();
   mu2preFSR.init();
   mu2postFSR.init();
 
-  bosonInfo.fill(boson);
+  FillGenPartInfo( bosonInfo, boson );
 
   TLorentzVector l1, l2, mother;
   bool moreThanOneLeptPair = false;
@@ -64,7 +81,7 @@ void fillBosonAndMuDaughters(const reco::Candidate& boson,
     // Status 23 muon, intermediate particle from a decay
     if (daughter->pdgId() == 13 && daughter->status() == 23) {
       // We have an intermediate status 23 muon, save the intermediate values as preFSR
-      mu1preFSR.fill( *daughter );
+      FillGenPartInfo( mu1preFSR, *daughter );
       
       // If it did not radiate then the post and pre are the same
       mu1postFSR = mu1preFSR;
@@ -74,14 +91,14 @@ void fillBosonAndMuDaughters(const reco::Candidate& boson,
       for (unsigned int i = 0; i < daughter->numberOfDaughters(); i++) {
 	const reco::Candidate* postFSRcand = daughter->daughter(i);
 	if (postFSRcand->pdgId() == 13 && daughter->status() == 1)
-	  mu1postFSR.fill( *postFSRcand );
+	  FillGenPartInfo( mu1postFSR, *postFSRcand );
       }
     }
 
     // Status 23 antimuon, intermediate particle from a decay
     else if (daughter->pdgId() == -13 && daughter->status() == 23) {
       // We have an intermediate status 23 muon, save the intermediate values as preFSR                                                        
-      mu2preFSR.fill( *daughter );
+      FillGenPartInfo( mu2preFSR, *daughter );
       
       mu2postFSR = mu2preFSR;
       
@@ -90,14 +107,14 @@ void fillBosonAndMuDaughters(const reco::Candidate& boson,
       for (unsigned int i = 0; i<daughter->numberOfDaughters(); i++) {
 	const reco::Candidate* postFSRcand = daughter->daughter(i);
 	if (postFSRcand->pdgId() == -13 && daughter->status() == 1)
-	  mu2postFSR.fill( *postFSRcand );
+	  FillGenPartInfo( mu2postFSR, *postFSRcand );
       }
     }
 
     // Final state muon
     else if (daughter->pdgId() == 13 && daughter->status() == 1) {
       // No intermediate status 23 muon that radiated only final state status 1, so pre and post are the same
-      mu1preFSR.fill( *daughter );
+      FillGenPartInfo( mu1preFSR, *daughter );
 
       // No radiation, post and pre are the same                                                                                               
       mu1postFSR = mu1preFSR;
@@ -105,7 +122,7 @@ void fillBosonAndMuDaughters(const reco::Candidate& boson,
     // Final state antimuon
     else if (daughter->pdgId() == -13 && daughter->status() == 1) {
       // No intermediate status 23 muon that radiated only final state status 1, so pre and post are the same                                  
-      mu2preFSR.fill( *daughter );
+      FillGenPartInfo( mu2preFSR, *daughter );
 
       // No radiation, post and pre are the same
       mu2postFSR = mu2preFSR;
@@ -204,4 +221,4 @@ void fillBosonAndMuDaughters(const reco::Candidate& boson,
     _genM2HpostFSR = mu2postFSR;
   }
 
-} // End void FillGenHelper::fillBosonAndMuDaughters
+} // End void FillBosonAndMuDaughters

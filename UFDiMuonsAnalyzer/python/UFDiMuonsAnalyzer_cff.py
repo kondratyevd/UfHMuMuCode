@@ -30,11 +30,11 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          muonColl = cms.InputTag("slimmedMuons"),
 
                          ## Electrons
-                         electronColl     = cms.InputTag("slimmedElectrons"),
-                         electronIdVeto   = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-veto"),
-                         electronIdLoose  = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-loose"),
-                         electronIdMedium = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-medium"),
-                         electronIdTight  = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-tight"),
+                         eleColl     = cms.InputTag("slimmedElectrons"),
+                         eleIdVeto   = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-veto"),
+                         eleIdLoose  = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-loose"),
+                         eleIdMedium = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-medium"),
+                         eleIdTight  = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-tight"),
 
                          ## Taus
                          tauColl    = cms.InputTag("slimmedTaus"),
@@ -79,9 +79,9 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          muon_iso_dR    = cms.double( 0.3),
                          muon_iso_max   = cms.double(999.),
 
-                         electron_ID      = cms.string("loose"),
-                         electron_pT_min  = cms.double(10.),
-                         electron_eta_max = cms.double(2.5),
+                         ele_ID      = cms.string("loose"),
+                         ele_pT_min  = cms.double(10.),
+                         ele_eta_max = cms.double(2.5),
 
                          tau_pT_min  = cms.double(10.),
                          tau_eta_max = cms.double(2.5),

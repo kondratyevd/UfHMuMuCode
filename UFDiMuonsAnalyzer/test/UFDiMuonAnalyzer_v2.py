@@ -19,7 +19,7 @@ process = cms.Process("UFDiMuonsAnalyzer")
 
 process.load("Configuration.StandardSequences.MagneticField_38T_cff")
 process.load("FWCore.MessageService.MessageLogger_cfi")
-process.MessageLogger.cerr.FwkReport.reportEvery = 100
+process.MessageLogger.cerr.FwkReport.reportEvery = 1
 ##process.MessageLogger.destinations.append("detailedInfo")
 ##process.MessageLogger.detailedInfo = cms.untracked.PSet(
 ##    threshold = cms.untracked.string("INFO"),
@@ -78,7 +78,7 @@ readFiles = cms.untracked.vstring();
 ## From /GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM
 readFiles.extend(['/store/user/abrinke1/HiggsToMuMu/samples/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/12B931FE-CD3A-E611-9844-0025905C3D98.root'])
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
 process.source = cms.Source("PoolSource",fileNames = readFiles)
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
 process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange()
@@ -140,7 +140,8 @@ if thisIsData:
 # Save output with TFileService
 # /////////////////////////////////////////////////////////////
 
-process.TFileService = cms.Service("TFileService", fileName = cms.string("stage_1_"+s.name+"_edit.root") )
+# process.TFileService = cms.Service("TFileService", fileName = cms.string("stage_1_"+s.name+"_edit_vec_10k.root") )
+process.TFileService = cms.Service("TFileService", fileName = cms.string("GluGlu_HToMuMu_M125_vec_test.root") )
 
 # /////////////////////////////////////////////////////////////
 # Load UFDiMuonsAnalyzer
@@ -152,7 +153,8 @@ else:
   process.load("UfHMuMuCode.UFDiMuonsAnalyzer.UFDiMuonsAnalyzer_MC_cff")
 
 process.dimuons = process.DiMuons.clone()
-#process.dimuons.jetsTag = cms.InputTag("cleanJets")
+# process.dimuons.jetsTag   = cms.InputTag("cleanJets")
+process.dimuons.isVerbose = cms.untracked.bool(False)
 
 # /////////////////////////////////////////////////////////////
 # Electron Cut Based IDs

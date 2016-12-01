@@ -16,10 +16,8 @@
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/CommonIncludes.h"
 
 // Add the data formats that we store most of the info into
-#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/DataFormats.h"
-
-// Code to fill GEN branches
-#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/FillGenHelper.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/NTupleBranches.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/NTupleHelpers.h"
 
 ///////////////////////////////////////////////////////////
 // Class Definition ======================================
@@ -65,53 +63,53 @@ public:
   //////////////////////////////////////////////////////////
   
   // general event information	
-  _EventInfo _eventInfo;
+  EventInfo _eventInfo;
 
   // array of vertex information
-  _VertexInfo _vertexInfo;
+  VertexInfos _vertexInfos;
 
   // array of muons, 0,1 locations are the dimuon candidate
-  _MuonInfo _muonInfo;
+  MuonInfos _muonInfos;
 
-  // info about the dimu candidate formed from the 0,1 muons in _muonInfo
-  _DiMuonInfo _diMuonInfo;
+  // info about the dimuon candidate formed from the 0,1 muons in _muonInfo
+  PairInfos _pairInfos;
 
   // array of electrons
-  _ElectronInfo  _electronInfo;
+  EleInfos  _eleInfos;
 
   // array of taus
-  _TauInfo  _tauInfo;
+  TauInfos  _tauInfos;
 
   // generator level info Gamma pre-FSR
-  _GenPartInfo _genGpreFSR, _genM1GpreFSR, _genM2GpreFSR;
+  GenPartInfo _genGpreFSR, _genM1GpreFSR, _genM2GpreFSR;
 
   // generator level info Gamma post-FSR
-  _GenPartInfo _genGpostFSR, _genM1GpostFSR, _genM2GpostFSR;
+  GenPartInfo _genGpostFSR, _genM1GpostFSR, _genM2GpostFSR;
 
   // generator level info Z pre-FSR
-  _GenPartInfo _genZpreFSR, _genM1ZpreFSR, _genM2ZpreFSR;
+  GenPartInfo _genZpreFSR, _genM1ZpreFSR, _genM2ZpreFSR;
 
   // generator level info Z post-FSR
-  _GenPartInfo _genZpostFSR, _genM1ZpostFSR, _genM2ZpostFSR;
+  GenPartInfo _genZpostFSR, _genM1ZpostFSR, _genM2ZpostFSR;
 
   // generator level info W pre-FSR
-  _GenPartInfo _genWpreFSR, _genMWpreFSR;
+  GenPartInfo _genWpreFSR, _genMWpreFSR;
 
   // generator level info W post-FSR
-  _GenPartInfo _genWpostFSR, _genMWpostFSR;
+  GenPartInfo _genWpostFSR, _genMWpostFSR;
 
   // generator level info H pre-FSR
-  _GenPartInfo _genHpreFSR, _genM1HpreFSR,_genM2HpreFSR;
+  GenPartInfo _genHpreFSR, _genM1HpreFSR,_genM2HpreFSR;
 
   // generator level info H post-FSR
-  _GenPartInfo _genHpostFSR, _genM1HpostFSR,_genM2HpostFSR;
+  GenPartInfo _genHpostFSR, _genM1HpostFSR,_genM2HpostFSR;
 
   // Jets and MET
-  _JetInfo    _jetInfo;
-  _JetInfo    _jetInfo_JES_up;
-  _JetInfo    _jetInfo_JES_down;
-  _GenJetInfo _genJetInfo;
-  _MetInfo    _metInfo;
+  JetInfos    _jetInfos;
+  JetInfos    _jetInfos_JES_up;
+  JetInfos    _jetInfos_JES_down;
+  GenJetInfos _genJetInfos;
+  MetInfo     _metInfo;
 
   ///////////////////////////////////////////////////////////
   // Trees  ================================================
@@ -145,10 +143,10 @@ private:
 
   void displaySelection();
 
-  static bool sortMuonsByPt    (pat::Muon i,     pat::Muon j    );
-  static bool sortElectronsByPt(pat::Electron i, pat::Electron j);
-  static bool sortTausByPt     (pat::Tau i,      pat::Tau j     );
-  static bool sortJetsByPt     (pat::Jet i,      pat::Jet j     );
+  static bool sortMuonsByPt (pat::Muon i,     pat::Muon j    );
+  static bool sortElesByPt  (pat::Electron i, pat::Electron j);
+  static bool sortTausByPt  (pat::Tau i,      pat::Tau j     );
+  static bool sortJetsByPt  (pat::Jet i,      pat::Jet j     );
 
 
   //////////////////////////////////////////////////////////
@@ -175,11 +173,11 @@ private:
   edm::EDGetTokenT<pat::MuonCollection> _muonCollToken;
 
   // Electrons
-  edm::EDGetTokenT<edm::View<pat::Electron>> _electronCollToken;
-  edm::EDGetTokenT< edm::ValueMap<bool> >    _electronIdVetoToken;
-  edm::EDGetTokenT< edm::ValueMap<bool> >    _electronIdLooseToken;
-  edm::EDGetTokenT< edm::ValueMap<bool> >    _electronIdMediumToken;
-  edm::EDGetTokenT< edm::ValueMap<bool> >    _electronIdTightToken;
+  edm::EDGetTokenT<edm::View<pat::Electron>> _eleCollToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >    _eleIdVetoToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >    _eleIdLooseToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >    _eleIdMediumToken;
+  edm::EDGetTokenT< edm::ValueMap<bool> >    _eleIdTightToken;
 
   // Taus
   edm::EDGetTokenT<pat::TauCollection> _tauCollToken;
@@ -225,9 +223,9 @@ private:
   double _muon_iso_dR;
   double _muon_iso_max;
 
-  std::string _electron_ID;
-  double _electron_pT_min;
-  double _electron_eta_max;
+  std::string _ele_ID;
+  double _ele_pT_min;
+  double _ele_eta_max;
 
   double _tau_pT_min;
   double _tau_eta_max;

@@ -1,17 +1,11 @@
 
-#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/DataFormats.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/MetHelper.h"
 
-void _MetInfo::init() {
-  px    = -999;
-  py    = -999;
-  pt    = -999;
-  phi   = -999;
-  sumEt = -999;
-}
+void FillMetInfo( MetInfo& _metInfo,
+		  const edm::Handle < pat::METCollection >& mets,
+		  const edm::Event& iEvent ) {
 
-void _MetInfo::fill( const edm::Handle < pat::METCollection >& mets,
-		     const edm::Event& iEvent ) {
-
+  _metInfo.init();
   if ( !mets.isValid() ) {
     std::cout << "No valid MET collection" << std::endl;
     return;
@@ -29,11 +23,11 @@ void _MetInfo::fill( const edm::Handle < pat::METCollection >& mets,
     // if ( !iEvent->eeBadScFilter()                      ) break;
     // if ( !iEvent->globalTightHalo2016Filter()          ) break;
     
-    px    = met->px();
-    py    = met->py();
-    pt    = met->pt();
-    phi   = met->phi();
-    sumEt = met->sumEt();
+    _metInfo.px    = met->px();
+    _metInfo.py    = met->py();
+    _metInfo.pt    = met->pt();
+    _metInfo.phi   = met->phi();
+    _metInfo.sumEt = met->sumEt();
 
     break;  // Only use the first "MET" in vector of "METs"
     

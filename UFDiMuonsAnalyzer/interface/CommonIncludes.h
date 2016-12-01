@@ -20,6 +20,7 @@
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TBranch.h"
+#include "TROOT.h"
 
 // CMSSW includes
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
