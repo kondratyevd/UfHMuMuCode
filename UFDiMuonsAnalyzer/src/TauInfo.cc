@@ -17,9 +17,3 @@ void TauInfo::init() {
     isPF = -999;
 }
 
-void TauInfos::init() {
-
-  nTaus = 0;
-  taus.clear();
-
-}

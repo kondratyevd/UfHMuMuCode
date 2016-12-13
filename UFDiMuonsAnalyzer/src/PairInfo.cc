@@ -22,9 +22,3 @@ void PairInfo::init() {
 
 } // End void PairInfo::init()
 
-void PairInfos::init() {
-
-  nPairs = 0;
-  pairs.clear();
-
-}

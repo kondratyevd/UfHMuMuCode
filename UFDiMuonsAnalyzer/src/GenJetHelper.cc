@@ -5,7 +5,7 @@ void FillGenJetInfos( GenJetInfos& _genJetInfos,
 		      const edm::Handle < reco::GenJetCollection >& genJets, 
 		      bool isMC ) { 
 
-  _genJetInfos.init();
+  _genJetInfos.clear();
   if ( !genJets.isValid() ) {
     if (isMC) std::cout << "No valid collection of GEN jets" << std::endl;
     return;
@@ -27,14 +27,9 @@ void FillGenJetInfos( GenJetInfos& _genJetInfos,
     _genJetInfo.mass   = sortedGenJets[i].mass();
     _genJetInfo.charge = sortedGenJets[i].charge();
     
-    _genJetInfos.genJets.push_back( _genJetInfo );
-    _genJetInfos.nGenJets += 1;
+    _genJetInfos.push_back( _genJetInfo );
   }
 
-  if ( _genJetInfos.nGenJets != int(_genJetInfos.genJets.size()) )
-    std::cout << "Bizzare error: _genJetInfos.nGenJets = " << _genJetInfos.nGenJets
-              << ", _genJetInfos.genJets.size() = " << _genJetInfos.genJets.size() << std::endl;
-  
 }
 
 bool genJet_sortByPt (reco::GenJet i, reco::GenJet j) { 

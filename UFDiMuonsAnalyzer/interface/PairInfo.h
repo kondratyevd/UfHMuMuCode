@@ -28,13 +28,6 @@ struct PairInfo {
 
 };
 
-struct PairInfos {
-  
-  Int_t nPairs;
-  std::vector<PairInfo> pairs;
-
-  void init();
-
-};
+typedef std::vector<PairInfo> PairInfos;
 
 #endif  // #ifndef PAIR_INFO

@@ -16,7 +16,7 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   // Boolean switches from config file
   _isVerbose	= iConfig.getUntrackedParameter<bool>("isVerbose", false);
   _isMonteCarlo	= iConfig.getParameter         <bool>("isMonteCarlo");
-  _doSyst       = iConfig.getParameter         <bool>("doSyst");
+  _doSys       = iConfig.getParameter          <bool>("doSys");
   
   // Event selection from config file
   _skim_nMuons = iConfig.getParameter<int>  ("skim_nMuons");
@@ -83,6 +83,22 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _jet_pT_min  = iConfig.getParameter<double>      ("jet_pT_min");
   _jet_eta_max = iConfig.getParameter<double>      ("jet_eta_max");
 
+  if (_isMonteCarlo) _KaMu_calib = KalmanMuonCalibrator("MC_80X_13TeV");
+  else               _KaMu_calib = KalmanMuonCalibrator("DATA_80X_13TeV");
+  _doSys_KaMu  = iConfig.getParameter<bool>("doSys_KaMu");
+
+  _Roch_calib[0] = new rochcor2016();
+  _doSys_Roch  = iConfig.getParameter<bool>("doSys_Roch");
+  if (_doSys_Roch) {
+    srand( time(NULL) );
+    std::cout << "Creating 200 toys for Rochester correction systematics ..." << std::endl;
+    for (int i = 1; i < 201; i++) {
+      int iRand = (rand() % 1000) + 1;
+      _Roch_calib[i] = new rochcor2016(iRand);
+    }  
+    std::cout << "... DONE." << std::endl;
+  }
+  
 } // End constructor: UFDiMuonsAnalyzer::UFDiMuonsAnalyzer
 
 // Destructor
@@ -153,8 +169,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 							    _vertex_rho_max, _vertex_z_max );
   reco::Vertex primaryVertex = verticesSelected.at(0);
   
-  _vertexInfos.init();
-  FillVertexInfos( _vertexInfos, verticesSelected );
+  bool _onlyPV = true;  // Only fill primary vertex
+  FillVertexInfos( _vertexInfos, _nVertices, verticesSelected, _onlyPV );
   
   // -----
   // MUONS
@@ -175,13 +191,16 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   
   FillMuonInfos( _muonInfos, muonsSelected, primaryVertex, verticesSelected.size(), beamSpotHandle, 
 		 iEvent, iSetup, triggerObjsHandle, triggerResultsHandle, _triggerNames,
-		 _muon_trig_dR, _muon_use_pfIso, _muon_iso_dR ); 
+		 _muon_trig_dR, _muon_use_pfIso, _muon_iso_dR, !(_isMonteCarlo), 
+		 _KaMu_calib, _doSys_KaMu, _Roch_calib, _doSys_Roch ); 
+  _nMuons = _muonInfos.size();
 
   // ------------
   // DIMUON PAIRS
   // ------------
   if (_isVerbose) std::cout << "\nFilling PairInfo" << std::endl;
   FillPairInfos( _pairInfos, _muonInfos );
+  _nPairs = _pairInfos.size();
 
   // -----------------------
   // MC PILEUP / GEN WEIGHTS
@@ -226,8 +245,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   
   FillEleInfos( _eleInfos, elesSelected, primaryVertex, iEvent, 
   		ele_id_veto, ele_id_loose, ele_id_medium, ele_id_tight );
+  _nEles = _eleInfos.size();
 
-  // Mysterious segfault prevents filling branch in TTree. Not yet resolved. - AWB 01.12.16
   // ----
   // TAUS
   // ----
@@ -241,6 +260,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   sort(tausSelected.begin(), tausSelected.end(), sortTausByPt);
 
   FillTauInfos( _tauInfos, tausSelected, _tauIDNames );  // Sort first? - AWB 09.11.16
+  _nTaus = _tauInfos.size();
     
   // ----
   // JETS
@@ -263,20 +283,39 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   
   sort(jetsSelected.begin(), jetsSelected.end(), sortJetsByPt);
 
-  FillJetInfos( _jetInfos, jetsSelected, _btagNames );
+  FillJetInfos( _jetInfos, _nJetsFwd, jetsSelected, _btagNames );
+  _nJets = _jetInfos.size();
+  _nJetsCent = _nJets - _nJetsFwd;
   
   // Alternate collections corresponding to jet energy scale up / down
-  if (_doSyst) {
+  if (_doSys) {
     pat::JetCollection jets_JES_up   = SelectJets( jets, JetCorPar, "JES_up",
 						   _jet_ID, _jet_pT_min, _jet_eta_max );
     pat::JetCollection jets_JES_down = SelectJets( jets, JetCorPar, "JES_down",
 						   _jet_ID, _jet_pT_min, _jet_eta_max );
+    // pat::JetCollection jets_JER_up   = SelectJets( jets, JetCorPar, "JER_up",
+    // 						   _jet_ID, _jet_pT_min, _jet_eta_max );
+    // pat::JetCollection jets_JER_down = SelectJets( jets, JetCorPar, "JER_down",
+    // 						   _jet_ID, _jet_pT_min, _jet_eta_max );
 
     sort(jets_JES_up.begin(),   jets_JES_up.end(),   sortJetsByPt);
     sort(jets_JES_down.begin(), jets_JES_down.end(), sortJetsByPt);
+    // sort(jets_JER_up.begin(),   jets_JER_up.end(),   sortJetsByPt);
+    // sort(jets_JER_down.begin(), jets_JER_down.end(), sortJetsByPt);
     
-    FillJetInfos( _jetInfos_JES_up,   jets_JES_up,   _btagNames );
-    FillJetInfos( _jetInfos_JES_down, jets_JES_down, _btagNames );
+    FillJetInfos( _jetInfos_JES_up,   _nJetsFwd_JES_up,   jets_JES_up,   _btagNames );
+    FillJetInfos( _jetInfos_JES_down, _nJetsFwd_JES_down, jets_JES_down, _btagNames );
+    _nJets_JES_up   = _jetInfos_JES_up.size();
+    _nJets_JES_down = _jetInfos_JES_down.size();
+    _nJetsCent_JES_up   = _nJets_JES_up   - _nJetsFwd_JES_up;
+    _nJetsCent_JES_down = _nJets_JES_down - _nJetsFwd_JES_down;
+
+    // FillJetInfos( _jetInfos_JER_up,   _nJetsFwd_JER_up,   jets_JER_up,   _btagNames );
+    // FillJetInfos( _jetInfos_JER_down, _nJetsFwd_JER_down, jets_JER_down, _btagNames );
+    // _nJets_JER_up   = _jetInfos_JER_up.size();
+    // _nJets_JER_down = _jetInfos_JER_down.size();
+    // _nJetsCent_JER_up   = _nJets_JER_up   - _nJetsFwd_JER_up;
+    // _nJetsCent_JER_down = _nJets_JER_down - _nJetsFwd_JER_down;
   }
 
 
@@ -307,6 +346,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
       iEvent.getByToken(_genJetsToken, genJets);
 
     FillGenJetInfos( _genJetInfos, genJets, _isMonteCarlo );
+    _nGenJets = _genJetInfos.size();
   }
 
   // -------------------------------------------
@@ -372,21 +412,43 @@ void UFDiMuonsAnalyzer::beginJob() {
 
   displaySelection();
 
-  // Include user-defined structs (or classes) in the output tree
-  gROOT->ProcessLine("#include <UfHMuMuCode/UFDiMuonsAnalyzer/interface/LinkDef.h>");
+  // // Include user-defined structs (or classes) in the output tree
+  // gROOT->ProcessLine("#include <UfHMuMuCode/UFDiMuonsAnalyzer/interface/LinkDef.h>");
 
   // Set up the _outTree branches
   _outTree->Branch("event",         (EventInfo*)     &_eventInfo         );
   _outTree->Branch("vertices",      (VertexInfos*)   &_vertexInfos       );
   _outTree->Branch("muons",         (MuonInfos*)     &_muonInfos         );
   _outTree->Branch("pairs",         (PairInfos*)     &_pairInfos         );
-  // // Electrons and taus cause mysterious segfault in runtime. Not yet resolved. - AWB 01.12.16
-  // _outTree->Branch("eles",          (EleInfos*)      &_eleInfos          );
-  // _outTree->Branch("taus",          (TauInfos*)      &_tauInfos          );
+  _outTree->Branch("eles",          (EleInfos*)      &_eleInfos          );
+  _outTree->Branch("taus",          (TauInfos*)      &_tauInfos          );
   _outTree->Branch("met",           (MetInfo*)       &_metInfo           );
   _outTree->Branch("jets",          (JetInfos*)      &_jetInfos          );
   _outTree->Branch("jets_JES_up",   (JetInfos*)      &_jetInfos_JES_up   );
   _outTree->Branch("jets_JES_down", (JetInfos*)      &_jetInfos_JES_down );
+  // _outTree->Branch("jets_JER_up",   (JetInfos*)      &_jetInfos_JER_up   );
+  // _outTree->Branch("jets_JER_down", (JetInfos*)      &_jetInfos_JER_down );
+
+  _outTree->Branch("nVertices",          (int*) &_nVertices          );
+  _outTree->Branch("nMuons",             (int*) &_nMuons             );
+  _outTree->Branch("nPairs",             (int*) &_nPairs             );
+  _outTree->Branch("nEles",              (int*) &_nEles              );
+  _outTree->Branch("nTaus",              (int*) &_nTaus              );
+  _outTree->Branch("nJets",              (int*) &_nJets              );
+  _outTree->Branch("nJetsCent",          (int*) &_nJetsCent          );
+  _outTree->Branch("nJetsFwd",           (int*) &_nJetsFwd           );
+  _outTree->Branch("nJets_JES_up",       (int*) &_nJets_JES_up       );
+  _outTree->Branch("nJetsCent_JES_up",   (int*) &_nJetsCent_JES_up   );
+  _outTree->Branch("nJetsFwd_JES_up",    (int*) &_nJetsFwd_JES_up    );
+  _outTree->Branch("nJets_JES_down",     (int*) &_nJets_JES_down     );
+  _outTree->Branch("nJetsCent_JES_down", (int*) &_nJetsCent_JES_down );
+  _outTree->Branch("nJetsFws_JES_down",  (int*) &_nJetsFwd_JES_down  );
+  // _outTree->Branch("nJets_JER_up",       (int*) &_nJets_JER_up       );
+  // _outTree->Branch("nJetsCent_JER_up",   (int*) &_nJetsCent_JER_up   );
+  // _outTree->Branch("nJetsFwd_JER_up",    (int*) &_nJetsFwd_JER_up    );
+  // _outTree->Branch("nJets_JER_down",     (int*) &_nJets_JER_down     );
+  // _outTree->Branch("nJetsCent_JER_down", (int*) &_nJetsCent_JER_down );
+  // _outTree->Branch("nJetsFws_JER_down",  (int*) &_nJetsFwd_JER_down  );
 
   _outTree->Branch("hltPaths",      &_triggerNames);
   _outTree->Branch("btagNames",     &_btagNames   );

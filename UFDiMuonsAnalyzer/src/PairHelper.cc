@@ -3,8 +3,8 @@
 
 void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos ) {
 
-  _pairInfos.init();
-  if (_muonInfos.nMuons < 2)
+  _pairInfos.clear();
+  if (_muonInfos.size() < 2)
     return;
 
   double const MASS_MUON  = 0.105658367; // GeV/c^2
@@ -18,15 +18,15 @@ void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos ) {
   dMass.clear();
 
   // Sort pairs by mass difference from Z boson (smallest to largest)
-  for (int i = 0; i < _muonInfos.nMuons; i++) {
-    for (int j = i+1; j < _muonInfos.nMuons; j++) {
+  for (int i = 0; i < int(_muonInfos.size()); i++) {
+    for (int j = i+1; j < int(_muonInfos.size()); j++) {
 
-      mu1_vec.SetPtEtaPhiM(_muonInfos.muons.at(i).pt, _muonInfos.muons.at(i).eta, _muonInfos.muons.at(i).phi, MASS_MUON);
-      mu2_vec.SetPtEtaPhiM(_muonInfos.muons.at(j).pt, _muonInfos.muons.at(j).eta, _muonInfos.muons.at(j).phi, MASS_MUON);
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(i).pt, _muonInfos.at(i).eta, _muonInfos.at(i).phi, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(j).pt, _muonInfos.at(j).eta, _muonInfos.at(j).phi, MASS_MUON);
       pair_vec = mu1_vec + mu2_vec;
 
       double mass_diff = fabs(pair_vec.M() - PDG_MASS_Z);
-      if (_muonInfos.muons.at(i).charge == _muonInfos.muons.at(j).charge)
+      if (_muonInfos.at(i).charge == _muonInfos.at(j).charge)
 	mass_diff += 100000.;  // Push same-sign pairs to the back of the line
       dMass.push_back(std::make_pair(mass_diff, std::make_pair(i, j)));
     }
@@ -46,8 +46,8 @@ void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos ) {
     _pairInfo.iMu1 = iMu1;
     _pairInfo.iMu2 = iMu2;
 
-    mu1_vec.SetPtEtaPhiM(_muonInfos.muons.at(iMu1).pt, _muonInfos.muons.at(iMu1).eta, _muonInfos.muons.at(iMu1).phi, MASS_MUON);
-    mu2_vec.SetPtEtaPhiM(_muonInfos.muons.at(iMu2).pt, _muonInfos.muons.at(iMu2).eta, _muonInfos.muons.at(iMu2).phi, MASS_MUON);
+    mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
+    mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
     pair_vec = mu1_vec + mu2_vec;
     
     // Correct trackIsoSumPtCorr for other muon? - AWB 09.11.16
@@ -63,9 +63,9 @@ void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos ) {
     // 						  mu1.track()->p()/mu2.track()->p()) );
     
     
-    if ( _muonInfos.muons.at(iMu1).isPF && _muonInfos.muons.at(iMu2).isPF ) {      
-      mu1_vec.SetPtEtaPhiM(_muonInfos.muons.at(iMu1).pfPt, _muonInfos.muons.at(iMu1).pfEta, _muonInfos.muons.at(iMu2).pfPhi, MASS_MUON);
-      mu2_vec.SetPtEtaPhiM(_muonInfos.muons.at(iMu2).pfPt, _muonInfos.muons.at(iMu2).pfEta, _muonInfos.muons.at(iMu2).pfPhi, MASS_MUON);
+    if ( _muonInfos.at(iMu1).isPF && _muonInfos.at(iMu2).isPF ) {      
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pfPt, _muonInfos.at(iMu1).pfEta, _muonInfos.at(iMu2).pfPhi, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pfPt, _muonInfos.at(iMu2).pfEta, _muonInfos.at(iMu2).pfPhi, MASS_MUON);
       pair_vec = mu1_vec + mu2_vec;
       
       _pairInfo.pfMass = pair_vec.M();
@@ -76,16 +76,13 @@ void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos ) {
       _pairInfo.pfPhi  = pair_vec.Phi();
     }
 
-    _pairInfos.pairs.push_back( _pairInfo );
-    _pairInfos.nPairs += 1;
+    _pairInfos.push_back( _pairInfo );
   } // End loop: for (int i = 0; i < dMass.size(); i++)
-
-if ( _pairInfos.nPairs != int(_pairInfos.pairs.size()) ||
-     _pairInfos.nPairs != nPairs )
-  std::cout << "Bizzare error: _pairInfos.nPairs = " << _pairInfos.nPairs
-	    << ", _pairInfos.pairs.size() = " << _pairInfos.pairs.size()
-	    << ", nPairs = " << nPairs << std::endl;
-
+  
+  if ( int(_pairInfos.size()) != nPairs )
+    std::cout << "Bizzare error: _pairInfos.size() = " << _pairInfos.size()
+	      << ", nPairs = " << nPairs << std::endl;
+  
 } // End void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos )
 
 bool pair_smaller_dMass( std::pair< double, std::pair<int, int> > i, 

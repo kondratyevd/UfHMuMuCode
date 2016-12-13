@@ -15,7 +15,24 @@ void MuonInfo::init() {
     pt     = -999;
     eta    = -999;
     phi    = -999;
+
+    trkPt    = -999;
+    trkPtErr = -999;
+    trkEta   = -999;
+    trkPhi   = -999;
     
+    pt_KaMu           = -999;
+    ptErr_KaMu        = -999;
+    pt_sys_up_KaMu    = -999;
+    pt_sys_down_KaMu  = -999;
+    pt_clos_up_KaMu   = -999;
+    pt_clos_down_KaMu = -999;
+
+    pt_Roch          = -999;
+    q_term_Roch      = -999;
+    pt_sys_up_Roch   = -999;
+    pt_sys_down_Roch = -999;
+     
     d0_BS = -999;
     dz_BS = -999;
     
@@ -57,9 +74,3 @@ void MuonInfo::init() {
 
 } // End void MuonInfo::init()
 
-void MuonInfos::init() {
-
-  nMuons = 0;
-  muons.clear();
-
-}

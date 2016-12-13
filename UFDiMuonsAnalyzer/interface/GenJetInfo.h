@@ -20,13 +20,6 @@ struct GenJetInfo {
 
 };
 
-struct GenJetInfos {
-
-  Int_t nGenJets;
-  std::vector<GenJetInfo> genJets;
-
-  void init();
-
-};
+typedef std::vector<GenJetInfo> GenJetInfos;
 
 #endif  // #ifndef GENJET_INFO

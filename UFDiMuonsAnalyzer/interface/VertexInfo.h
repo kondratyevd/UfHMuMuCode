@@ -22,13 +22,6 @@ struct VertexInfo {
   
 };
 
-struct VertexInfos {
-  
-  Int_t nVertices;
-  std::vector<VertexInfo> vertices;
-
-  void init();
-
-};
+typedef std::vector<VertexInfo> VertexInfos;
 
 #endif  // #ifndef VERTEX_INFO

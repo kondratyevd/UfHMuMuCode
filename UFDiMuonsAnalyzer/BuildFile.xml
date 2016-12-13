@@ -42,5 +42,6 @@
 #<use name="PhysicsTools/Utilities"/>
 #<use name="RecoParticleFlow/PFClusterTools"/>
 #<use name="EgammaAnalysis/ElectronTools"/>
-
+<use name="KaMuCa/Calibration"/>
+<use name="RochCor/Calibration"/>
 <!-- <use name="rootrflx"/> -->

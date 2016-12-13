@@ -16,9 +16,3 @@ void VertexInfo::init() {
 
 }
 
-void VertexInfos::init() {
-
-  nVertices = 0;
-  vertices.clear();
-
-}

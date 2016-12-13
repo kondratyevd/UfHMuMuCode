@@ -1,12 +1,14 @@
 
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/JetHelper.h"
 
-void FillJetInfos( JetInfos& _jetInfos,
+void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
 		   const pat::JetCollection jetsSelected, 
 		   const std::vector<std::string> _btagNames) {
 
-  _jetInfos.init();
+  _jetInfos.clear();
+  _nJetsFwd  = 0;
   int nJets     = jetsSelected.size();
+  int nJetsCent = 0;
 
   for (int i = 0; i < nJets; i++) {
     
@@ -78,20 +80,17 @@ void FillJetInfos( JetInfos& _jetInfos,
       _jetInfo.genAuxF    = -1;
     }
     
-    _jetInfos.nJets += 1;
-    if ( fabs( jet.eta() ) < 2.4 ) _jetInfos.nJetsCent += 1;
-    else                           _jetInfos.nJetsFwd  += 1;
-    _jetInfos.jets.push_back( _jetInfo );
+    if ( fabs( jet.eta() ) < 2.4 ) nJetsCent += 1;
+    else                           _nJetsFwd += 1;
+    _jetInfos.push_back( _jetInfo );
 
   }  // End loop: for (int i = 0; i < nJets; i++)
 
-  if ( _jetInfos.nJets != int(_jetInfos.jets.size()) ||
-       _jetInfos.nJetsCent + _jetInfos.nJetsFwd != _jetInfos.nJets )
-    std::cout << "Bizzare error: _jetInfos.nJets = " << _jetInfos.nJets
-	      << ", _jetInfos.nJetsCent = " << _jetInfos.nJetsCent
-	      << ", _jetInfos.nJetsFwd = " << _jetInfos.nJetsFwd
-              << ", _jetInfos.jets.size() = " << _jetInfos.jets.size() << std::endl;
-
+  if ( nJetsCent + _nJetsFwd != int(_jetInfos.size()) )
+    std::cout << "Bizzare error: _jetInfos.size() = " << _jetInfos.size()
+	      << ", nJetsCent = " << nJetsCent
+	      << ", _nJetsFwd = " << _nJetsFwd << std::endl;
+  
 }
 
 

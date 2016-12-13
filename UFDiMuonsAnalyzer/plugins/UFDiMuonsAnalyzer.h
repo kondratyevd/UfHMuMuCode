@@ -19,6 +19,12 @@
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/NTupleBranches.h"
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/NTupleHelpers.h"
 
+// Special calibration classes
+#include "KaMuCa/Calibration/interface/KalmanMuonCalibrator.h"
+#include "RochCor/Calibration/interface/rochcor2016.h"
+#include "RochCor/Calibration/interface/RoccoR.h"
+#include <time.h>
+
 ///////////////////////////////////////////////////////////
 // Class Definition ======================================
 //////////////////////////////////////////////////////////
@@ -65,20 +71,25 @@ public:
   // general event information	
   EventInfo _eventInfo;
 
-  // array of vertex information
+  // vector of vertex information
   VertexInfos _vertexInfos;
+  int _nVertices;
 
-  // array of muons, 0,1 locations are the dimuon candidate
+  // vector of muons
   MuonInfos _muonInfos;
+  int _nMuons;
 
-  // info about the dimuon candidate formed from the 0,1 muons in _muonInfo
+  // info about the dimuon candidates in _muonInfos
   PairInfos _pairInfos;
+  int _nPairs;
 
-  // array of electrons
+  // vector of electrons
   EleInfos  _eleInfos;
+  int _nEles;
 
-  // array of taus
+  // vector of taus
   TauInfos  _tauInfos;
+  int _nTaus;
 
   // generator level info Gamma pre-FSR
   GenPartInfo _genGpreFSR, _genM1GpreFSR, _genM2GpreFSR;
@@ -106,9 +117,19 @@ public:
 
   // Jets and MET
   JetInfos    _jetInfos;
+  int _nJets, _nJetsCent, _nJetsFwd;
   JetInfos    _jetInfos_JES_up;
+  int _nJets_JES_up, _nJetsCent_JES_up, _nJetsFwd_JES_up;
   JetInfos    _jetInfos_JES_down;
+  int _nJets_JES_down, _nJetsCent_JES_down, _nJetsFwd_JES_down;
+  JetInfos    _jetInfos_JER_up;
+  int _nJets_JER_up, _nJetsCent_JER_up, _nJetsFwd_JER_up;
+  JetInfos    _jetInfos_JER_down;
+  int _nJets_JER_down, _nJetsCent_JER_down, _nJetsFwd_JER_down;
+
   GenJetInfos _genJetInfos;
+  int _nGenJets;
+
   MetInfo     _metInfo;
 
   ///////////////////////////////////////////////////////////
@@ -148,6 +169,10 @@ private:
   static bool sortTausByPt  (pat::Tau i,      pat::Tau j     );
   static bool sortJetsByPt  (pat::Jet i,      pat::Jet j     );
 
+  KalmanMuonCalibrator _KaMu_calib;
+  bool _doSys_KaMu;
+  rochcor2016* _Roch_calib[201];
+  bool _doSys_Roch;
 
   //////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////
@@ -206,7 +231,7 @@ private:
   // Selection Criteria for event and objects in config file
   bool _isVerbose;   
   bool _isMonteCarlo;
-  bool _doSyst;
+  bool _doSys;
 
   int  _skim_nMuons;
   bool _skim_trigger;

@@ -5,7 +5,7 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          
                          isVerbose    = cms.untracked.bool(False),
                          isMonteCarlo = cms.bool(False),
-                         doSyst       = cms.bool(False),
+                         doSys        = cms.bool(False),
 
                          ## Event selection cuts
                          skim_nMuons = cms.int32(2),
@@ -27,7 +27,9 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          beamSpotTag      = cms.InputTag("offlineBeamSpot"),
 
                          ## Muons
-                         muonColl = cms.InputTag("slimmedMuons"),
+                         muonColl   = cms.InputTag("slimmedMuons"),
+                         doSys_KaMu = cms.bool(False),
+                         doSys_Roch = cms.bool(False),
 
                          ## Electrons
                          eleColl     = cms.InputTag("slimmedElectrons"),

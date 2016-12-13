@@ -4,6 +4,8 @@
 
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/CommonIncludes.h"
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/MuonInfo.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/PtCorrKalman.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/PtCorrRoch.h"
 
 void FillMuonInfos( MuonInfos& _muonInfos, 
 		    const pat::MuonCollection muonsSelected,
@@ -13,7 +15,9 @@ void FillMuonInfos( MuonInfos& _muonInfos,
 		    const edm::Handle<pat::TriggerObjectStandAloneCollection>& _triggerObjsHandle,
 		    const edm::Handle<edm::TriggerResults>& _triggerResultsHandle,
 		    const std::vector<std::string> _triggerNames, const double _muon_trig_dR,
-		    const bool _muon_use_pfIso, const double _muon_iso_dR );
+		    const bool _muon_use_pfIso, const double _muon_iso_dR, const bool _isData,
+		    KalmanMuonCalibrator& _KaMu_calib, const bool _doSys_KaMu,
+		    rochcor2016* _Roch_calib[201], const bool _doSys_Roch );
 
 pat::MuonCollection SelectMuons( const edm::Handle<pat::MuonCollection>& muons,
 				 const reco::Vertex primaryVertex, const std::string _muon_ID,

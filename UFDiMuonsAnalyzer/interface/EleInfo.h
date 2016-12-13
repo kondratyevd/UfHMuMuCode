@@ -34,13 +34,6 @@ struct EleInfo {
 
 };
 
-struct EleInfos {
-
-  Int_t nEles;
-  std::vector<EleInfo> eles;
-
-  void init();
-
-};
+typedef std::vector<EleInfo> EleInfos;
 
 #endif  // #ifndef ELE_INFO                                                                                                                      

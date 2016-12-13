@@ -5,7 +5,7 @@
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/CommonIncludes.h"
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/JetInfo.h"
 
-void FillJetInfos( JetInfos& _jetInfos, 
+void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
 		   const pat::JetCollection jetsSelected, 
 		   const std::vector<std::string> _btagNames );
 

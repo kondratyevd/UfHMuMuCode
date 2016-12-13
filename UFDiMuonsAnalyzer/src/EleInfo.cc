@@ -27,9 +27,3 @@ void EleInfo::init() {
 
 } // End void EleInfo::init()
 
-void EleInfos::init() {
-
-  nEles = 0;
-  eles.clear();
-
-}

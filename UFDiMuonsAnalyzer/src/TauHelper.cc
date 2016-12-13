@@ -5,7 +5,7 @@ void FillTauInfos( TauInfos& _tauInfos,
 		   const pat::TauCollection tausSelected, 
 		   const std::vector<std::string> _tauIDNames) {
 
-  _tauInfos.init();
+  _tauInfos.clear();
   int nTaus = tausSelected.size();
   
   for (int i = 0; i < nTaus; i++) {
@@ -47,14 +47,9 @@ void FillTauInfos( TauInfos& _tauInfos,
       _tauInfo.d0_PV = packedLeadTauCand->dxy();
     }
 
-    _tauInfos.taus.push_back( _tauInfo );
-    _tauInfos.nTaus += 1;
+    _tauInfos.push_back( _tauInfo );
   } // End loop: for (int i = 0; i < nTaus; i++)
 
-  if ( _tauInfos.nTaus != int(_tauInfos.taus.size()) )
-    std::cout << "Bizzare error: _tauInfos.nTaus = " << _tauInfos.nTaus
-              << ", _tauInfos.taus.size() = " << _tauInfos.taus.size() << std::endl;
-  
 } // End void FillTauInfos
 
 

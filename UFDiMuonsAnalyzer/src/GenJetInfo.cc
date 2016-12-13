@@ -13,9 +13,3 @@ void GenJetInfo::init() {
   charge = -999;
 }
 
-void GenJetInfos::init() {
-
-  nGenJets = 0;
-  genJets.clear();
-
-}

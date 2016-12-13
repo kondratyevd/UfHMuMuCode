@@ -23,8 +23,20 @@ struct MuonInfo {
 
   Double_t trkPt   ;
   Double_t trkPtErr;
-  Double_t trketa  ;
+  Double_t trkEta  ;
   Double_t trkPhi  ;
+
+  Double_t pt_KaMu          ;
+  Double_t ptErr_KaMu       ;
+  Double_t pt_sys_up_KaMu   ;
+  Double_t pt_sys_down_KaMu ;
+  Double_t pt_clos_up_KaMu  ;
+  Double_t pt_clos_down_KaMu;
+
+  Double_t pt_Roch          ;
+  Double_t q_term_Roch      ;
+  Double_t pt_sys_up_Roch   ;
+  Double_t pt_sys_down_Roch ;
 
   Float_t d0_BS;
   Float_t dz_BS;
@@ -68,13 +80,6 @@ struct MuonInfo {
 
 };
 
-struct MuonInfos {
-
-  Int_t nMuons;
-  std::vector<MuonInfo> muons;
-
-  void init();
-
-};
+typedef std::vector<MuonInfo> MuonInfos;
 
 #endif  // #ifndef MUON_INFO

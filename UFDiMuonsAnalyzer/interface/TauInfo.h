@@ -23,13 +23,6 @@ struct TauInfo {
 
 };
 
-struct TauInfos {
-
-  Int_t nTaus;
-  std::vector<TauInfo> taus;
-
-  void init();
-
-};
+typedef std::vector<TauInfo> TauInfos;
 
 #endif  // #ifndef TAU_INFO

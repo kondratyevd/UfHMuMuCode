@@ -13,9 +13,3 @@ void GenPartInfo::init() {
 
 }
 
-void GenPartInfos::init() {
-  
-  nGenParts = 0;
-  genParts.clear();
-
-}

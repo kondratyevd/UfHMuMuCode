@@ -19,13 +19,6 @@ struct GenPartInfo {
 
 };
 
-struct GenPartInfos {
-
-  Int_t nGenParts;
-  std::vector<GenPartInfo> genParts;
-
-  void init();
-
-};
+typedef std::vector<GenPartInfo> GenPartInfos;
 
 #endif  // #ifndef GENPART_INFO

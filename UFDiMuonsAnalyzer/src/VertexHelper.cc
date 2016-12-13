@@ -1,11 +1,13 @@
 
 #import "UfHMuMuCode/UFDiMuonsAnalyzer/interface/VertexHelper.h"
 
-void FillVertexInfos( VertexInfos& _vertexInfos,
-		      const reco::VertexCollection verticesSelected ) {
+void FillVertexInfos( VertexInfos& _vertexInfos, int& _nVertices,
+		      const reco::VertexCollection verticesSelected,
+		      const bool _onlyPV ) {
 
-  _vertexInfos.init();
+  _vertexInfos.clear();
   int nVertices = verticesSelected.size();
+  _nVertices = nVertices;
 
   for (int i = 0; i < nVertices; i++) {
 
@@ -24,14 +26,12 @@ void FillVertexInfos( VertexInfos& _vertexInfos,
     _vertexInfo.ndof     = vertex.ndof();
     _vertexInfo.normChi2 = vertex.normalizedChi2();
 
-    _vertexInfos.vertices.push_back( _vertexInfo );
-    _vertexInfos.nVertices += 1;
+    _vertexInfos.push_back( _vertexInfo );
+
+    if (_onlyPV) break;  // Only fill primary vertex
+
   } // End loop: for (int i = 0; i < nVertices; i++)                                                                                            
 
-  if ( _vertexInfos.nVertices != int(_vertexInfos.vertices.size()) )
-    std::cout << "Bizzare error: _vertexInfos.nVertices = " << _vertexInfos.nVertices
-	      << ", _vertexInfos.vertices.size() = " << _vertexInfos.vertices.size() << std::endl;
-  
 } // End function: void FillVertexInfo     
   
 

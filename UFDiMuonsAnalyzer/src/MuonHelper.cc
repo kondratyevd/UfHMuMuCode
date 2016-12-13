@@ -9,9 +9,13 @@ void FillMuonInfos( MuonInfos& _muonInfos,
 		    const edm::Handle<pat::TriggerObjectStandAloneCollection>& _triggerObjsHandle,
 		    const edm::Handle<edm::TriggerResults>& _triggerResultsHandle,
 		    const std::vector<std::string> _triggerNames, const double _muon_trig_dR, 
-		    const bool _muon_use_pfIso, const double _muon_iso_dR ) {
+		    const bool _muon_use_pfIso, const double _muon_iso_dR, const bool _isData,
+		    KalmanMuonCalibrator& _KaMu_calib, const bool _doSys_KaMu,
+		    rochcor2016* _Roch_calib[201], const bool _doSys_Roch ) {
   
-  _muonInfos.init();
+  double const MASS_MUON  = 0.105658367; // GeV/c^2
+
+  _muonInfos.clear();
   int nMuons = muonsSelected.size();
 
   for (int i = 0; i < nMuons; i++) {
@@ -71,9 +75,48 @@ void FillMuonInfos( MuonInfos& _muonInfos,
     if (muon.isTrackerMuon()) {
       _muonInfo.trkPt    = muon.innerTrack()->pt();
       _muonInfo.trkPtErr = muon.innerTrack()->ptError();
-      _muonInfo.trketa   = muon.innerTrack()->eta();
+      _muonInfo.trkEta   = muon.innerTrack()->eta();
       _muonInfo.trkPhi   = muon.innerTrack()->phi();
-    }
+
+      // Kalman-calibrated pT
+      double pt_KaMu    = muon.innerTrack()->pt();
+      double ptErr_KaMu = muon.innerTrack()->ptError();
+      double eta_KaMu   = muon.innerTrack()->eta();
+      double phi_KaMu   = muon.innerTrack()->phi();
+      int charge_KaMu   = muon.innerTrack()->charge();
+      double pt_sys_up_KaMu, pt_sys_down_KaMu, pt_clos_up_KaMu, pt_clos_down_KaMu;
+
+      CorrectPtKaMu( _KaMu_calib, _doSys_KaMu, 
+      		     pt_KaMu, ptErr_KaMu, pt_sys_up_KaMu, 
+      		     pt_sys_down_KaMu, pt_clos_up_KaMu, pt_clos_down_KaMu,
+      		     eta_KaMu, phi_KaMu, charge_KaMu, _isData );
+
+      _muonInfo.pt_KaMu           = pt_KaMu;
+      _muonInfo.ptErr_KaMu        = ptErr_KaMu;
+      _muonInfo.pt_sys_up_KaMu    = pt_sys_up_KaMu;
+      _muonInfo.pt_sys_down_KaMu  = pt_sys_down_KaMu;
+      _muonInfo.pt_clos_up_KaMu   = pt_clos_up_KaMu;
+      _muonInfo.pt_clos_down_KaMu = pt_clos_down_KaMu;
+
+      // Rochester-calibrated pT
+      TLorentzVector mu_vec_Roch;
+      mu_vec_Roch.SetPtEtaPhiM( muon.innerTrack()->pt(), muon.innerTrack()->eta(),
+      				muon.innerTrack()->phi(), MASS_MUON );
+      float q_term_Roch, pt_sys_up_Roch, pt_sys_down_Roch;
+      int charge_Roch     = muon.innerTrack()->charge();
+      int trk_layers_Roch = muon.innerTrack()->hitPattern().trackerLayersWithMeasurement(); 
+
+      CorrectPtRoch( _Roch_calib, _doSys_Roch, 
+		     mu_vec_Roch, q_term_Roch, 
+		     pt_sys_up_Roch, pt_sys_down_Roch,
+      		     charge_Roch, trk_layers_Roch, _isData );
+
+      _muonInfo.pt_Roch           = mu_vec_Roch.Pt();
+      _muonInfo.q_term_Roch       = q_term_Roch;
+      _muonInfo.pt_sys_up_Roch    = pt_sys_up_Roch;
+      _muonInfo.pt_sys_down_Roch  = pt_sys_down_Roch;
+
+    } // End if (muon.isTrackerMuon())
 
     // Particle flow kinematics
     if ( muon.isPFMuon() ) {
@@ -142,14 +185,9 @@ void FillMuonInfos( MuonInfos& _muonInfos,
       _muonInfo.sumPUPtR04              = muon.pfIsolationR04().sumPUPt             ;
     }
 
-    _muonInfos.muons.push_back( _muonInfo );
-    _muonInfos.nMuons += 1;
+    _muonInfos.push_back( _muonInfo );
   } // End loop: for (unsigned int i = 0; i < nMuons; i++)
 
-  if ( _muonInfos.nMuons != int(_muonInfos.muons.size()) )
-    std::cout << "Bizzare error: _muonInfos.nMuons = " << _muonInfos.nMuons
-              << ", _muonInfos.muons.size() = " << _muonInfos.muons.size() << std::endl;
-  
 } // End function: void FillMuonInfos
     
 

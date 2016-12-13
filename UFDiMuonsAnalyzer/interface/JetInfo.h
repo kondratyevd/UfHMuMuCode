@@ -64,15 +64,6 @@ struct JetInfo {
 
 };
 
-struct JetInfos {
-
-  Int_t nJets;
-  Int_t nJetsCent;
-  Int_t nJetsFwd;
-  std::vector<JetInfo> jets;
-
-  void init();
-
-};
+typedef std::vector<JetInfo> JetInfos;
 
 #endif  // #ifndef JET_INFO

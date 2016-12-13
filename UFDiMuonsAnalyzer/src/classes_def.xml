@@ -1,43 +1,45 @@
 <lcgdict>
-  <selection>
+  <!-- <selection> -->
     
-    <class name="EleInfo"/>
-    <class name="EleInfos"/>
-    <!-- <class name="edm::Wrapper<EleInfos>"/> -->
-    
-    <class name="GenJetInfo"/> 
-    <class name="GenJetInfos"/> 
-    <!-- <class name="edm::Wrapper<GenJetInfos>"/>  -->
-    
-    <class name="JetInfo"/> 
-    <class name="JetInfos"/> 
-    <!-- <class name="edm::Wrapper<JetInfos>"/>  -->
-    
-    <class name="MuonInfo"/> 
-    <class name="MuonInfos"/> 
-    <!-- <class name="edm::Wrapper<MuonInfos>"/>  -->
-    
-    <class name="TauInfo"/> 
-    <class name="TauInfos"/> 
-    <!-- <class name="edm::Wrapper<TauInfos>"/>  -->
-    
-    <class name="EventInfo"/> 
-    <!-- <class name="edm::Wrapper<EventInfo>"/>  -->
-    
-    <class name="GenPartInfo"/> 
-    <class name="GenPartInfos"/> 
-    <!-- <class name="edm::Wrapper<GenPartInfos>"/>  -->
-    
-    <class name="MetInfo"/> 
-    <!-- <class name="edm::Wrapper<MetInfo>"/>  -->
-    
-    <class name="PairInfo"/> 
-    <class name="PairInfos"/> 
-    <!-- <class name="edm::Wrapper<PairInfos>"/>  -->
-    
-    <class name="VertexInfo"/> 
-    <class name="VertexInfos"/> 
-    <!-- <class name="edm::Wrapper<VertexInfos>"/>  -->
-
-    </selection>
+  <class name="EleInfo"/>
+  <class name="std::vector<EleInfo>"/>
+  <!-- <class name="EleInfos"/> -->
+  <!-- <class name="edm::Wrapper<EleInfos>"/> -->
+  
+  <class name="GenJetInfo"/> 
+  <class name="GenJetInfos"/> 
+  <class name="edm::Wrapper<GenJetInfos>"/>
+  
+  <class name="JetInfo"/> 
+  <class name="JetInfos"/> 
+  <class name="edm::Wrapper<JetInfos>"/>
+  
+  <class name="MuonInfo"/> 
+  <class name="MuonInfos"/> 
+  <class name="edm::Wrapper<MuonInfos>"/>
+  
+  <class name="TauInfo"/> 
+  <!-- <class name="std::vector<TauInfo>"/> -->
+  <class name="TauInfos"/>
+  <!-- <class name="edm::Wrapper<TauInfos>"/> -->
+  
+  <class name="EventInfo"/> 
+  <class name="edm::Wrapper<EventInfo>"/>
+  
+  <class name="GenPartInfo"/> 
+  <class name="GenPartInfos"/> 
+  <class name="edm::Wrapper<GenPartInfos>"/>
+  
+  <class name="MetInfo"/> 
+  <class name="edm::Wrapper<MetInfo>"/>
+  
+  <class name="PairInfo"/> 
+  <class name="PairInfos"/> 
+  <class name="edm::Wrapper<PairInfos>"/>
+  
+  <class name="VertexInfo"/> 
+  <class name="VertexInfos"/> 
+  <class name="edm::Wrapper<VertexInfos>"/>
+  
+    <!-- </selection> -->
 </lcgdict>

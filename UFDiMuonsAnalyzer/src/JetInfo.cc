@@ -51,11 +51,3 @@ void JetInfo::init() {
 
 } // End void JetInfo::init()
 
-void JetInfos::init() {
-
-  nJets     = 0;
-  nJetsCent = 0;
-  nJetsFwd  = 0;
-  jets.clear();
-
-}

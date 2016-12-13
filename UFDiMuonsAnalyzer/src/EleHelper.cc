@@ -7,7 +7,7 @@ void FillEleInfos( EleInfos& _eleInfos,
 		   const edm::Handle< edm::ValueMap<bool> >& ele_id_veto, const edm::Handle< edm::ValueMap<bool> >& ele_id_loose,
 		   const edm::Handle< edm::ValueMap<bool> >& ele_id_medium, const edm::Handle< edm::ValueMap<bool> >& ele_id_tight ) {
   
-  _eleInfos.init();
+  _eleInfos.clear();
   int nEles = elesSelected.size();
   
   for (int i = 0; i < nEles; i++) {
@@ -59,13 +59,8 @@ void FillEleInfos( EleInfos& _eleInfos,
     _eleInfo.sumPhotonEtR03        = ele.pfIsolationVariables().sumPhotonEt;
     _eleInfo.sumPUPtR03            = ele.pfIsolationVariables().sumPUPt;
 
-    _eleInfos.eles.push_back( _eleInfo );
-    _eleInfos.nEles += 1;
+    _eleInfos.push_back( _eleInfo );
   } // End loop: for (int i = 0; i < nEles; i++)
-
-  if ( _eleInfos.nEles != int(_eleInfos.eles.size()) )
-    std::cout << "Bizzare error: _eleInfos.nEles = " << _eleInfos.nEles
-              << ", _eleInfos.eles.size() = " << _eleInfos.eles.size() << std::endl;
 
 }
 
