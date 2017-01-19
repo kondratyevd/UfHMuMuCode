@@ -6,8 +6,11 @@
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/JetInfo.h"
 
 void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
+		   int& _nBLoose, int& _nBMed, int& _nBTight,
 		   const pat::JetCollection jetsSelected, 
-		   const std::vector<std::string> _btagNames );
+		   const std::string _btagName );
+
+void FillSlimJetInfos( SlimJetInfos& _slimJetInfos, const JetInfos _jetInfos );
 
 pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
 			       const JetCorrectorParameters& JetCorPar, const std::string _JES_syst,

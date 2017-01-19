@@ -44,14 +44,8 @@ public:
   // Basic types ===========================================
   ///////////////////////////////////////////////////////////
 
-  // Needed here? - AWB 09.11.16
-  /* //Physical Constants */
-  /* double static constexpr PDG_MASS_Z  = 91.1876;      //GeV/c2 */
-  /* double static constexpr PDG_WIDTH_Z = 2.4952;       //GeV/c2 */
-  /* double static constexpr MASS_MUON = 0.105658367;    //GeV/c2 */
-
   // meta-data not given in python config file
-  // info gathered from py cfg defined later (py-cfg meta data: isMonteCarlo, triggerNames, tauIDNames, bTagNames)
+  // info gathered from py cfg defined later (py-cfg meta data: isMonteCarlo, trigNames, tauIDNames, bTagName)
   int _numEvents;
   int _sumEventWeights;
 
@@ -59,9 +53,16 @@ public:
   typedef std::pair<reco::Track,reco::Track> TrackPair;
   typedef std::vector<TrackPair> TrackPairs;
 
-  // gen info
-  int _nPU;        // true pileup
-  int _genWeight;  // +1 or -1 weight for nlo samples, -1 simulates interference when filling histos
+  // GEN info
+  int    _nPU;     // True number of vertices
+  float  _PU_wgt;  // Pileup weight
+  float  _PU_wgt_up;
+  float  _PU_wgt_down;
+  TH1D*  _PU_wgt_hist;
+  TH1D*  _PU_wgt_hist_up;
+  TH1D*  _PU_wgt_hist_down;
+  TFile* _PU_wgt_file;
+  int _GEN_wgt;    // +1 or -1 weight for nlo samples, -1 simulates interference when filling histos
 
 
   ///////////////////////////////////////////////////////////
@@ -116,21 +117,48 @@ public:
   GenPartInfo _genHpostFSR, _genM1HpostFSR,_genM2HpostFSR;
 
   // Jets and MET
-  JetInfos    _jetInfos;
+  JetInfos     _jetInfos;
+  SlimJetInfos _slimJetInfos;
   int _nJets, _nJetsCent, _nJetsFwd;
-  JetInfos    _jetInfos_JES_up;
+  int _nBLoose, _nBMed, _nBTight;
+  JetInfos     _jetInfos_JES_up;
+  SlimJetInfos _slimJetInfos_JES_up;
   int _nJets_JES_up, _nJetsCent_JES_up, _nJetsFwd_JES_up;
-  JetInfos    _jetInfos_JES_down;
+  int _nBLoose_JES_up, _nBMed_JES_up, _nBTight_JES_up;
+  JetInfos     _jetInfos_JES_down;
+  SlimJetInfos _slimJetInfos_JES_down;
   int _nJets_JES_down, _nJetsCent_JES_down, _nJetsFwd_JES_down;
-  JetInfos    _jetInfos_JER_up;
+  int _nBLoose_JES_down, _nBMed_JES_down, _nBTight_JES_down;
+  JetInfos     _jetInfos_JER_up;
+  SlimJetInfos _slimJetInfos_JER_up;
   int _nJets_JER_up, _nJetsCent_JER_up, _nJetsFwd_JER_up;
-  JetInfos    _jetInfos_JER_down;
+  int _nBLoose_JER_up, _nBMed_JER_up, _nBTight_JER_up;
+  JetInfos     _jetInfos_JER_down;
+  SlimJetInfos _slimJetInfos_JER_down;
   int _nJets_JER_down, _nJetsCent_JER_down, _nJetsFwd_JER_down;
+  int _nBLoose_JER_down, _nBMed_JER_down, _nBTight_JER_down;
 
   GenJetInfos _genJetInfos;
   int _nGenJets;
 
   MetInfo     _metInfo;
+  MhtInfo     _mhtInfo;
+  MhtInfo     _mhtInfo_JES_up;
+  MhtInfo     _mhtInfo_JES_down;
+  MhtInfo     _mhtInfo_JER_up;
+  MhtInfo     _mhtInfo_JER_down;
+
+  // Weights and efficiencies
+  float  _IsoMu_eff_3;
+  float  _IsoMu_eff_3_up;
+  float  _IsoMu_eff_3_down;
+  TH2F*  _IsoMu_eff_3_hist;
+  TFile* _IsoMu_eff_3_file;
+  float  _IsoMu_eff_4;
+  float  _IsoMu_eff_4_up;
+  float  _IsoMu_eff_4_down;
+  TH2F*  _IsoMu_eff_4_hist;
+  TFile* _IsoMu_eff_4_file;
 
   ///////////////////////////////////////////////////////////
   // Trees  ================================================
@@ -159,8 +187,8 @@ private:
 
   // methods for selection
   bool isHltPassed (const edm::Event&, const edm::EventSetup&, 
-		    const edm::Handle<edm::TriggerResults>& triggerResultsHandle,
-		    const std::vector<std::string> triggerNames);
+		    const edm::Handle<edm::TriggerResults>& trigResultsHandle,
+		    const std::vector<std::string> trigNames);
 
   void displaySelection();
 
@@ -189,10 +217,10 @@ private:
 
   // Trigger
   std::string _processName;
-  std::vector<std::string> _triggerNames;
+  std::vector<std::string> _trigNames;
 
-  edm::EDGetTokenT<edm::TriggerResults> _triggerResultsToken;
-  edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> _triggerObjsToken;
+  edm::EDGetTokenT<edm::TriggerResults> _trigResultsToken;
+  edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> _trigObjsToken;
   
   // Muons
   edm::EDGetTokenT<pat::MuonCollection> _muonCollToken;
@@ -211,7 +239,7 @@ private:
   // Jets / MET
   edm::EDGetTokenT<pat::METCollection> _metToken;
   edm::EDGetTokenT<pat::JetCollection> _jetsToken;
-  std::vector<std::string> _btagNames;
+  std::string _btagName;
 
   // Event info
   edm::EDGetTokenT<reco::BeamSpot> _beamSpotToken;		
@@ -232,9 +260,10 @@ private:
   bool _isVerbose;   
   bool _isMonteCarlo;
   bool _doSys;
+  bool _slimOut;
 
   int  _skim_nMuons;
-  bool _skim_trigger;
+  bool _skim_trig;
 
   double _vertex_ndof_min;
   double _vertex_rho_max;

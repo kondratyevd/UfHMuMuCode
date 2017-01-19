@@ -46,8 +46,8 @@ void CorrectPtRoch( rochcor2016* _calib[201], const bool _doSys,
     q_term_sys = q_term_orig;
   }
 
-  _pt_sys_up   = ( _doSys ? sqrt(sum_sq_up   / nUp)   : -999 );
-  _pt_sys_down = ( _doSys ? sqrt(sum_sq_down / nDown) : -999 ); 
+  _pt_sys_up   = ( _doSys ? _mu_vec.Pt() + sqrt(sum_sq_up   / nUp)   : -999 );
+  _pt_sys_down = ( _doSys ? _mu_vec.Pt() + sqrt(sum_sq_down / nDown) : -999 ); 
 
   // std::cout << "\n*******   RESULT   *******" << std::endl;
   // std::cout << "mu_vec_orig.Pt() = " << mu_vec_orig.Pt() << ", q_term_orig = " << q_term_orig << std::endl;

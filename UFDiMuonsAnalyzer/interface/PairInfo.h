@@ -15,14 +15,31 @@ struct PairInfo {
   Double_t eta ;
   Double_t y   ;
   Double_t phi ;
-
-  Double_t pfMass;
-  Double_t pfPt  ;
-  Double_t pfEta ;
-  Double_t pfY   ;
-  Double_t pfPhi ;
-
   Double_t angle;
+
+  Double_t mass_PF;
+  Double_t pt_PF  ;
+
+  Double_t mass_trk;
+  Double_t pt_trk  ;
+
+  Double_t mass_KaMu;
+  Double_t pt_KaMu  ;
+  Double_t mass_KaMu_clos_up;
+  Double_t pt_KaMu_clos_up  ;
+  Double_t mass_KaMu_clos_down;
+  Double_t pt_KaMu_clos_down  ;
+  Double_t mass_KaMu_sys_up;
+  Double_t pt_KaMu_sys_up  ;
+  Double_t mass_KaMu_sys_down;
+  Double_t pt_KaMu_sys_down  ;
+
+  Double_t mass_Roch;
+  Double_t pt_Roch  ;
+  Double_t mass_Roch_sys_up;
+  Double_t pt_Roch_sys_up  ;
+  Double_t mass_Roch_sys_down;
+  Double_t pt_Roch_sys_down  ;
 
   void init();
 

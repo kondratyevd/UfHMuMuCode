@@ -8,40 +8,30 @@
 <flags ADD_SUBDIR="1"/>
 <flags LDFLAGS="-lXMLIO"/>
 
-<use name="PhysicsTools/UtilAlgos"/>
-<use name="FWCore/ServiceRegistry"/>
-<use name="FWCore/Framework"/>
-<use name="FWCore/Common"/>
-<use name="FWCore/PluginManager"/>
-<use name="FWCore/ParameterSet"/>
-<use name="DataFormats/Common"/>
-<use name="DataFormats/MuonReco"/>
-#<use name="DataFormats/TrackReco"/>
-#<use name="DataFormats/CSCRecHit"/>
-#<use name="DataFormats/L1GlobalTrigger"/>
-<use name="DataFormats/Math"/>
-<use name="DataFormats/VertexReco"/>
-<use name="DataFormats/HepMCCandidate"/>
-#<use name="RecoMuon/TrackingTools"/>
-#<use name="Geometry/Records"/>
-#<use name="Geometry/CSCGeometry"/>
-#<use name="Geometry/CommonDetUnit"/>
 <use name="boost"/>
 <use name="boost_regex"/>
-#<use name="clhep"/>
+
 <use name="root"/>
 <use name="rootcore"/>
-#<use name="RecoVertex/KalmanVertexFit"/>
-#<use name="RecoVertex/VertexPrimitives"/>
-#<use name="TrackingTools/TransientTrack"/>
-#<use name="TrackingTools/Records"/>
-#<use name="HLTrigger/HLTcore"/>
+
 <use name="CondFormats/JetMETObjects"/>
+
+<use name="DataFormats/Common"/>
+<use name="DataFormats/HepMCCandidate"/>
+<use name="DataFormats/Math"/>
+<use name="DataFormats/MuonReco"/>
+<use name="DataFormats/VertexReco"/>
+
+<use name="FWCore/Common"/>
+<use name="FWCore/Framework"/>
+<use name="FWCore/ParameterSet"/>
+<use name="FWCore/PluginManager"/>
+<use name="FWCore/ServiceRegistry"/>
+
 <use name="JetMETCorrections/Objects"/>
-<use name="DataFormats/PatCandidates"/>
-#<use name="PhysicsTools/Utilities"/>
-#<use name="RecoParticleFlow/PFClusterTools"/>
-#<use name="EgammaAnalysis/ElectronTools"/>
+
 <use name="KaMuCa/Calibration"/>
+
+<use name="PhysicsTools/UtilAlgos"/>
+
 <use name="RochCor/Calibration"/>
-<!-- <use name="rootrflx"/> -->

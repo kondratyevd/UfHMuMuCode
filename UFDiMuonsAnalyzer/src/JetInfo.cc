@@ -11,7 +11,6 @@ void JetInfo::init() {
   phi           = -999;
   mass          = -999;
   charge        = -999;
-  isB           = -999;
   partonFlavour = -999;
   
   chf  = -999;
@@ -47,6 +46,7 @@ void JetInfo::init() {
   genInvF    = -999;
   genAuxF    = -999;
   
+  CSV  = -999;
   puid = -999;
 
 } // End void JetInfo::init()

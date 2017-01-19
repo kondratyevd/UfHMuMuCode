@@ -1,12 +1,36 @@
 
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/JetHelper.h"
 
+void FillSlimJetInfos( SlimJetInfos& _slimJetInfos, const JetInfos _jetInfos ) {
+  
+  _slimJetInfos.clear();
+  
+  for (int i = 0; i < int(_jetInfos.size()); i++) {
+    SlimJetInfo s;
+    JetInfo j = _jetInfos.at(i);
+    s.pt        = j.pt;
+    s.eta       = j.eta;
+    s.phi       = j.phi;
+    s.mass      = j.mass;
+    s.jecFactor = j.jecFactor;
+    s.jecUnc    = j.jecUnc;
+    s.CSV       = j.CSV;
+    s.puid      = j.puid;
+    _slimJetInfos.push_back(s);
+  }
+  
+}
+
 void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
-		   const pat::JetCollection jetsSelected, 
-		   const std::vector<std::string> _btagNames) {
+		   int& _nBLoose, int& _nBMed, int& _nBTight,
+		   const pat::JetCollection jetsSelected,
+		   const std::string _btagName) {
 
   _jetInfos.clear();
   _nJetsFwd  = 0;
+  _nBLoose   = 0;
+  _nBMed     = 0;
+  _nBTight   = 0;
   int nJets     = jetsSelected.size();
   int nJetsCent = 0;
 
@@ -46,7 +70,9 @@ void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
     _jetInfo.jecUnc    = -1.0;
     _jetInfo.jecFactor = jet.jecFactor("Uncorrected");
     
-    _jetInfo.isB  = jet.bDiscriminator(_btagNames[0]);
+    _jetInfo.CSV  = jet.bDiscriminator(_btagName);
+    if (_jetInfo.CSV < 0.) _jetInfo.CSV = -0.4;
+    if (_jetInfo.CSV > 1.) _jetInfo.CSV = 1.0;
     _jetInfo.puid = jet.userFloat("pileupJetId:fullDiscriminant");
     
     const reco::GenJet* genJet = jet.genJet();
@@ -82,6 +108,9 @@ void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
     
     if ( fabs( jet.eta() ) < 2.4 ) nJetsCent += 1;
     else                           _nJetsFwd += 1;
+    if ( _jetInfo.CSV > 0.5426 )   _nBLoose  += 1;
+    if ( _jetInfo.CSV > 0.8484 )   _nBMed    += 1;
+    if ( _jetInfo.CSV > 0.9535 )   _nBTight  += 1;
     _jetInfos.push_back( _jetInfo );
 
   }  // End loop: for (int i = 0; i < nJets; i++)
@@ -99,6 +128,7 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
 			       const std::string _jet_ID, const double _jet_pT_min, const double _jet_eta_max ) {
   
   // Following https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID#Recommendations_for_13_TeV_data
+  //       and https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2016
   // Modeled after "isGoodJet" in https://github.com/cms-ttH/MiniAOD/blob/master/MiniAODHelper/src/MiniAODHelper.cc
   // VBF H-->bb analysis: http://cms.cern.ch/iCMS/analysisadmin/cadilines?line=HIG-16-003
   // Is PU jet ID used at some point in the sequence? (http://cds.cern.ch/record/1581583) Or just charged hadron subtraction (CHS)?
@@ -145,9 +175,10 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
 
       isLoose = ( corr_jet.neutralHadronEnergyFraction() < 0.99 &&
 		  corr_jet.neutralEmEnergyFraction()     < 0.99 &&
-		  corr_jet.numberOfDaughters()           > 1 );
+		  ( corr_jet.chargedMultiplicity() + 
+		    corr_jet.neutralMultiplicity() )     > 1 );
 
-      isTight = ( isLoose                                   && 
+      isTight = ( isLoose                                       && 
 		  corr_jet.neutralHadronEnergyFraction() < 0.90 &&
 		  corr_jet.neutralEmEnergyFraction()     < 0.90 );
 
@@ -162,8 +193,9 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
     } // End if ( fabs( corr_jet.eta() ) < 2.7 )
     else if ( fabs( corr_jet.eta() ) < 3.0 ) {
 
-      isLoose = ( corr_jet.neutralEmEnergyFraction() < 0.90 &&
-		  corr_jet.neutralMultiplicity()     > 2 );
+      isLoose = ( corr_jet.neutralEmEnergyFraction()     > 0.01 &&
+		  corr_jet.neutralHadronEnergyFraction() < 0.98 &&
+		  corr_jet.neutralMultiplicity()         > 2 );
       isTight = isLoose;
     }
     else {

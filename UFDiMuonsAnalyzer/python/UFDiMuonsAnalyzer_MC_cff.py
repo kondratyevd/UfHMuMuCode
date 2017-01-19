@@ -6,23 +6,24 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          isVerbose    = cms.untracked.bool(False),
                          isMonteCarlo = cms.bool(True),
                          doSys        = cms.bool(False),
+                         slimOut      = cms.bool(True),
 
                          ## Event selection cuts
                          skim_nMuons = cms.int32(0),
-                         skim_trigger = cms.bool(False),
+                         skim_trig   = cms.bool(False),
                          
                          ## HLT trigger info
                          processName  = cms.string("HLT"),
                          ## processName  = cms.string("HLT2"),  ## For reHLT MC samples?
                          ## Unprescaled triggers at the end of 2016
                          ## https://cmswbm.web.cern.ch/cmswbm/cmsdb/servlet/TriggerMode?KEY=l1_hlt_collisions2016/v450
-                         triggerNames = cms.vstring("HLT_IsoMu22_eta2p1", "HLT_IsoTkMu22_eta2p1", 
+                         trigNames = cms.vstring("HLT_IsoMu22_eta2p1", "HLT_IsoTkMu22_eta2p1", 
                                                     "HLT_IsoMu24", "HLT_IsoTkMu24", 
                                                     "HLT_Mu50", "HLT_TkMu50"),
 
-                         ## triggerResults = cms.InputTag("TriggerResults","","HLT"),
-                         triggerResults = cms.InputTag("TriggerResults","","HLT2"),  ## For reHLT MC samples
-                         triggerObjs    = cms.InputTag("selectedPatTrigger"),
+                         ## trigResults = cms.InputTag("TriggerResults","","HLT"),
+                         trigResults = cms.InputTag("TriggerResults","","HLT2"),  ## For reHLT MC samples
+                         trigObjs    = cms.InputTag("selectedPatTrigger"),
                          
                          ## Vertex and Beam Spot
                          primaryVertexTag = cms.InputTag("offlineSlimmedPrimaryVertices"),
@@ -31,7 +32,7 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          ## Muons
                          muonColl   = cms.InputTag("slimmedMuons"),
                          doSys_KaMu = cms.bool(False),
-                         doSys_Roch = cms.bool(False),
+                         doSys_Roch = cms.bool(True),
 
                          ## Electrons
                          eleColl     = cms.InputTag("slimmedElectrons"),
@@ -59,8 +60,8 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                                                    "againstElectronTightMVA6",
                                                    "againstElectronVTightMVA6"]),
                          ## Jets
-                         jetsTag   = cms.InputTag("slimmedJets"),
-                         btagNames = cms.vstring(["pfCombinedInclusiveSecondaryVertexV2BJetTags"]),
+                         jetsTag  = cms.InputTag("slimmedJets"),
+                         btagName = cms.string("pfCombinedInclusiveSecondaryVertexV2BJetTags"),
 
                          ## MET
                          metTag         = cms.InputTag("slimmedMETs"),
@@ -93,5 +94,10 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          jet_ID      = cms.string("loose"),
                          jet_pT_min  = cms.double(20.0),
                          jet_eta_max = cms.double(4.7),
+
+                         ## Event weights
+                         PU_wgt_file = cms.string("PU_wgt_2016_Summer16_v0.root"),
+                         Trig_eff_3_file = cms.string("EfficienciesAndSF_Period3.root"),
+                         Trig_eff_4_file = cms.string("EfficienciesAndSF_Period4.root"),
 
                          )

@@ -10,6 +10,7 @@
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/EventInfo.h"     
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenPartInfo.h"  
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/MetInfo.h"  
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/MhtInfo.h"  
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/PairInfo.h"  
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/VertexInfo.h"
 

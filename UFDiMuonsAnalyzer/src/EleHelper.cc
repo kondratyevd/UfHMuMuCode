@@ -4,8 +4,7 @@
 void FillEleInfos( EleInfos& _eleInfos, 
 		   const pat::ElectronCollection elesSelected,
 		   const reco::Vertex primaryVertex, const edm::Event& iEvent,
-		   const edm::Handle< edm::ValueMap<bool> >& ele_id_veto, const edm::Handle< edm::ValueMap<bool> >& ele_id_loose,
-		   const edm::Handle< edm::ValueMap<bool> >& ele_id_medium, const edm::Handle< edm::ValueMap<bool> >& ele_id_tight ) {
+		   const std::vector<std::array<bool, 4>> ele_ID_pass ) {
   
   _eleInfos.clear();
   int nEles = elesSelected.size();
@@ -24,12 +23,10 @@ void FillEleInfos( EleInfos& _eleInfos,
 
     // Basic quality
     _eleInfo.isPF       = ele.isPF();
-    // // Not sure how to access IDs ... code below does not work.  Appears to require edm::View. - AWB 15.11.16
-    // const auto ele_ptr = elesSelected.ptrAt(i);
-    // _eleInfo.isTightID  = (*ele_id_tight )[ele_ptr] && ElePassKinematics(ele, primaryVertex);
-    // _eleInfo.isMediumID = (*ele_id_medium)[ele_ptr] && ElePassKinematics(ele, primaryVertex);
-    // _eleInfo.isLooseID  = (*ele_id_loose )[ele_ptr] && ElePassKinematics(ele, primaryVertex);
-    // _eleInfo.isVetoID   = (*ele_id_veto  )[ele_ptr] && ElePassKinematics(ele, primaryVertex);
+    _eleInfo.isVetoID   = ele_ID_pass.at(i)[0];
+    _eleInfo.isLooseID  = ele_ID_pass.at(i)[1];
+    _eleInfo.isMediumID = ele_ID_pass.at(i)[2];
+    _eleInfo.isTightID  = ele_ID_pass.at(i)[3];
 
     // Basic isolation
     _eleInfo.relIso = EleCalcRelIsoPF_DeltaBeta( ele );
@@ -66,9 +63,10 @@ void FillEleInfos( EleInfos& _eleInfos,
 
 
 pat::ElectronCollection SelectEles( const edm::Handle<edm::View<pat::Electron>>& eles, const reco::Vertex primaryVertex,
-					 const edm::Handle< edm::ValueMap<bool> >& ele_id_veto, const edm::Handle< edm::ValueMap<bool> >& ele_id_loose,
-					 const edm::Handle< edm::ValueMap<bool> >& ele_id_medium, const edm::Handle< edm::ValueMap<bool> >& ele_id_tight,
-					 const std::string _ele_ID, const double _ele_pT_min, const double _ele_eta_max ) {
+				    const edm::Handle< edm::ValueMap<bool> >& ele_id_veto, const edm::Handle< edm::ValueMap<bool> >& ele_id_loose,
+				    const edm::Handle< edm::ValueMap<bool> >& ele_id_medium, const edm::Handle< edm::ValueMap<bool> >& ele_id_tight,
+				    const std::string _ele_ID, const double _ele_pT_min, const double _ele_eta_max,
+				    std::vector<std::array<bool, 4>>& ele_ID_pass ) {
   
   // Main Egamma POG page: https://twiki.cern.ch/twiki/bin/view/CMS/EgammaPOG
   // Following https://twiki.cern.ch/twiki/bin/view/CMS/EgammaIDRecipesRun2
@@ -77,6 +75,7 @@ pat::ElectronCollection SelectEles( const edm::Handle<edm::View<pat::Electron>>&
   
   pat::ElectronCollection elesSelected;
   elesSelected.clear();
+  ele_ID_pass.clear();
 
   if ( !eles.isValid() ) {
     std::cout << "No valid electron collection" << std::endl;
@@ -110,6 +109,7 @@ pat::ElectronCollection SelectEles( const edm::Handle<edm::View<pat::Electron>>&
     if (_ele_ID.find("tight")  != std::string::npos && !_isTight)  continue;
 
     elesSelected.push_back(*ele);
+    ele_ID_pass.push_back( {{_isVeto, _isLoose, _isMedium, _isTight}} );
 
   }
   
@@ -122,7 +122,7 @@ bool ElePassKinematics( const pat::Electron ele, const reco::Vertex primaryVerte
   if ( ele.superCluster().isAvailable() )
     SC_eta = fabs( ele.superCluster()->position().eta() );
   bool isBarrel = ( SC_eta != -999 && SC_eta < 1.479 );
-  bool inCrack  = ( SC_eta != -999 && SC_eta > 1.4442 && SC_eta < 1.5660 );
+  // bool inCrack  = ( SC_eta != -999 && SC_eta > 1.4442 && SC_eta < 1.5660 );
   
   double dXY = -999.;
   double dZ  = -999.;
@@ -131,15 +131,16 @@ bool ElePassKinematics( const pat::Electron ele, const reco::Vertex primaryVerte
     dZ  = fabs( ele.gsfTrack()->dz ( primaryVertex.position() ) );
   }
   
-  // From https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedElectronIdentificationRun2#Offline_selection_criteria
+  // From https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedElectronIdentificationRun2#Working_points_for_2016_data_for
   // Different than https://github.com/cms-ttH/MiniAOD/blob/master/MiniAODHelper/src/MiniAODHelper.cc#L890
   bool passDXY = dXY != -999 && ( isBarrel ? (dXY < 0.05) : (dXY < 0.10 ) );
   bool passDZ  = dZ  != -999 && ( isBarrel ? (dZ  < 0.10) : (dZ  < 0.20 ) );
 
-  // What about passMVAId53x? no_exp_inner_trkr_hits? myTrigPresel? - AWB 15.11.16
-  return (passDXY && passDZ && ele.passConversionVeto() && !inCrack);
-  // Does ele->passConversionVeto() return the same thing as ConversionTools::hasMatchedConversion? - AWB 15.11.16
-  // https://github.com/ikrav/EgammaWork/blob/ntupler_and_VID_demos_8.0.3/ElectronNtupler/plugins/ElectronNtuplerVIDDemo.cc#L358
+  return (passDXY && passDZ );  // Is this really all we need? - AWB 16.01.17
+  // // What about passMVAId53x? no_exp_inner_trkr_hits? myTrigPresel? - AWB 15.11.16
+  // return (passDXY && passDZ && ele.passConversionVeto() && !inCrack);
+  // // Does ele->passConversionVeto() return the same thing as ConversionTools::hasMatchedConversion? - AWB 15.11.16
+  // // https://github.com/ikrav/EgammaWork/blob/ntupler_and_VID_demos_8.0.3/ElectronNtupler/plugins/ElectronNtuplerVIDDemo.cc#L358
 }  
   
 double EleCalcRelIsoPF_DeltaBeta( const pat::Electron ele ) {
@@ -147,7 +148,7 @@ double EleCalcRelIsoPF_DeltaBeta( const pat::Electron ele ) {
   // Using Delta Beta corrections - simpler, only slightly worse performance
   
   double iso_charged    = ele.pfIsolationVariables().sumChargedHadronPt;  // Is this correct? should be chargedHadronIso?   - AWB 14.11.16
-  double iso_neutral    = ele.pfIsolationVariables().sumNeutralHadronEt;    // Is this correct? should be sumNeutralHadronPt? - AWB 14.11.16
+  double iso_neutral    = ele.pfIsolationVariables().sumNeutralHadronEt;  // Is this correct? should be sumNeutralHadronPt? - AWB 14.11.16
   double iso_photon     = ele.pfIsolationVariables().sumPhotonEt;
   double iso_PU_charged = ele.pfIsolationVariables().sumPUPt;
   

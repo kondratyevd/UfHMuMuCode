@@ -6,9 +6,9 @@ void FillMuonInfos( MuonInfos& _muonInfos,
 		    const reco::Vertex primaryVertex, const int _nPV,
 		    const edm::Handle<reco::BeamSpot>& beamSpotHandle,  
 		    const edm::Event& iEvent, const edm::EventSetup& iSetup,
-		    const edm::Handle<pat::TriggerObjectStandAloneCollection>& _triggerObjsHandle,
-		    const edm::Handle<edm::TriggerResults>& _triggerResultsHandle,
-		    const std::vector<std::string> _triggerNames, const double _muon_trig_dR, 
+		    const edm::Handle<pat::TriggerObjectStandAloneCollection>& _trigObjsHandle,
+		    const edm::Handle<edm::TriggerResults>& _trigResultsHandle,
+		    const std::vector<std::string> _trigNames, const double _muon_trig_dR, 
 		    const bool _muon_use_pfIso, const double _muon_iso_dR, const bool _isData,
 		    KalmanMuonCalibrator& _KaMu_calib, const bool _doSys_KaMu,
 		    rochcor2016* _Roch_calib[201], const bool _doSys_Roch ) {
@@ -30,15 +30,21 @@ void FillMuonInfos( MuonInfos& _muonInfos,
     else if ( muon.isTrackerMuon() ) track = *(muon.innerTrack()  );
     else {
       std::cout << "ERROR: The muon is NOT global NOR tracker ?!?\n";
-      return;
+      continue;
     }
-    
+
     // Basic kinematics
+    // "muon.pt()" returns PF quantities if PF is available - and all loose/med/tight muons are PF
     _muonInfo.charge = muon.charge();
     _muonInfo.pt     = muon.pt();
     _muonInfo.ptErr  = track.ptError();
     _muonInfo.eta    = muon.eta();
     _muonInfo.phi    = muon.phi();
+
+    // _muonInfo.pt     = ( muon.isTrackerMuon() ? muon.innerTrack()->pt()      : muon.pt()       );
+    // _muonInfo.ptErr  = ( muon.isTrackerMuon() ? muon.innerTrack()->ptError() : track.ptError() );
+    // _muonInfo.eta    = ( muon.isTrackerMuon() ? muon.innerTrack()->eta()     : muon.eta()      );
+    // _muonInfo.phi    = ( muon.isTrackerMuon() ? muon.innerTrack()->phi()     : muon.phi()      );
     
     // Basic quality
     _muonInfo.isTightID  =  MuonIsTight  ( muon, primaryVertex );
@@ -53,16 +59,16 @@ void FillMuonInfos( MuonInfos& _muonInfos,
     
     // Basic vertexing? - AWB 12.11.16
 
-    // // Basic trigger (which triggers are in the list? - AWB 12.11.16)
-    // for (unsigned int iTrigger = 0; iTrigger < _triggerNames.size(); iTrigger++) {
-    //   if (iTrigger >= triggerArraySize) {
-    // 	std::cout << "Found " << i+1 << "th muon trigger; only " << triggerArraySize << " allowed in array" << std::endl;
-    // 	continue;
-    //   }
-    //   _muonInfo.isHltMatched[iTrigger] = IsHltMatched( muon, iEvent, iSetup, _triggerObjsHandle, _triggerResultsHandle,  
-    // 							  _triggerNames[iTrigger], _muon_trig_dR );
-    //   _muonInfo.hltEff[iTrigger] = MuonCalcTrigEff( muon, _nPV, _triggerNames[iTrigger] );
-    // }
+    // Basic trigger (which triggers are in the list? - AWB 12.11.16)
+    for (unsigned int iTrig = 0; iTrig < _trigNames.size(); iTrig++) {
+      if (iTrig >= _muonInfo.nTrig) {
+    	std::cout << "Found " << i+1 << "th muon trigger; only " << _muonInfo.nTrig << " allowed in array" << std::endl;
+    	continue;
+      }
+      _muonInfo.isHltMatched[iTrig] = IsHltMatched( muon, iEvent, iSetup, _trigObjsHandle, _trigResultsHandle,  
+    							  _trigNames[iTrig], _muon_trig_dR );
+      _muonInfo.hltEff[iTrig] = MuonCalcTrigEff( muon, _nPV, _trigNames[iTrig] );
+    }
 
 
     // // -------------------------
@@ -73,10 +79,10 @@ void FillMuonInfos( MuonInfos& _muonInfos,
 
     // Inner track kinematics
     if (muon.isTrackerMuon()) {
-      _muonInfo.trkPt    = muon.innerTrack()->pt();
-      _muonInfo.trkPtErr = muon.innerTrack()->ptError();
-      _muonInfo.trkEta   = muon.innerTrack()->eta();
-      _muonInfo.trkPhi   = muon.innerTrack()->phi();
+      _muonInfo.pt_trk    = muon.innerTrack()->pt();
+      _muonInfo.ptErr_trk = muon.innerTrack()->ptError();
+      _muonInfo.eta_trk   = muon.innerTrack()->eta();
+      _muonInfo.phi_trk   = muon.innerTrack()->phi();
 
       // Kalman-calibrated pT
       double pt_KaMu    = muon.innerTrack()->pt();
@@ -84,46 +90,46 @@ void FillMuonInfos( MuonInfos& _muonInfos,
       double eta_KaMu   = muon.innerTrack()->eta();
       double phi_KaMu   = muon.innerTrack()->phi();
       int charge_KaMu   = muon.innerTrack()->charge();
-      double pt_sys_up_KaMu, pt_sys_down_KaMu, pt_clos_up_KaMu, pt_clos_down_KaMu;
+      double pt_KaMu_sys_up, pt_KaMu_sys_down, pt_KaMu_clos_up, pt_KaMu_clos_down;
 
       CorrectPtKaMu( _KaMu_calib, _doSys_KaMu, 
-      		     pt_KaMu, ptErr_KaMu, pt_sys_up_KaMu, 
-      		     pt_sys_down_KaMu, pt_clos_up_KaMu, pt_clos_down_KaMu,
+      		     pt_KaMu, ptErr_KaMu, pt_KaMu_sys_up, 
+      		     pt_KaMu_sys_down, pt_KaMu_clos_up, pt_KaMu_clos_down,
       		     eta_KaMu, phi_KaMu, charge_KaMu, _isData );
 
       _muonInfo.pt_KaMu           = pt_KaMu;
       _muonInfo.ptErr_KaMu        = ptErr_KaMu;
-      _muonInfo.pt_sys_up_KaMu    = pt_sys_up_KaMu;
-      _muonInfo.pt_sys_down_KaMu  = pt_sys_down_KaMu;
-      _muonInfo.pt_clos_up_KaMu   = pt_clos_up_KaMu;
-      _muonInfo.pt_clos_down_KaMu = pt_clos_down_KaMu;
+      _muonInfo.pt_KaMu_sys_up    = pt_KaMu_sys_up;
+      _muonInfo.pt_KaMu_sys_down  = pt_KaMu_sys_down;
+      _muonInfo.pt_KaMu_clos_up   = pt_KaMu_clos_up;
+      _muonInfo.pt_KaMu_clos_down = pt_KaMu_clos_down;
 
       // Rochester-calibrated pT
       TLorentzVector mu_vec_Roch;
       mu_vec_Roch.SetPtEtaPhiM( muon.innerTrack()->pt(), muon.innerTrack()->eta(),
       				muon.innerTrack()->phi(), MASS_MUON );
-      float q_term_Roch, pt_sys_up_Roch, pt_sys_down_Roch;
+      float q_term_Roch, pt_Roch_sys_up, pt_Roch_sys_down;
       int charge_Roch     = muon.innerTrack()->charge();
       int trk_layers_Roch = muon.innerTrack()->hitPattern().trackerLayersWithMeasurement(); 
 
       CorrectPtRoch( _Roch_calib, _doSys_Roch, 
 		     mu_vec_Roch, q_term_Roch, 
-		     pt_sys_up_Roch, pt_sys_down_Roch,
+		     pt_Roch_sys_up, pt_Roch_sys_down,
       		     charge_Roch, trk_layers_Roch, _isData );
 
       _muonInfo.pt_Roch           = mu_vec_Roch.Pt();
       _muonInfo.q_term_Roch       = q_term_Roch;
-      _muonInfo.pt_sys_up_Roch    = pt_sys_up_Roch;
-      _muonInfo.pt_sys_down_Roch  = pt_sys_down_Roch;
+      _muonInfo.pt_Roch_sys_up    = pt_Roch_sys_up;
+      _muonInfo.pt_Roch_sys_down  = pt_Roch_sys_down;
 
     } // End if (muon.isTrackerMuon())
 
     // Particle flow kinematics
     if ( muon.isPFMuon() ) {
       reco::Candidate::LorentzVector pfmuon = muon.pfP4();
-      _muonInfo.pfPt  = pfmuon.Pt();
-      _muonInfo.pfEta = pfmuon.Eta();
-      _muonInfo.pfPhi = pfmuon.Phi();
+      _muonInfo.pt_PF  = pfmuon.Pt();
+      _muonInfo.eta_PF = pfmuon.Eta();
+      _muonInfo.phi_PF = pfmuon.Phi();
     }
 
     // Standard quality
@@ -150,14 +156,14 @@ void FillMuonInfos( MuonInfos& _muonInfos,
     _muonInfo.relCombIso = isovar;
 
     // // Standard trigger variables
-    // for (unsigned int iTrigger = 0; iTrigger < _triggerNames.size(); iTrigger++) {
-    //   if (iTrigger >= triggerArraySize) {
-    // 	std::cout << "Found " << i+1 << "th muon trigger; only " << triggerArraySize << " allowed in array" << std::endl;
+    // for (unsigned int iTrig = 0; iTrig < _trigNames.size(); iTrig++) {
+    //   if (iTrig >= trigArraySize) {
+    // 	std::cout << "Found " << i+1 << "th muon trigger; only " << trigArraySize << " allowed in array" << std::endl;
     // 	continue;
     //   }
-    //   // _muonInfo.hltPt[iTrigger]  = ???; - AWB 12.11.16
-    //   // _muonInfo.hltEta[iTrigger] = ???; - AWB 12.11.16
-    //   // _muonInfo.hltPhi[iTrigger] = ???; - AWB 12.11.16
+    //   // _muonInfo.hltPt[iTrig]  = ???; - AWB 12.11.16
+    //   // _muonInfo.hltEta[iTrig] = ???; - AWB 12.11.16
+    //   // _muonInfo.hltPhi[iTrig] = ???; - AWB 12.11.16
     // }
 
     // // -----------------------------
@@ -297,7 +303,7 @@ double MuonCalcRelIsoTrk( const pat::Muon muon, const double _muon_iso_dR ) {
   return (iso / muon.pt() );
 }
 
-double MuonCalcTrigEff( const pat::Muon muon, const int _nPV, const std::string _triggerName ) {
+double MuonCalcTrigEff( const pat::Muon muon, const int _nPV, const std::string _trigName ) {
 
   // Guestimates based on https://indico.cern.ch/event/570616/contributions/2359949/attachments/1365003/2067370/Muon_HLT_Budapest_WS.pdf
   
@@ -310,16 +316,16 @@ double MuonCalcTrigEff( const pat::Muon muon, const int _nPV, const std::string 
   else if ( fabs(muon.eta()) < 2.1 ) _L1T_eff_vs_eta = 0.85;
   else                               _L1T_eff_vs_eta = 0.82;
   
-  if ( _triggerName.find("Iso") != std::string::npos ) {
+  if ( _trigName.find("Iso") != std::string::npos ) {
     return _L1T_eff_vs_eta * _HLT_eff_vs_nPV * _HLT_eff_vs_pT; }
   else
     return _L1T_eff_vs_eta * _HLT_eff_vs_pT;
 }
 
 bool IsHltMatched( const pat::Muon& muon, const edm::Event& iEvent, const edm::EventSetup& iSetup,
-		   const edm::Handle<pat::TriggerObjectStandAloneCollection>& _triggerObjsHandle,
-		   const edm::Handle<edm::TriggerResults>& _triggerResultsHandle,
-		   const std::string _desiredTriggerName, const double _muon_trig_dR ) {
+		   const edm::Handle<pat::TriggerObjectStandAloneCollection>& _trigObjsHandle,
+		   const edm::Handle<edm::TriggerResults>& _trigResultsHandle,
+		   const std::string _desiredTrigName, const double _muon_trig_dR ) {
   
   // Check if the muon is the one firing the HLT path
   
@@ -331,25 +337,25 @@ bool IsHltMatched( const pat::Muon& muon, const edm::Event& iEvent, const edm::E
   
   const boost::regex rgx("_v[0-9]+");
   
-  const TriggerNames &triggerNames = iEvent.triggerNames(*_triggerResultsHandle);
+  const TriggerNames &trigNames = iEvent.triggerNames(*_trigResultsHandle);
   
-  const unsigned nTriggers = _triggerResultsHandle->size();
-  for (unsigned iTrigger = 0; iTrigger < nTriggers; ++iTrigger) {
-    const string triggerName = triggerNames.triggerName(iTrigger);
-    string triggerNameStripped = boost::regex_replace(triggerName, rgx, "", boost::match_default | boost::format_sed);
-    if ( _desiredTriggerName == triggerNameStripped && _triggerResultsHandle->accept(iTrigger) ) {
+  const unsigned nTrigs = _trigResultsHandle->size();
+  for (unsigned iTrig = 0; iTrig < nTrigs; ++iTrig) {
+    const string trigName = trigNames.triggerName(iTrig);
+    string trigNameStripped = boost::regex_replace(trigName, rgx, "", boost::match_default | boost::format_sed);
+    if ( _desiredTrigName == trigNameStripped && _trigResultsHandle->accept(iTrig) ) {
       stringstream debugString;
       debugString << "IsHltMatched: ";
-      debugString << "'" << _desiredTriggerName << "'\n";
-      debugString << "  Trigger " << iTrigger << ": " << triggerName << "(" << triggerNameStripped
-		  << ") passed: " << _triggerResultsHandle->accept(iTrigger) << endl;
+      debugString << "'" << _desiredTrigName << "'\n";
+      debugString << "  Trigger " << iTrig << ": " << trigName << "(" << trigNameStripped
+		  << ") passed: " << _trigResultsHandle->accept(iTrig) << endl;
       
-      for ( TriggerObjectStandAloneCollection::const_iterator trigObj = (*_triggerObjsHandle).begin();
-	    trigObj != (*_triggerObjsHandle).end(); trigObj++) {
+      for ( TriggerObjectStandAloneCollection::const_iterator trigObj = (*_trigObjsHandle).begin();
+	    trigObj != (*_trigObjsHandle).end(); trigObj++) {
 	
 	TriggerObjectStandAlone tmpTrigObj(*trigObj); // Get rid of const which messes up unpackPathNames
-	tmpTrigObj.unpackPathNames(triggerNames);
-	bool isRightObj = tmpTrigObj.hasPathName(triggerName, true, true); // Name, is L3 filter accepted, is last filter
+	tmpTrigObj.unpackPathNames(trigNames);
+	bool isRightObj = tmpTrigObj.hasPathName(trigName, true, true); // Name, is L3 filter accepted, is last filter
 	if (isRightObj) {
 	  debugString << "    TriggerObject:  " << tmpTrigObj.collection() << endl;
 	  bool isMatched = ( deltaR(tmpTrigObj, muon) < _muon_trig_dR );
@@ -362,8 +368,52 @@ bool IsHltMatched( const pat::Muon& muon, const edm::Event& iEvent, const edm::E
       } // trigObj lookp
       LogVerbatim("UFHLTTests") << debugString.str();
     } // if desiredTrigger
-  } // iTrigger loop
+  } // iTrig loop
   
   return false;
 }
 
+void CalcTrigEff( float& _muon_eff, float& _muon_eff_up, float& _muon_eff_down, 
+		  const TH2F* _muon_eff_hist, const MuonInfos _muonInfos, const bool EMTF_bug ) {
+
+  // EMTF_bug not yet implemented - AWB 18.01.17
+  // https://twiki.cern.ch/twiki/bin/view/CMS/EndcapHighPtMuonEfficiencyProblem
+
+  float ineff      = 1.;
+  float ineff_up   = 1.;
+  float ineff_down = 1.;
+
+  for (int iMu = 0; iMu < int(_muonInfos.size()); iMu++) {
+    float mu_pt  = min( _muonInfos.at(iMu).pt, 
+			_muon_eff_hist->GetYaxis()->GetBinLowEdge( _muon_eff_hist->GetNbinsY() ) +
+			_muon_eff_hist->GetYaxis()->GetBinWidth(   _muon_eff_hist->GetNbinsY() ) - 0.01 );
+    float mu_eta = min( fabs(_muonInfos.at(iMu).eta),
+			_muon_eff_hist->GetXaxis()->GetBinLowEdge( _muon_eff_hist->GetNbinsX() ) +
+			_muon_eff_hist->GetXaxis()->GetBinWidth(   _muon_eff_hist->GetNbinsX() ) - 0.01 );
+    bool found_mu = false;
+
+    if ( mu_pt < _muon_eff_hist->GetYaxis()->GetBinLowEdge(1) ) continue;
+    
+    for (int iPt = 1; iPt <= _muon_eff_hist->GetNbinsY(); iPt++) {
+      if ( found_mu ) continue;
+      if ( mu_pt < _muon_eff_hist->GetYaxis()->GetBinLowEdge(iPt) ) continue;
+      if ( mu_pt > _muon_eff_hist->GetYaxis()->GetBinLowEdge(iPt) + _muon_eff_hist->GetYaxis()->GetBinWidth(iPt) ) continue;
+      
+      for (int iEta = 1; iEta <= _muon_eff_hist->GetNbinsX(); iEta++) {
+	if ( found_mu ) continue;
+	if ( mu_eta < _muon_eff_hist->GetXaxis()->GetBinLowEdge(iEta) ) continue;
+	if ( mu_eta > _muon_eff_hist->GetXaxis()->GetBinLowEdge(iEta) + _muon_eff_hist->GetXaxis()->GetBinWidth(iEta) ) continue;
+
+	found_mu = true;
+	ineff      *= ( 1. - _muon_eff_hist->GetBinContent(iEta, iPt) );
+	ineff_up   *= ( 1. - _muon_eff_hist->GetBinContent(iEta, iPt) - _muon_eff_hist->GetBinError(iEta, iPt) );
+	ineff_down *= ( 1. - _muon_eff_hist->GetBinContent(iEta, iPt) + _muon_eff_hist->GetBinError(iEta, iPt) );    
+      }
+    }
+  }
+
+  _muon_eff      = 1. - ineff;
+  _muon_eff_up   = 1. - ineff_up;
+  _muon_eff_down = 1. - ineff_down;
+
+}

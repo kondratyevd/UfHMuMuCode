@@ -10,6 +10,7 @@
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/EventHelper.h"     
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenPartHelper.h"  
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/MetHelper.h"  
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/MhtHelper.h"  
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/PairHelper.h"  
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/VertexHelper.h"
 

@@ -5,6 +5,7 @@
 #include "KaMuCa/Calibration/interface/KalmanMuonCalibrator.h"
 #include <math.h>
 #include "TROOT.h"
+#include <assert.h>
 
 void CorrectPtKaMu( KalmanMuonCalibrator& _calib, const bool _doSys,
 		    double& _pt, double& _dPt, double& _pt_sys_up, 

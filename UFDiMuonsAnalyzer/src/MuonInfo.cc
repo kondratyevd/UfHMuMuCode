@@ -16,22 +16,22 @@ void MuonInfo::init() {
     eta    = -999;
     phi    = -999;
 
-    trkPt    = -999;
-    trkPtErr = -999;
-    trkEta   = -999;
-    trkPhi   = -999;
+    pt_trk    = -999;
+    ptErr_trk = -999;
+    eta_trk   = -999;
+    phi_trk   = -999;
     
     pt_KaMu           = -999;
     ptErr_KaMu        = -999;
-    pt_sys_up_KaMu    = -999;
-    pt_sys_down_KaMu  = -999;
-    pt_clos_up_KaMu   = -999;
-    pt_clos_down_KaMu = -999;
+    pt_KaMu_sys_up    = -999;
+    pt_KaMu_sys_down  = -999;
+    pt_KaMu_clos_up   = -999;
+    pt_KaMu_clos_down = -999;
 
     pt_Roch          = -999;
     q_term_Roch      = -999;
-    pt_sys_up_Roch   = -999;
-    pt_sys_down_Roch = -999;
+    pt_Roch_sys_up   = -999;
+    pt_Roch_sys_down = -999;
      
     d0_BS = -999;
     dz_BS = -999;
@@ -49,9 +49,9 @@ void MuonInfo::init() {
     
     isPF = -999;
     
-    pfPt  = -999;
-    pfEta = -999;
-    pfPhi = -999;
+    pt_PF  = -999;
+    eta_PF = -999;
+    phi_PF = -999;
     
     sumChargedHadronPtR03   = -999;
     sumChargedParticlePtR03 = -999;
@@ -65,12 +65,12 @@ void MuonInfo::init() {
     sumPhotonEtR04          = -999;
     sumPUPtR04              = -999;
     
-    // for (unsigned int iTrigger = 0; iTrigger < triggerArraySize; iTrigger++) {
-    //   isHltMatched[iTrigger] = -999;
-    //   hltPt[iTrigger]        = -999;
-    //   hltEta[iTrigger]       = -999;
-    //   hltPhi[iTrigger]       = -999;
-    // }
+    for (unsigned int iTrig = 0; iTrig < nTrig; iTrig++) {
+      isHltMatched[iTrig] = -999;
+      hltPt[iTrig]        = -999;
+      hltEta[iTrig]       = -999;
+      hltPhi[iTrig]       = -999;
+    }
 
 } // End void MuonInfo::init()
 

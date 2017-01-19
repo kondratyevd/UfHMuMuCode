@@ -5,6 +5,21 @@
 #include <vector>
 #include "TMath.h"
 
+struct SlimJetInfo {
+
+  Float_t pt           ;
+  Float_t eta          ;
+  Float_t phi          ;
+  Float_t mass         ;
+
+  Float_t jecFactor;
+  Float_t jecUnc   ;
+
+  Float_t CSV          ;
+  Float_t puid;
+
+};
+
 struct JetInfo {
 
   Float_t px           ;
@@ -15,7 +30,6 @@ struct JetInfo {
   Float_t phi          ;
   Float_t mass         ;
   Float_t charge       ;
-  Bool_t  isB          ;
   Int_t   partonFlavour;
 
   /////// Energy Fractions //////
@@ -58,12 +72,14 @@ struct JetInfo {
   Float_t genInvF;  // Invisible Fraction
   Float_t genAuxF;  // Auxiliary Fraction (Undecayed Sigmas, etc.)
 
+  Float_t CSV ;  // Btag CSV_v2
   Float_t puid;  // PUID
 
   void init();
 
 };
 
-typedef std::vector<JetInfo> JetInfos;
+typedef std::vector<SlimJetInfo> SlimJetInfos;
+typedef std::vector<JetInfo>     JetInfos;
 
 #endif  // #ifndef JET_INFO

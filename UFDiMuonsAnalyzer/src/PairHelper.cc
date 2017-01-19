@@ -49,7 +49,7 @@ void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos ) {
     mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
     mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
     pair_vec = mu1_vec + mu2_vec;
-    
+
     // Correct trackIsoSumPtCorr for other muon? - AWB 09.11.16
 
     _pairInfo.mass = pair_vec.M();
@@ -61,19 +61,85 @@ void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos ) {
     _pairInfo.angle = mu1_vec.DeltaR(mu2_vec); // Need to check that this is correct - AWB 10.11.16
     // _pairInfo.angle = acos( -mu1.track()->momentum().Dot(mu2.track()->momentum() /
     // 						  mu1.track()->p()/mu2.track()->p()) );
-    
-    
-    if ( _muonInfos.at(iMu1).isPF && _muonInfos.at(iMu2).isPF ) {      
-      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pfPt, _muonInfos.at(iMu1).pfEta, _muonInfos.at(iMu2).pfPhi, MASS_MUON);
-      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pfPt, _muonInfos.at(iMu2).pfEta, _muonInfos.at(iMu2).pfPhi, MASS_MUON);
+        
+    if ( _muonInfos.at(iMu1).pt_PF > 0 && _muonInfos.at(iMu2).pt_PF > 0 ) {
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt_PF, _muonInfos.at(iMu1).eta_PF, _muonInfos.at(iMu1).phi_PF, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt_PF, _muonInfos.at(iMu2).eta_PF, _muonInfos.at(iMu2).phi_PF, MASS_MUON);
       pair_vec = mu1_vec + mu2_vec;
-      
-      _pairInfo.pfMass = pair_vec.M();
-      _pairInfo.pfPt   = pair_vec.Pt();
-      
-      _pairInfo.pfEta  = pair_vec.PseudoRapidity();
-      _pairInfo.pfY    = pair_vec.Rapidity();
-      _pairInfo.pfPhi  = pair_vec.Phi();
+      _pairInfo.mass_PF = pair_vec.M();
+      _pairInfo.pt_PF   = pair_vec.Pt();
+    }
+
+    if ( _muonInfos.at(iMu1).pt_trk > 0 && _muonInfos.at(iMu2).pt_trk > 0 ) {
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt_trk, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt_trk, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
+      pair_vec = mu1_vec + mu2_vec;
+      _pairInfo.mass_trk = pair_vec.M();
+      _pairInfo.pt_trk   = pair_vec.Pt();
+    }
+    
+    if ( _muonInfos.at(iMu1).pt_KaMu > 0 && _muonInfos.at(iMu2).pt_KaMu > 0 ) {
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt_KaMu, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt_KaMu, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
+      pair_vec = mu1_vec + mu2_vec;
+      _pairInfo.mass_KaMu           = pair_vec.M();
+      _pairInfo.pt_KaMu             = pair_vec.Pt();
+    }
+    
+    if ( _muonInfos.at(iMu1).pt_KaMu_clos_up > 0 && _muonInfos.at(iMu2).pt_KaMu_clos_up > 0 ) {
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt_KaMu_clos_up, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt_KaMu_clos_up, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
+      pair_vec = mu1_vec + mu2_vec;
+      _pairInfo.mass_KaMu_clos_up   = pair_vec.M();
+      _pairInfo.pt_KaMu_clos_up     = pair_vec.Pt();
+    }
+
+    if ( _muonInfos.at(iMu1).pt_KaMu_clos_down > 0 && _muonInfos.at(iMu2).pt_KaMu_clos_down > 0 ) {
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt_KaMu_clos_down, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt_KaMu_clos_down, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
+      pair_vec = mu1_vec + mu2_vec;
+      _pairInfo.mass_KaMu_clos_down = pair_vec.M();
+      _pairInfo.pt_KaMu_clos_down   = pair_vec.Pt();
+    }
+
+    if ( _muonInfos.at(iMu1).pt_KaMu_sys_up > 0 && _muonInfos.at(iMu2).pt_KaMu_sys_up > 0 ) {
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt_KaMu_sys_up, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt_KaMu_sys_up, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
+      pair_vec = mu1_vec + mu2_vec;
+      _pairInfo.mass_KaMu_sys_up    = pair_vec.M();
+      _pairInfo.pt_KaMu_sys_up      = pair_vec.Pt();
+    }
+
+    if ( _muonInfos.at(iMu1).pt_KaMu_sys_down > 0 && _muonInfos.at(iMu2).pt_KaMu_sys_down > 0 ) {
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt_KaMu_sys_down, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt_KaMu_sys_down, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
+      pair_vec = mu1_vec + mu2_vec;
+      _pairInfo.mass_KaMu_sys_down  = pair_vec.M();
+      _pairInfo.pt_KaMu_sys_down    = pair_vec.Pt();
+    }
+
+    if ( _muonInfos.at(iMu1).pt_Roch > 0 && _muonInfos.at(iMu2).pt_Roch > 0 ) {
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt_Roch, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt_Roch, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
+      pair_vec = mu1_vec + mu2_vec;
+      _pairInfo.mass_Roch          = pair_vec.M();
+      _pairInfo.pt_Roch            = pair_vec.Pt();
+    }
+
+    if ( _muonInfos.at(iMu1).pt_Roch_sys_up > 0 && _muonInfos.at(iMu2).pt_Roch_sys_up > 0 ) {
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt_Roch_sys_up, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt_Roch_sys_up, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
+      pair_vec = mu1_vec + mu2_vec;
+      _pairInfo.mass_Roch_sys_up   = pair_vec.M();
+      _pairInfo.pt_Roch_sys_up     = pair_vec.Pt();
+    }
+
+    if ( _muonInfos.at(iMu1).pt_Roch_sys_down > 0 && _muonInfos.at(iMu2).pt_Roch_sys_down > 0 ) {
+      mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt_Roch_sys_down, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
+      mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt_Roch_sys_down, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
+      pair_vec = mu1_vec + mu2_vec;
+      _pairInfo.mass_Roch_sys_down = pair_vec.M();
+      _pairInfo.pt_Roch_sys_down   = pair_vec.Pt();
     }
 
     _pairInfos.push_back( _pairInfo );

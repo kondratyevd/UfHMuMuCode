@@ -47,8 +47,10 @@ void CorrectPtKaMu( KalmanMuonCalibrator& _calib, const bool _doSys,
     for (int i = 0; i < _calib.getN(); i++) {
       _calib.vary(i, +1);
       double pt_sys_up   = _calib.getCorrectedPt( pt_v2, _eta, _phi, _charge ) - pt_v2;
+      assert( pt_sys_up >= 0 );
       _calib.vary(i, -1);
       double pt_sys_down = _calib.getCorrectedPt( pt_v2, _eta, _phi, _charge ) - pt_v2;
+      assert( pt_sys_down <= 0 );
       _calib.reset();
       
       std::pair<double, double> pt_pair;
@@ -67,6 +69,7 @@ void CorrectPtKaMu( KalmanMuonCalibrator& _calib, const bool _doSys,
   double pt_clos_up   = _calib.getCorrectedPt( pt_v2, _eta, _phi, _charge );
   _calib.varyClosure(-1);
   double pt_clos_down = _calib.getCorrectedPt( pt_v2, _eta, _phi, _charge );
+  // Sometimes the closure "up" varies the pT lower, and "down" varies the pT higher
 
   _pt           = pt_v2;
   _ptErr        = ptErr_v2;

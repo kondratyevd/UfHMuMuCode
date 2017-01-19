@@ -21,22 +21,22 @@ struct MuonInfo {
   Double_t eta   ;
   Double_t phi   ;
 
-  Double_t trkPt   ;
-  Double_t trkPtErr;
-  Double_t trkEta  ;
-  Double_t trkPhi  ;
+  Double_t pt_trk   ;
+  Double_t ptErr_trk;
+  Double_t eta_trk  ;
+  Double_t phi_trk  ;
 
   Double_t pt_KaMu          ;
   Double_t ptErr_KaMu       ;
-  Double_t pt_sys_up_KaMu   ;
-  Double_t pt_sys_down_KaMu ;
-  Double_t pt_clos_up_KaMu  ;
-  Double_t pt_clos_down_KaMu;
+  Double_t pt_KaMu_sys_up   ;
+  Double_t pt_KaMu_sys_down ;
+  Double_t pt_KaMu_clos_up  ;
+  Double_t pt_KaMu_clos_down;
 
   Double_t pt_Roch          ;
   Double_t q_term_Roch      ;
-  Double_t pt_sys_up_Roch   ;
-  Double_t pt_sys_down_Roch ;
+  Double_t pt_Roch_sys_up   ;
+  Double_t pt_Roch_sys_down ;
 
   Float_t d0_BS;
   Float_t dz_BS;
@@ -54,9 +54,9 @@ struct MuonInfo {
   // PF information
   Bool_t isPF;
 
-  Double_t pfPt ;
-  Double_t pfEta;
-  Double_t pfPhi;
+  Double_t pt_PF ;
+  Double_t eta_PF;
+  Double_t phi_PF;
   
   Float_t sumChargedHadronPtR03  ;  // sum-pt of charged Hadron
   Float_t sumChargedParticlePtR03;  // sum-pt of charged Particles(inludes e/mu)
@@ -70,11 +70,12 @@ struct MuonInfo {
   Float_t sumPhotonEtR04         ;
   Float_t sumPUPtR04             ;
 
-  /* Bool_t  isHltMatched[triggerArraySize]; */
-  /* Float_t hltEff      [triggerArraySize]; */
-  /* Float_t hltPt       [triggerArraySize]; */
-  /* Float_t hltEta      [triggerArraySize]; */
-  /* Float_t hltPhi      [triggerArraySize]; */
+  const static Int_t nTrig = 6;
+  Bool_t  isHltMatched[nTrig];
+  Float_t hltEff      [nTrig];
+  Float_t hltPt       [nTrig];
+  Float_t hltEta      [nTrig];
+  Float_t hltPhi      [nTrig];
 
   void init();
 
