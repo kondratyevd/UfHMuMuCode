@@ -12,10 +12,11 @@ void FillSlimJetInfos( SlimJetInfos& _slimJetInfos, const JetInfos _jetInfos ) {
     s.eta       = j.eta;
     s.phi       = j.phi;
     s.mass      = j.mass;
+    s.partonID  = j.partonID;
     s.jecFactor = j.jecFactor;
     s.jecUnc    = j.jecUnc;
     s.CSV       = j.CSV;
-    s.puid      = j.puid;
+    s.puID      = j.puID;
     _slimJetInfos.push_back(s);
   }
   
@@ -40,15 +41,15 @@ void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
     JetInfo _jetInfo;
     _jetInfo.init();
 
-    _jetInfo.px            = jet.px();
-    _jetInfo.py            = jet.py();
-    _jetInfo.pz            = jet.pz();
-    _jetInfo.pt            = jet.pt();
-    _jetInfo.eta           = jet.eta();
-    _jetInfo.phi           = jet.phi();
-    _jetInfo.mass          = jet.mass();
-    _jetInfo.charge        = jet.charge();
-    _jetInfo.partonFlavour = jet.partonFlavour();
+    _jetInfo.px       = jet.px();
+    _jetInfo.py       = jet.py();
+    _jetInfo.pz       = jet.pz();
+    _jetInfo.pt       = jet.pt();
+    _jetInfo.eta      = jet.eta();
+    _jetInfo.phi      = jet.phi();
+    _jetInfo.mass     = jet.mass();
+    _jetInfo.charge   = jet.charge();
+    _jetInfo.partonID = jet.partonFlavour();
     
     _jetInfo.chf  = jet.chargedHadronEnergyFraction();
     _jetInfo.nhf  = jet.neutralHadronEnergyFraction();
@@ -73,7 +74,7 @@ void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
     _jetInfo.CSV  = jet.bDiscriminator(_btagName);
     if (_jetInfo.CSV < 0.) _jetInfo.CSV = -0.4;
     if (_jetInfo.CSV > 1.) _jetInfo.CSV = 1.0;
-    _jetInfo.puid = jet.userFloat("pileupJetId:fullDiscriminant");
+    _jetInfo.puID = jet.userFloat("pileupJetId:fullDiscriminant");
     
     const reco::GenJet* genJet = jet.genJet();
     if (genJet != NULL) {
@@ -108,6 +109,9 @@ void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
     
     if ( fabs( jet.eta() ) < 2.4 ) nJetsCent += 1;
     else                           _nJetsFwd += 1;
+    // https://twiki.cern.ch/twiki/bin/view/CMS/BtagPOG
+    // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80XReReco
+    // https://twiki.cern.ch/twiki/bin/view/CMS/BTagSFMethods
     if ( _jetInfo.CSV > 0.5426 )   _nBLoose  += 1;
     if ( _jetInfo.CSV > 0.8484 )   _nBMed    += 1;
     if ( _jetInfo.CSV > 0.9535 )   _nBTight  += 1;

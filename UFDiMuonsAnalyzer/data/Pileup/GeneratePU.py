@@ -114,6 +114,20 @@ def CalcWeights(era, prof, ver, prob_MC, sys, out_file):
 
     h_ratio.Write()
     
+    ######################################################
+    ### Closure test: create weighted MC distribution  ###
+    ######################################################
+
+    h_MC_wgt = h_MC.Clone()
+    h_MC_wgt.SetName('PU_MC_wgt%s' % sys)
+    h_MC_wgt.SetLineColor(kOrange)
+    if sys == '_up':   h_MC_wgt.SetLineColor(kMagenta)
+    if sys == '_down': h_MC_wgt.SetLineColor(kViolet)
+    for iBin in range(1, h_MC_wgt.GetNbinsX()+1):
+        h_MC_wgt.SetBinContent( iBin, h_MC_wgt.GetBinContent(iBin) * h_ratio.GetBinContent(iBin) )
+        h_MC_wgt.SetBinError  ( iBin, h_MC_wgt.GetBinError(iBin)   * h_ratio.GetBinContent(iBin) )
+    h_MC_wgt.Write()
+
 ## End def CalcWeights(era, prof, ver, prob_MC):
 
                 

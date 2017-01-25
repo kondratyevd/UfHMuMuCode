@@ -7,30 +7,31 @@
 
 struct SlimJetInfo {
 
-  Float_t pt           ;
-  Float_t eta          ;
-  Float_t phi          ;
-  Float_t mass         ;
+  Float_t pt      ;
+  Float_t eta     ;
+  Float_t phi     ;
+  Float_t mass    ;
+  Int_t   partonID;
 
   Float_t jecFactor;
   Float_t jecUnc   ;
 
-  Float_t CSV          ;
-  Float_t puid;
+  Float_t CSV ;
+  Float_t puID;
 
 };
 
 struct JetInfo {
 
-  Float_t px           ;
-  Float_t py           ;
-  Float_t pz           ;
-  Float_t pt           ;
-  Float_t eta          ;
-  Float_t phi          ;
-  Float_t mass         ;
-  Float_t charge       ;
-  Int_t   partonFlavour;
+  Float_t px      ;
+  Float_t py      ;
+  Float_t pz      ;
+  Float_t pt      ;
+  Float_t eta     ;
+  Float_t phi     ;
+  Float_t mass    ;
+  Float_t charge  ;
+  Int_t   partonID;
 
   /////// Energy Fractions //////
   Float_t chf ;  // Charged Hadron
@@ -73,7 +74,7 @@ struct JetInfo {
   Float_t genAuxF;  // Auxiliary Fraction (Undecayed Sigmas, etc.)
 
   Float_t CSV ;  // Btag CSV_v2
-  Float_t puid;  // PUID
+  Float_t puID;  // PUID
 
   void init();
 

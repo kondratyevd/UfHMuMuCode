@@ -21,8 +21,8 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                                                     "HLT_IsoMu24", "HLT_IsoTkMu24", 
                                                     "HLT_Mu50", "HLT_TkMu50"),
 
-                         ## trigResults = cms.InputTag("TriggerResults","","HLT"),
-                         trigResults = cms.InputTag("TriggerResults","","HLT2"),  ## For reHLT MC samples
+                         trigResults = cms.InputTag("TriggerResults","","HLT"),
+                         ## trigResults = cms.InputTag("TriggerResults","","HLT2"),  ## For reHLT MC samples
                          trigObjs    = cms.InputTag("selectedPatTrigger"),
                          
                          ## Vertex and Beam Spot
@@ -61,6 +61,7 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                                                    "againstElectronVTightMVA6"]),
                          ## Jets
                          jetsTag  = cms.InputTag("slimmedJets"),
+                         # jetsTag  = cms.InputTag("JetCorrectorParametersCollection_Spring16_23Sep2016V2_MC_AK4PFchs"),
                          btagName = cms.string("pfCombinedInclusiveSecondaryVertexV2BJetTags"),
 
                          ## MET
@@ -96,7 +97,8 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          jet_eta_max = cms.double(4.7),
 
                          ## Event weights
-                         PU_wgt_file = cms.string("PU_wgt_2016_Summer16_v0.root"),
+                         # PU_wgt_file = cms.string("PU_wgt_2016_Summer16_v0.root"),
+                         PU_wgt_file = cms.string("PU_wgt_2016_Spring16_v0.root"),
                          Trig_eff_3_file = cms.string("EfficienciesAndSF_Period3.root"),
                          Trig_eff_4_file = cms.string("EfficienciesAndSF_Period4.root"),
 

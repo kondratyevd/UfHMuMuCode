@@ -221,6 +221,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 	       _IsoMu_eff_3_hist, _muonInfos, false );
   CalcTrigEff( _IsoMu_eff_4, _IsoMu_eff_4_up, _IsoMu_eff_4_down, 
 	       _IsoMu_eff_4_hist, _muonInfos, false );
+  CalcTrigEff( _IsoMu_eff_bug, _IsoMu_eff_bug_up, _IsoMu_eff_bug_down, 
+	       _IsoMu_eff_3_hist, _muonInfos, true );
 
 
   // ------------
@@ -246,7 +248,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     for (PVI = PupInfo->begin(); PVI != PupInfo->end(); ++PVI) {
       if (PVI->getBunchCrossing() == 0) { 
 	_nPU = PVI->getTrueNumInteractions();
-	_PU_wgt =     _PU_wgt_hist->GetBinContent(_nPU);
+	_PU_wgt      = _PU_wgt_hist->GetBinContent(_nPU);
 	_PU_wgt_up   = _PU_wgt_hist_up->GetBinContent(_nPU);
 	_PU_wgt_down = _PU_wgt_hist_down->GetBinContent(_nPU);
 	continue;
@@ -307,7 +309,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 
   // Following https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetCorUncertainties
   edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
-  iSetup.get<JetCorrectionsRecord>().get("AK4PF",JetCorParColl);
+  iSetup.get<JetCorrectionsRecord>().get("AK4PFchs",JetCorParColl);
   JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
   
   // Might we need to re-compute the central scale via this recipe? - AWB 14.11.16
@@ -549,12 +551,15 @@ void UFDiMuonsAnalyzer::beginJob() {
   _outTree->Branch("tauIDNames",    &_tauIDNames  );
 
   // Weights and efficiencies
-  _outTree->Branch("IsoMu_eff_3",      &_IsoMu_eff_3,      "IsoMu_eff_3/F"      );
-  _outTree->Branch("IsoMu_eff_3_up",   &_IsoMu_eff_3_up,   "IsoMu_eff_3_up/F"   );
-  _outTree->Branch("IsoMu_eff_3_down", &_IsoMu_eff_3_down, "IsoMu_eff_3_down/F" );
-  _outTree->Branch("IsoMu_eff_4",      &_IsoMu_eff_4,      "IsoMu_eff_4/F"      );
-  _outTree->Branch("IsoMu_eff_4_up",   &_IsoMu_eff_4_up,   "IsoMu_eff_4_up/F"   );
-  _outTree->Branch("IsoMu_eff_4_down", &_IsoMu_eff_4_down, "IsoMu_eff_4_down/F" );
+  _outTree->Branch("IsoMu_eff_3",        &_IsoMu_eff_3,        "IsoMu_eff_3/F"        );
+  _outTree->Branch("IsoMu_eff_3_up",     &_IsoMu_eff_3_up,     "IsoMu_eff_3_up/F"     );
+  _outTree->Branch("IsoMu_eff_3_down",   &_IsoMu_eff_3_down,   "IsoMu_eff_3_down/F"   );
+  _outTree->Branch("IsoMu_eff_4",        &_IsoMu_eff_4,        "IsoMu_eff_4/F"        );
+  _outTree->Branch("IsoMu_eff_4_up",     &_IsoMu_eff_4_up,     "IsoMu_eff_4_up/F"     );
+  _outTree->Branch("IsoMu_eff_4_down",   &_IsoMu_eff_4_down,   "IsoMu_eff_4_down/F"   );
+  _outTree->Branch("IsoMu_eff_bug",      &_IsoMu_eff_bug,      "IsoMu_eff_bug/F"      );
+  _outTree->Branch("IsoMu_eff_bug_up",   &_IsoMu_eff_bug_up,   "IsoMu_eff_bug_up/F"   );
+  _outTree->Branch("IsoMu_eff_bug_down", &_IsoMu_eff_bug_down, "IsoMu_eff_bug_down/F" );
 
 
   // MC information

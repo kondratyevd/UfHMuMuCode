@@ -40,4 +40,8 @@ bool IsHltMatched( const pat::Muon& mu, const edm::Event& iEvent, const edm::Eve
 void CalcTrigEff( float& _muon_eff, float& _muon_eff_up, float& _muon_eff_down,
 		  const TH2F* _muon_eff_hist, const MuonInfos _muonInfos, const bool EMTF_bug );
 
+float CalcL1TPhi( const float mu_pt, const float mu_eta, float mu_phi, const int mu_charge );
+bool SameSector( float phi1, float phi2 );
+float CalcDPhi( const float phi1, const float phi2 );
+
 #endif  // #ifndef MUON_HELPER                                                                                                                  

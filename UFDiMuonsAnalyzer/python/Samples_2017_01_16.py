@@ -12,8 +12,6 @@ class sample:
         self.JSON   = JSON   ## JSON file
         self.isData = isData ## Is data
 
-AWB_dir = '/store/user/abrinke1/HiggsToMuMu/samples/'
-
 # =======================================================================================================
 # ------------------------------- DATA ------------------------------------------------------------------
 # =======================================================================================================
@@ -125,13 +123,14 @@ SingleMu.append(SingleMu_2016H_2)
 
 ## DAS location: dataset=/*HToMuMu_M125_13TeV*/*Moriond*/MINIAODSIM
 DAS_era_sig = 'RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'
-H2Mu_gg_dir = 'GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/'
+AWB_dir     = '/store/user/abrinke1/HiggsToMuMu/samples/'
+H2Mu_gg_dir = 'GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/'
 
 ## Gluon-gluon fusion
 H2Mu_gg = sample( name  = 'H2Mu_gg',
                   DAS   = '/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/'+DAS_era_sig,
                   nEvt  = 250000, ## 250 k
-                  files = [ AWB_dir+H2Mu_gg_dir+'12B931FE-CD3A-E611-9844-0025905C3D98.root' ] )
+                  files = [ AWB_dir+H2Mu_gg_dir+'36967CD0-3CC1-E611-A615-D8D385FF1996.root' ] )
 
 ## Vector boson fusion
 H2Mu_VBF = sample( name = 'H2Mu_VBF',

@@ -13,7 +13,7 @@ void FillMuonInfos( MuonInfos& _muonInfos,
 		    KalmanMuonCalibrator& _KaMu_calib, const bool _doSys_KaMu,
 		    rochcor2016* _Roch_calib[201], const bool _doSys_Roch ) {
   
-  double const MASS_MUON  = 0.105658367; // GeV/c^2
+  double const MASS_MUON = 0.105658367; // GeV/c^2
 
   _muonInfos.clear();
   int nMuons = muonsSelected.size();
@@ -383,6 +383,12 @@ void CalcTrigEff( float& _muon_eff, float& _muon_eff_up, float& _muon_eff_down,
   float ineff_up   = 1.;
   float ineff_down = 1.;
 
+  int   nFound   =    0;
+  int   mu_end_1 =    0;
+  int   mu_end_2 =    0;
+  float mu_phi_1 = -99.;
+  float mu_phi_2 = -99.;
+
   for (int iMu = 0; iMu < int(_muonInfos.size()); iMu++) {
     float mu_pt  = min( _muonInfos.at(iMu).pt, 
 			_muon_eff_hist->GetYaxis()->GetBinLowEdge( _muon_eff_hist->GetNbinsY() ) +
@@ -393,6 +399,16 @@ void CalcTrigEff( float& _muon_eff, float& _muon_eff_up, float& _muon_eff_down,
     bool found_mu = false;
 
     if ( mu_pt < _muon_eff_hist->GetYaxis()->GetBinLowEdge(1) ) continue;
+    // Find endcap and phi value of EMTF muons
+    if ( EMTF_bug && fabs(_muonInfos.at(iMu).eta) > 1.24 ) {
+      if ( mu_end_1 == 0 ) {
+	mu_end_1 = ( _muonInfos.at(iMu).eta > 0 ? 1 : -1 );
+	mu_phi_1 = CalcL1TPhi(_muonInfos.at(iMu).pt, _muonInfos.at(iMu).eta, _muonInfos.at(iMu).phi, _muonInfos.at(iMu).charge);
+      } else if ( mu_end_2 == 0 ) {
+	mu_end_2 = ( _muonInfos.at(iMu).eta > 0 ? 1 : -1 );
+	mu_phi_2 = CalcL1TPhi(_muonInfos.at(iMu).pt, _muonInfos.at(iMu).eta, _muonInfos.at(iMu).phi, _muonInfos.at(iMu).charge);
+      }
+    }
     
     for (int iPt = 1; iPt <= _muon_eff_hist->GetNbinsY(); iPt++) {
       if ( found_mu ) continue;
@@ -405,15 +421,86 @@ void CalcTrigEff( float& _muon_eff, float& _muon_eff_up, float& _muon_eff_down,
 	if ( mu_eta > _muon_eff_hist->GetXaxis()->GetBinLowEdge(iEta) + _muon_eff_hist->GetXaxis()->GetBinWidth(iEta) ) continue;
 
 	found_mu = true;
-	ineff      *= ( 1. - _muon_eff_hist->GetBinContent(iEta, iPt) );
-	ineff_up   *= ( 1. - _muon_eff_hist->GetBinContent(iEta, iPt) - _muon_eff_hist->GetBinError(iEta, iPt) );
-	ineff_down *= ( 1. - _muon_eff_hist->GetBinContent(iEta, iPt) + _muon_eff_hist->GetBinError(iEta, iPt) );    
-      }
-    }
-  }
+	nFound += 1;
+
+	if ( EMTF_bug && nFound == 2 && mu_end_1*mu_end_2 == 1 && SameSector(mu_phi_1, mu_phi_2) ) {
+	  float eff_1      = 1. - ineff;
+	  float eff_1_up   = 1. - ineff_up;
+	  float eff_1_down = 1. - ineff_down;
+	  float eff_2      = _muon_eff_hist->GetBinContent(iEta, iPt);
+	  float eff_2_up   = _muon_eff_hist->GetBinContent(iEta, iPt) + _muon_eff_hist->GetBinError(iEta, iPt);
+	  float eff_2_down = _muon_eff_hist->GetBinContent(iEta, iPt) - _muon_eff_hist->GetBinError(iEta, iPt);
+	  ineff      = (1. - (eff_1      + eff_2     ) / 2.);
+	  ineff_up   = (1. - (eff_1_up   + eff_2_up  ) / 2.);
+	  ineff_down = (1. - (eff_1_down + eff_2_down) / 2.);
+	} else {
+	  ineff      *= ( 1. - _muon_eff_hist->GetBinContent(iEta, iPt) );
+	  ineff_up   *= ( 1. - _muon_eff_hist->GetBinContent(iEta, iPt) - _muon_eff_hist->GetBinError(iEta, iPt) );
+	  ineff_down *= ( 1. - _muon_eff_hist->GetBinContent(iEta, iPt) + _muon_eff_hist->GetBinError(iEta, iPt) );
+	}
+
+      } // End loop: for (int iEta = 1; iEta <= _muon_eff_hist->GetNbinsX(); iEta++)
+    } // End loop: for (int iPt = 1; iPt <= _muon_eff_hist->GetNbinsY(); iPt++)
+  } // End loop: for (int iMu = 0; iMu < int(_muonInfos.size()); iMu++)
 
   _muon_eff      = 1. - ineff;
   _muon_eff_up   = 1. - ineff_up;
   _muon_eff_down = 1. - ineff_down;
 
+}
+
+float CalcL1TPhi( const float mu_pt, const float mu_eta, float mu_phi, const int mu_charge ) {
+
+  if (fabs(mu_eta) < 1.24)
+    return mu_phi; // Only computed for EMTF
+
+  float PI = 3.14159265359;
+
+  // Input muon phi is in radians
+  mu_phi  *= (180./PI);  // Convert to degrees
+  float mu_theta = 2. * atan( exp(-1. * fabs(mu_eta) ) ) * (180./PI);
+  float l1t_phi  = mu_phi + mu_charge * (1./mu_pt) * (10.48 - 5.1412 * mu_theta + 0.02308 * pow(mu_theta, 2) );
+
+  mu_phi  *= (PI/180.);
+  l1t_phi *= (PI/180.);  // Convert to radians
+  if (l1t_phi >     PI) l1t_phi -= 2*PI;
+  if (l1t_phi < -1.*PI) l1t_phi += 2*PI;
+
+  // std::cout << "Muon pt " << mu_pt << ", eta " << mu_eta << ", charge " << mu_charge 
+  // 	    << ", phi " << mu_phi << " converted to L1T phi " << l1t_phi << std::endl;
+  return l1t_phi;
+
+}
+
+bool SameSector( float phi1, float phi2 ) {
+
+  bool same_sector = false;
+  float PI = 3.14159265359;
+  
+  phi1 *= (180./PI);
+  phi2 *= (180./PI);
+  if (phi1 < 0) phi1 += 360.;
+  if (phi2 < 0) phi2 += 360.;
+  for (int iSect = 0; iSect < 6; iSect++) {
+    if ( phi1 > 15 + 60*iSect && phi1 < 65 + 60*iSect &&
+	 phi2 > 15 + 60*iSect && phi2 < 65 + 60*iSect ) same_sector = true;
+    if ( phi1 >  5 + 60*iSect && phi1 < 15 + 60*iSect &&
+	 phi2 >  5 + 60*iSect && phi2 < 15 + 60*iSect ) same_sector = true;
+  }
+
+  // if ( same_sector ) {
+  //   std::cout << "\n********************************************************************************************" << std::endl;
+  //   std::cout << "Muons with phi1 " << phi1 << " and phi2 " << phi2 << " are in the same sector" << std::endl;
+  //   std::cout << "********************************************************************************************\n" << std::endl;
+  // }
+
+  return same_sector;
+}
+  
+float CalcDPhi( const float phi1, const float phi2 ) {
+
+  float abs_dPhi  = acos( cos(phi2 - phi1) );
+  float sign_dPhi = sin(phi2 - phi1) / fabs( sin(phi2 - phi1) );
+  std::cout << "phi1 = " << phi1 << ", phi2 = " << phi2 << ", dPhi = " << abs_dPhi*sign_dPhi << " (sign = " << sign_dPhi << ")" << std::endl;
+  return abs_dPhi*sign_dPhi;
 }

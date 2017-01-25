@@ -159,6 +159,9 @@ public:
   float  _IsoMu_eff_4_down;
   TH2F*  _IsoMu_eff_4_hist;
   TFile* _IsoMu_eff_4_file;
+  float  _IsoMu_eff_bug;
+  float  _IsoMu_eff_bug_up;
+  float  _IsoMu_eff_bug_down;
 
   ///////////////////////////////////////////////////////////
   // Trees  ================================================

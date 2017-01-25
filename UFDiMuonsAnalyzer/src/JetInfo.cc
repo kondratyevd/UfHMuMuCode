@@ -3,15 +3,15 @@
 
 void JetInfo::init() {
 
-  px            = -999;
-  py            = -999;
-  pz            = -999;
-  pt            = -999;
-  eta           = -999;
-  phi           = -999;
-  mass          = -999;
-  charge        = -999;
-  partonFlavour = -999;
+  px       = -999;
+  py       = -999;
+  pz       = -999;
+  pt       = -999;
+  eta      = -999;
+  phi      = -999;
+  mass     = -999;
+  charge   = -999;
+  partonID = -999;
   
   chf  = -999;
   nhf  = -999;
@@ -47,7 +47,7 @@ void JetInfo::init() {
   genAuxF    = -999;
   
   CSV  = -999;
-  puid = -999;
+  puID = -999;
 
 } // End void JetInfo::init()
 
