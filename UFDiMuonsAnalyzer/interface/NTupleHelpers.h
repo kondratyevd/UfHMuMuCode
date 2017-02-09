@@ -4,6 +4,9 @@
 
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/EleHelper.h"  
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenJetHelper.h"   
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenMuonHelper.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenPairHelper.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenParentHelper.h"   
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/JetHelper.h"  
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/MuonHelper.h"  
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/TauHelper.h"

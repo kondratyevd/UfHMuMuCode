@@ -5,11 +5,11 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          
                          isVerbose    = cms.untracked.bool(False),
                          isMonteCarlo = cms.bool(True),
-                         doSys        = cms.bool(False),
+                         doSys        = cms.bool(True),
                          slimOut      = cms.bool(True),
 
                          ## Event selection cuts
-                         skim_nMuons = cms.int32(0),
+                         skim_nMuons = cms.int32(2),
                          skim_trig   = cms.bool(False),
                          
                          ## HLT trigger info
@@ -77,13 +77,13 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          vertex_rho_max  = cms.double( 2.0),
                          vertex_z_max    = cms.double(24.0),
 
-                         muon_ID        = cms.string("loose"),
+                         muon_ID        = cms.string("medium"),
                          muon_pT_min    = cms.double(10.0),
                          muon_eta_max   = cms.double( 2.4),
                          muon_trig_dR   = cms.double( 0.1),
                          muon_use_pfIso = cms.bool(True),
                          muon_iso_dR    = cms.double( 0.3),
-                         muon_iso_max   = cms.double(999.),
+                         muon_iso_max   = cms.double(0.25),
 
                          ele_ID      = cms.string("loose"),
                          ele_pT_min  = cms.double(10.),
@@ -96,9 +96,9 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          jet_pT_min  = cms.double(20.0),
                          jet_eta_max = cms.double(4.7),
 
-                         ## Event weights
-                         # PU_wgt_file = cms.string("PU_wgt_2016_Summer16_v0.root"),
-                         PU_wgt_file = cms.string("PU_wgt_2016_Spring16_v0.root"),
+                         ## Event weights and efficiencies
+                         PU_wgt_file = cms.string("PU_wgt_2016_Summer16_v0.root"),
+                         # PU_wgt_file = cms.string("PU_wgt_2016_Spring16_v0.root"),
                          Trig_eff_3_file = cms.string("EfficienciesAndSF_Period3.root"),
                          Trig_eff_4_file = cms.string("EfficienciesAndSF_Period4.root"),
 

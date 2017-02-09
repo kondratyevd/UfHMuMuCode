@@ -1,59 +1,59 @@
 
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/PtCorrRoch.h"
 
-void CorrectPtRoch( rochcor2016* _calib[201], const bool _doSys,
-		    TLorentzVector& _mu_vec, float& _q_term, 
-		    float& _pt_sys_up, float& _pt_sys_down,
-		    const int _charge, const int _trk_layers, const bool _isData ) {
+void CorrectPtRoch( const RoccoR _calib, const bool _doSys, const TLorentzVector _mu_vec, 
+		    float& _pt, float& _pt_sys_up, float& _pt_sys_down, const int _charge, 
+		    const int _trk_layers, const float _GEN_pt, const bool _isData ) {
   
-  _q_term = 1.0;
+  _pt = _mu_vec.Pt();
   _pt_sys_up = -999;
   _pt_sys_down = -999;
-  int runopt = 0;   // No run dependence for 2016 prompt, so default runopt = 0 
-
-  TLorentzVector mu_vec_orig = _mu_vec;
-  TLorentzVector mu_vec_sys = _mu_vec;
-  float q_term_orig = _q_term;
-  float q_term_sys = _q_term;
-
-  if (_isData) _calib[0]->momcor_data( _mu_vec, _charge*1.0, runopt, _q_term );
-  else         _calib[0]->momcor_mc  ( _mu_vec, _charge*1.0, _trk_layers, _q_term );
-
+  float q_term     = 1.0;
+  float q_term_sys = -99;
+  
+  srand( time(NULL) );
+  int iRand_1 = rand();
+  int iRand_2 = (iRand_1 % 1000)*(iRand_1 % 1000);
+  float fRand_1 = (iRand_1 % 1000) * 0.001;
+  float fRand_2 = (iRand_2 % 1000) * 0.001;
+  
+  // For default computation, error set and error member are 0
+  if (_isData)          q_term = _calib.kScaleDT( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(), 0, 0 );
+  else if (_GEN_pt > 0) q_term = _calib.kScaleFromGenMC( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(),
+							 _trk_layers, _GEN_pt, fRand_1, 0, 0 );
+  else                  q_term = _calib.kScaleAndSmearMC( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(),
+							  _trk_layers, fRand_1, fRand_2, 0, 0 );
   int nUp   = 0;
   int nDown = 0;
   double sum_sq_up   = 0;
   double sum_sq_down = 0;
- 
-  // Throw 200 toys to generate uncertainty on correction
-  // Even with 200 toys, does not add noticeable time to the UFDiMuonsAnalyzer NTuple-maker
-  for (int i = 1; i < 201; i++) {
+  
+  // Throw 100 toys to generate uncertainty on correction
+  // Even with 100 toys, only increases UFDiMuonsAnalyzer NTuple-maker time from 2 min for 10k events to 2:20
+  for (int i = 0; i < 100; i++) {
     if (!_doSys) break;
-
-    if (_isData) _calib[i]->momcor_data( mu_vec_sys, _charge*1.0, runopt, q_term_sys );
-    else         _calib[i]->momcor_mc  ( mu_vec_sys, _charge*1.0, _trk_layers, q_term_sys );
-
-    // std::cout << "pt " << mu_vec_sys.Pt() << " returned by index " << i << std::endl;
     
-    if ( mu_vec_sys.Pt() >= _mu_vec.Pt() ) {
+    if (_isData)          q_term_sys = _calib.kScaleDT( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(), 1, i );
+    else if (_GEN_pt > 0) q_term_sys = _calib.kScaleFromGenMC( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(),
+							       _trk_layers, _GEN_pt, fRand_1, 1, i );
+    else                  q_term_sys = _calib.kScaleAndSmearMC( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(),
+								_trk_layers, fRand_1, fRand_2, 1, i );
+    if ( q_term_sys >= q_term ) {
       nUp   += 1;
-      sum_sq_up   += pow( mu_vec_sys.Pt() - _mu_vec.Pt(), 2 );
+      sum_sq_up   += pow( q_term_sys - q_term, 2 );
     } else {
       nDown += 1;
-      sum_sq_down += pow( mu_vec_sys.Pt() - _mu_vec.Pt(), 2 );
+      sum_sq_down += pow( q_term_sys - q_term, 2 );
     }
-    
-    mu_vec_sys = mu_vec_orig;
-    q_term_sys = q_term_orig;
   }
-
-  _pt_sys_up   = ( _doSys ? _mu_vec.Pt() + sqrt(sum_sq_up   / nUp)   : -999 );
-  _pt_sys_down = ( _doSys ? _mu_vec.Pt() + sqrt(sum_sq_down / nDown) : -999 ); 
+  
+  _pt          = _mu_vec.Pt() * q_term;
+  _pt_sys_up   = ( _doSys ? _pt * sqrt(sum_sq_up   / nUp)   : -999 );
+  _pt_sys_down = ( _doSys ? _pt * sqrt(sum_sq_down / nDown) : -999 ); 
 
   // std::cout << "\n*******   RESULT   *******" << std::endl;
-  // std::cout << "mu_vec_orig.Pt() = " << mu_vec_orig.Pt() << ", q_term_orig = " << q_term_orig << std::endl;
-  // std::cout << "_mu_vec.Pt() = " << _mu_vec.Pt() << ", _q_term = " << _q_term << std::endl;
+  // std::cout << "_mu_vec.Pt() = " << _mu_vec.Pt() << ", corrected = " << _pt << std::endl;
   // std::cout << "nUp = " << nUp << ", _pt_sys_up = " << _pt_sys_up << std::endl;
   // std::cout << "nDown = " << nDown << ", _pt_sys_down = " << _pt_sys_down << std::endl;
-
+  
 }
-

@@ -21,9 +21,7 @@
 
 // Special calibration classes
 #include "KaMuCa/Calibration/interface/KalmanMuonCalibrator.h"
-#include "RochCor/Calibration/interface/rochcor2016.h"
 #include "RochCor/Calibration/interface/RoccoR.h"
-#include <time.h>
 
 ///////////////////////////////////////////////////////////
 // Class Definition ======================================
@@ -138,6 +136,12 @@ public:
   int _nJets_JER_down, _nJetsCent_JER_down, _nJetsFwd_JER_down;
   int _nBLoose_JER_down, _nBMed_JER_down, _nBTight_JER_down;
 
+  GenParentInfos _genParentInfos;
+  int _nGenParents;
+  GenMuonInfos _genMuonInfos;
+  int _nGenMuons;
+  GenPairInfos _genPairInfos;
+  int _nGenPairs;
   GenJetInfos _genJetInfos;
   int _nGenJets;
 
@@ -202,7 +206,7 @@ private:
 
   KalmanMuonCalibrator _KaMu_calib;
   bool _doSys_KaMu;
-  rochcor2016* _Roch_calib[201];
+  RoccoR _Roch_calib;
   bool _doSys_Roch;
 
   //////////////////////////////////////////////////////////

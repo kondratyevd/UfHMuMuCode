@@ -11,7 +11,8 @@ void FillMuonInfos( MuonInfos& _muonInfos,
 		    const std::vector<std::string> _trigNames, const double _muon_trig_dR, 
 		    const bool _muon_use_pfIso, const double _muon_iso_dR, const bool _isData,
 		    KalmanMuonCalibrator& _KaMu_calib, const bool _doSys_KaMu,
-		    rochcor2016* _Roch_calib[201], const bool _doSys_Roch ) {
+		    const RoccoR _Roch_calib, const bool _doSys_Roch,
+		    const edm::Handle < reco::GenParticleCollection >& genPartons ) {
   
   double const MASS_MUON = 0.105658367; // GeV/c^2
 
@@ -47,9 +48,10 @@ void FillMuonInfos( MuonInfos& _muonInfos,
     // _muonInfo.phi    = ( muon.isTrackerMuon() ? muon.innerTrack()->phi()     : muon.phi()      );
     
     // Basic quality
-    _muonInfo.isTightID  =  MuonIsTight  ( muon, primaryVertex );
-    _muonInfo.isMediumID =  MuonIsMedium ( muon );
-    _muonInfo.isLooseID  =  MuonIsLoose  ( muon );
+    _muonInfo.isTightID      = MuonIsTight  ( muon, primaryVertex );
+    _muonInfo.isMediumID     = MuonIsMedium ( muon ) && muon.innerTrack()->validFraction() > 0.8;
+    _muonInfo.isMediumID2016 = MuonIsMedium ( muon );
+    _muonInfo.isLooseID      = MuonIsLoose  ( muon );
     
     // Basic isolation
     if ( _muon_use_pfIso )
@@ -105,20 +107,45 @@ void FillMuonInfos( MuonInfos& _muonInfos,
       _muonInfo.pt_KaMu_clos_down = pt_KaMu_clos_down;
 
       // Rochester-calibrated pT
-      TLorentzVector mu_vec_Roch;
+      TLorentzVector mu_vec_Roch, GEN_vec;
       mu_vec_Roch.SetPtEtaPhiM( muon.innerTrack()->pt(), muon.innerTrack()->eta(),
       				muon.innerTrack()->phi(), MASS_MUON );
-      float q_term_Roch, pt_Roch_sys_up, pt_Roch_sys_down;
+      float pt_Roch, pt_Roch_sys_up, pt_Roch_sys_down;
       int charge_Roch     = muon.innerTrack()->charge();
       int trk_layers_Roch = muon.innerTrack()->hitPattern().trackerLayersWithMeasurement(); 
 
-      CorrectPtRoch( _Roch_calib, _doSys_Roch, 
-		     mu_vec_Roch, q_term_Roch, 
-		     pt_Roch_sys_up, pt_Roch_sys_down,
-      		     charge_Roch, trk_layers_Roch, _isData );
+      int iMatch = -99;
+      if (not _isData) {
+	for (unsigned int i = 0; i < genPartons->size(); i++) {
+	  const reco::Candidate& GEN_mu = genPartons->at(i);
+	  if ( abs(GEN_mu.pdgId()) != 13 ) continue;
+	  if ( GEN_mu.status() != 1 ) continue;
+	  if ( GEN_mu.charge() != _muonInfo.charge ) continue;
+	
+	  GEN_vec.SetPtEtaPhiM( GEN_mu.pt(), GEN_mu.eta(), GEN_mu.phi(), GEN_mu.mass() );
+	  if (GEN_vec.DeltaR(mu_vec_Roch) > 0.005) continue;
+	  if (iMatch > 0) {
+	    std::cout << "\nBizzare situation: two muons match!" << std::endl;
+	    std::cout << "RECO pT = " << mu_vec_Roch.Pt() << ", eta = " << mu_vec_Roch.Eta() 
+		      << ", phi = " << mu_vec_Roch.Phi() << ", charge = " << _muonInfo.charge << std::endl;
+	    std::cout << "GEN1 pT = " << genPartons->at(i).pt()<< ", eta = " << genPartons->at(i).eta() 
+		      << ", phi = " << genPartons->at(i).phi() << std::endl;
+	    std::cout << "GEN2 pT = " << GEN_vec.Pt()<< ", eta = " << GEN_vec.Eta() << ", phi = " << GEN_vec.Phi() << std::endl;
+	  }
+	  
+	  iMatch = i;
+	  _muonInfo.GEN_pt = GEN_vec.Pt();
+	  _muonInfo.GEN_dR = GEN_vec.DeltaR(mu_vec_Roch);
+	}
+      } // End conditional: if (not _isData)
 
-      _muonInfo.pt_Roch           = mu_vec_Roch.Pt();
-      _muonInfo.q_term_Roch       = q_term_Roch;
+      float GEN_pt = (iMatch > 0) ? GEN_vec.Pt() : -99;
+      
+      CorrectPtRoch( _Roch_calib, _doSys_Roch, mu_vec_Roch, 
+      		     pt_Roch, pt_Roch_sys_up, pt_Roch_sys_down,
+      		     charge_Roch, trk_layers_Roch, GEN_pt, _isData );
+      
+      _muonInfo.pt_Roch           = pt_Roch;
       _muonInfo.pt_Roch_sys_up    = pt_Roch_sys_up;
       _muonInfo.pt_Roch_sys_down  = pt_Roch_sys_down;
 
@@ -247,7 +274,7 @@ bool MuonIsMedium( const pat::Muon muon ) {
 		     muon.combinedQuality().chi2LocalPosition < 12 && 
 		     muon.combinedQuality().trkKink < 20           ); 
   bool _isMedium = ( MuonIsLoose( muon )                                            && 
-		     muon.innerTrack()->validFraction() > 0.8                       && 
+		     muon.innerTrack()->validFraction() > 0.49                      && 
 		     muon::segmentCompatibility(muon) > (_goodGlob ? 0.303 : 0.451) ); 
   if ( _isMedium  != muon::isMediumMuon(muon)  )
     std::cout << "Manual muon isMedium = " << _isMedium << ", muon::isMediumMuon = " 
@@ -390,12 +417,12 @@ void CalcTrigEff( float& _muon_eff, float& _muon_eff_up, float& _muon_eff_down,
   float mu_phi_2 = -99.;
 
   for (int iMu = 0; iMu < int(_muonInfos.size()); iMu++) {
-    float mu_pt  = min( _muonInfos.at(iMu).pt, 
-			_muon_eff_hist->GetYaxis()->GetBinLowEdge( _muon_eff_hist->GetNbinsY() ) +
-			_muon_eff_hist->GetYaxis()->GetBinWidth(   _muon_eff_hist->GetNbinsY() ) - 0.01 );
-    float mu_eta = min( fabs(_muonInfos.at(iMu).eta),
-			_muon_eff_hist->GetXaxis()->GetBinLowEdge( _muon_eff_hist->GetNbinsX() ) +
-			_muon_eff_hist->GetXaxis()->GetBinWidth(   _muon_eff_hist->GetNbinsX() ) - 0.01 );
+    float mu_pt  = std::min( _muonInfos.at(iMu).pt, 
+			     _muon_eff_hist->GetYaxis()->GetBinLowEdge( _muon_eff_hist->GetNbinsY() ) +
+			     _muon_eff_hist->GetYaxis()->GetBinWidth(   _muon_eff_hist->GetNbinsY() ) - 0.01 );
+    float mu_eta = std::min( fabs(_muonInfos.at(iMu).eta),
+			     _muon_eff_hist->GetXaxis()->GetBinLowEdge( _muon_eff_hist->GetNbinsX() ) +
+			     _muon_eff_hist->GetXaxis()->GetBinWidth(   _muon_eff_hist->GetNbinsX() ) - 0.01 );
     bool found_mu = false;
 
     if ( mu_pt < _muon_eff_hist->GetYaxis()->GetBinLowEdge(1) ) continue;

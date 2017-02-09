@@ -45,6 +45,7 @@ void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos ) {
 
     _pairInfo.iMu1 = iMu1;
     _pairInfo.iMu2 = iMu2;
+    // _pairInfo.charge = _muonInfos.at(iMu1).charge + _muonInfos.at(iMu2).charge; 
 
     mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt, _muonInfos.at(iMu1).eta, _muonInfos.at(iMu1).phi, MASS_MUON);
     mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt, _muonInfos.at(iMu2).eta, _muonInfos.at(iMu2).phi, MASS_MUON);
@@ -61,7 +62,7 @@ void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos ) {
     _pairInfo.angle = mu1_vec.DeltaR(mu2_vec); // Need to check that this is correct - AWB 10.11.16
     // _pairInfo.angle = acos( -mu1.track()->momentum().Dot(mu2.track()->momentum() /
     // 						  mu1.track()->p()/mu2.track()->p()) );
-        
+
     if ( _muonInfos.at(iMu1).pt_PF > 0 && _muonInfos.at(iMu2).pt_PF > 0 ) {
       mu1_vec.SetPtEtaPhiM(_muonInfos.at(iMu1).pt_PF, _muonInfos.at(iMu1).eta_PF, _muonInfos.at(iMu1).phi_PF, MASS_MUON);
       mu2_vec.SetPtEtaPhiM(_muonInfos.at(iMu2).pt_PF, _muonInfos.at(iMu2).eta_PF, _muonInfos.at(iMu2).phi_PF, MASS_MUON);
@@ -152,6 +153,6 @@ void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos ) {
 } // End void FillPairInfos( PairInfos& _pairInfos, const MuonInfos _muonInfos )
 
 bool pair_smaller_dMass( std::pair< double, std::pair<int, int> > i, 
-				std::pair< double, std::pair<int, int> > j) {
+			 std::pair< double, std::pair<int, int> > j) {
   return (i.first < j.first);
 }

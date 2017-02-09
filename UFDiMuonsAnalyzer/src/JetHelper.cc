@@ -149,8 +149,9 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
   if (_jet_ID.find("loose") == std::string::npos && _jet_ID.find("tight") == std::string::npos)
     std::cout << "Jet ID is neither tight nor loose: " << _jet_ID
               << "\nWill not be used, no jet ID cuts applied" << std::endl;
-  
-  JetCorrectionUncertainty *jecUnc = new JetCorrectionUncertainty(JetCorPar);
+
+  // HAVE TO DELETE AFTER LOOP TO AVOID MEMORY LEAK!!!!
+  JetCorrectionUncertainty *JecUnc = new JetCorrectionUncertainty(JetCorPar);
   
   for (pat::JetCollection::const_iterator jet = jets->begin(), jetsEnd = jets->end(); jet !=jetsEnd; ++jet) {
 
@@ -159,9 +160,9 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
     // Apply jet energy scale systematics
     // Modeled after https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetCorUncertainties
     //           and https://github.com/cms-ttH/MiniAOD/blob/master/MiniAODHelper/src/MiniAODHelper.cc#L374
-    jecUnc->setJetEta( corr_jet.eta() );
-    jecUnc->setJetPt ( corr_jet.pt()  );
-    double uncert = jecUnc->getUncertainty(true);
+    JecUnc->setJetEta( corr_jet.eta() );
+    JecUnc->setJetPt ( corr_jet.pt()  );
+    double uncert = JecUnc->getUncertainty(true);
     if      ( _JES_syst.find("JES_up")   != std::string::npos )
       corr_jet.scaleEnergy( 1. + uncert );
     else if ( _JES_syst.find("JES_down") != std::string::npos )
@@ -212,7 +213,9 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
     if (_jet_ID.find("tight") != std::string::npos && !isTight) continue;
     
     jetsSelected.push_back(corr_jet);
-  }
+  } // End loop: for (pat::JetCollection::const_iterator jet = jets->begin(), jetsEnd = jets->end(); jet !=jetsEnd; ++jet)
+
+  delete JecUnc; // AVOID NASTY MEMORY LEAK!!!
   
   return jetsSelected;
 }

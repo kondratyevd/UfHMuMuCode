@@ -17,7 +17,8 @@ void FillMuonInfos( MuonInfos& _muonInfos,
 		    const std::vector<std::string> _trigNames, const double _muon_trig_dR,
 		    const bool _muon_use_pfIso, const double _muon_iso_dR, const bool _isData,
 		    KalmanMuonCalibrator& _KaMu_calib, const bool _doSys_KaMu,
-		    rochcor2016* _Roch_calib[201], const bool _doSys_Roch );
+		    const RoccoR _Roch_calib, const bool _doSys_Roch,
+		    const edm::Handle < reco::GenParticleCollection >& genPartons );
 
 pat::MuonCollection SelectMuons( const edm::Handle<pat::MuonCollection>& muons,
 				 const reco::Vertex primaryVertex, const std::string _muon_ID,

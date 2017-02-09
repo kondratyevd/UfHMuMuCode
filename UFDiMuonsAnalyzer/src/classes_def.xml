@@ -9,6 +9,18 @@
   <class name="GenJetInfos"/> 
   <class name="edm::Wrapper<GenJetInfos>"/>
   
+  <class name="GenMuonInfo"/>
+  <class name="GenMuonInfos"/>
+  <class name="edm::Wrapper<GenMuonInfos>"/>
+  
+  <class name="GenPairInfo"/>
+  <class name="GenPairInfos"/>
+  <class name="edm::Wrapper<GenPairInfos>"/>
+  
+  <class name="GenParentInfo"/> 
+  <class name="GenParentInfos"/> 
+  <class name="edm::Wrapper<GenParentInfos>"/>
+  
   <class name="JetInfo"/> 
   <class name="JetInfos"/> 
   <class name="edm::Wrapper<JetInfos>"/>

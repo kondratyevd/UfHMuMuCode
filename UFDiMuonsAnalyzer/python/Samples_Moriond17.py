@@ -24,6 +24,7 @@ class sample:
 JSON_2016 = ['data/JSON/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JSON.txt', ## 36.814 fb-1
              'data/JSON/Cert_271036-284044_13TeV_PromptReco_Collisions16_JSON.txt']      ## 36.773 fb-1
 
+AWB_dir = '/store/user/abrinke1/HiggsToMuMu/samples/'
 
 #####################################
 ###  Global tag and dataset info  ###
@@ -38,6 +39,8 @@ JSON_2016 = ['data/JSON/Cert_271036-284044_13TeV_23Sep2016ReReco_Collisions16_JS
 ## https://twiki.cern.ch/twiki/bin/view/CMS/JECDataMC
 ## https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections
 
+SingleMu_2016C_dir = 'SingleMuon_Run2016C/23Sep2016-v1/'
+
 SingleMu_2016B = sample( name   = 'SingleMu_2016B',
                          DAS    = '/SingleMuon/Run2016B-23Sep2016-v3/MINIAOD',
                          ## No runs from Run2016B-23Sep2016-v1 in the 23Sep2016ReReco JSON
@@ -48,6 +51,7 @@ SingleMu_2016B = sample( name   = 'SingleMu_2016B',
 
 SingleMu_2016C = sample( name   = 'SingleMu_2016C',
                          DAS    = '/SingleMuon/Run2016C-23Sep2016-v1/MINIAOD',
+                         files = [ AWB_dir+SingleMu_2016C_dir+'3A0D500E-228C-E611-B11E-0CC47AA989C4.root' ],
                          GT     = '80X_dataRun2_2016SeptRepro_v6',
                          JEC    = 'Spring16_23Sep2016BCDV2_DATA',
                          JSON   = JSON_2016[0],
@@ -123,14 +127,13 @@ SingleMu.append(SingleMu_2016H_2)
 
 ## DAS location: dataset=/*HToMuMu_M125_13TeV*/*Moriond*/MINIAODSIM
 DAS_era_sig = 'RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM'
-AWB_dir     = '/store/user/abrinke1/HiggsToMuMu/samples/'
 H2Mu_gg_dir = 'GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/'
 
 ## Gluon-gluon fusion
 H2Mu_gg = sample( name  = 'H2Mu_gg',
                   DAS   = '/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/'+DAS_era_sig,
                   nEvt  = 250000, ## 250 k
-                  files = [ AWB_dir+H2Mu_gg_dir+'36967CD0-3CC1-E611-A615-D8D385FF1996.root' ] )
+                  files = [ AWB_dir+H2Mu_gg_dir+'C0801715-85C0-E611-97A8-001E67396A18.root' ] )
 
 ## Vector boson fusion
 H2Mu_VBF = sample( name = 'H2Mu_VBF',
@@ -175,6 +178,7 @@ DAS_AMC       = 'TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv'
 ###################
 ###  Drell-Yan  ###
 ###################
+ZJets_AMC_dir = 'DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/PUMoriond17_HCALDebug_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/'
 
 ZJets_MG = sample( name = 'ZJets_MG',
                    DAS  = '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v2/MINIAODSIM',
@@ -186,17 +190,73 @@ ZJets_MG_HER = sample( name = 'ZJets_MG_HER',
 
 ZJets_AMC = sample( name = 'ZJets_AMC',
                     DAS  = '/DYJetsToLL_M-50_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_HCALDebug_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM',
-                    nEvt = 28968252 ) ## 29 million
+                    nEvt = 28968252,  ## 29 million
+                    files = [ AWB_dir+ZJets_AMC_dir+'00312D7A-FEBD-E611-A713-002590DB923E.root' ] )
 
 ZJets_hiM = sample( name = 'ZJets_hiM',
-                    DAS  = '/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISpring16MiniAODv2-PUSpring16_80X_mcRun2_asymptotic_2016_miniAODv2_v0_ext1-v1/MINIAODSIM',
-                    nEvt = 1082812 ) ## 1.1 million
+                    DAS  = '/DYJetsToLL_M-100to200_TuneCUETP8M1_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM',
+                    nEvt = 1083606 ) ## 1.1 million
                     ## GT   = 'Spring16_23Sep2016V2_MC' ) ## Need a different global tag? - AWB 19.01.17
+
+ZJets_MG_HT_70_100 = sample( name = 'ZJets_MG_HT_70_100',
+                             DAS  = '/DYJetsToLL_M-50_HT-70to100_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM',
+                             nEvt = 999 )
+
+ZJets_MG_HT_100_200_A = sample( name = 'ZJets_MG_HT_100_200_A',
+                                DAS  = '/DYJetsToLL_M-50_HT-100to200_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM',
+                                nEvt = 999 )
+
+ZJets_MG_HT_100_200_B = sample( name = 'ZJets_MG_HT_100_200_B',
+                                DAS  = '/DYJetsToLL_M-50_HT-100to200_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM',
+                                nEvt = 999 )
+
+ZJets_MG_HT_200_400_A = sample( name = 'ZJets_MG_HT_200_400_A',
+                                DAS  = '/DYJetsToLL_M-50_HT-200to400_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM',
+                                nEvt = 999 )
+
+ZJets_MG_HT_200_400_B = sample( name = 'ZJets_MG_HT_200_400_B',
+                                DAS  = '/DYJetsToLL_M-50_HT-200to400_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM',
+                                nEvt = 999 )
+
+ZJets_MG_HT_400_600_A = sample( name = 'ZJets_MG_HT_400_600_A',
+                                DAS  = '/DYJetsToLL_M-50_HT-400to600_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM',
+                                nEvt = 999 )
+
+ZJets_MG_HT_400_600_B = sample( name = 'ZJets_MG_HT_400_600_B',
+                                DAS  = '/DYJetsToLL_M-50_HT-400to600_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6_ext1-v1/MINIAODSIM',
+                                nEvt = 999 )
+
+ZJets_MG_HT_600_800 = sample( name = 'ZJets_MG_HT_600_800',
+                              DAS  = '/DYJetsToLL_M-50_HT-600to800_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v2/MINIAODSIM',
+                              nEvt = 999 )
+
+ZJets_MG_HT_800_1200 = sample( name = 'ZJets_MG_HT_800_1200',
+                               DAS  = '/DYJetsToLL_M-50_HT-800to1200_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM',
+                               nEvt = 999 )
+
+ZJets_MG_HT_1200_2500 = sample( name = 'ZJets_MG_HT_1200_2500',
+                                DAS  = '/DYJetsToLL_M-50_HT-1200to2500_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM',
+                                nEvt = 999 )
+
+ZJets_MG_HT_2500_inf = sample( name = 'ZJets_MG_HT_2500_inf',
+                               DAS  = '/DYJetsToLL_M-50_HT-2500toInf_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM',
+                               nEvt = 999 )
 
 Background.append(ZJets_MG)
 # Background.append(ZJets_MG_HER)
 Background.append(ZJets_AMC)
 Background.append(ZJets_hiM)
+Background.append(ZJets_MG_HT_70_100)
+Background.append(ZJets_MG_HT_100_200_A)
+Background.append(ZJets_MG_HT_100_200_B)
+Background.append(ZJets_MG_HT_200_400_A)
+Background.append(ZJets_MG_HT_200_400_B)
+Background.append(ZJets_MG_HT_400_600_A)
+Background.append(ZJets_MG_HT_400_600_B)
+Background.append(ZJets_MG_HT_600_800)
+Background.append(ZJets_MG_HT_800_1200)
+Background.append(ZJets_MG_HT_1200_2500)
+Background.append(ZJets_MG_HT_2500_inf)
 
 ####################
 ###  Single top  ###

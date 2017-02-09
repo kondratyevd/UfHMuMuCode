@@ -88,17 +88,17 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   else               _KaMu_calib = KalmanMuonCalibrator("DATA_80X_13TeV");
   _doSys_KaMu  = iConfig.getParameter<bool>("doSys_KaMu");
 
-  _Roch_calib[0] = new rochcor2016();
-  _doSys_Roch  = iConfig.getParameter<bool>("doSys_Roch");
-  if (_doSys_Roch) {
-    srand( time(NULL) );
-    std::cout << "Creating 200 toys for Rochester correction systematics ..." << std::endl;
-    for (int i = 1; i < 201; i++) {
-      int iRand = (rand() % 1000) + 1;
-      _Roch_calib[i] = new rochcor2016(iRand);
-    }  
-    std::cout << "... DONE." << std::endl;
-  }
+  // Jigger path name for crab
+  edm::FileInPath cfg_RochCor("RochCor/Calibration/data/Feb06/config.txt");
+  std::string path_RochCor = cfg_RochCor.fullPath().c_str();
+  std::string file_RochCor = "/config.txt";
+  std::string::size_type find_RochCor = path_RochCor.find(file_RochCor);
+  if (find_RochCor != std::string::npos)
+    path_RochCor.erase(find_RochCor, file_RochCor.length());
+
+  std::cout << "Rochester correction files located in " << path_RochCor << std::endl;
+  _Roch_calib.init(path_RochCor);
+  _doSys_Roch = iConfig.getParameter<bool>("doSys_Roch");
 
   if (_isMonteCarlo) {
     edm::FileInPath path_PU_wgt("UfHMuMuCode/UFDiMuonsAnalyzer/data/Pileup/"+iConfig.getParameter<std::string>("PU_wgt_file"));
@@ -120,7 +120,9 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
 // Destructor
 UFDiMuonsAnalyzer::~UFDiMuonsAnalyzer() {
 
-  _PU_wgt_file->Close();
+  if (_isMonteCarlo)
+    _PU_wgt_file->Close();
+
   _IsoMu_eff_3_file->Close();
   _IsoMu_eff_4_file->Close();
 
@@ -189,6 +191,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 
   reco::VertexCollection verticesSelected = SelectVertices( vertices, _vertex_ndof_min,
 							    _vertex_rho_max, _vertex_z_max );
+  if (verticesSelected.size() == 0) {
+    std::cout << "BUGGY EVENT!  There are no good vertices!  Skipping ..." << std::endl;
+    return;
+  }
   reco::Vertex primaryVertex = verticesSelected.at(0);
   
   bool _onlyPV = true;  // Only fill primary vertex
@@ -211,10 +217,14 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   // Sort the selected muons by pT
   sort(muonsSelected.begin(), muonsSelected.end(), sortMuonsByPt);
   
+  // Get GEN muons for Rochester corrections
+  edm::Handle<reco::GenParticleCollection> genPartons;
+  iEvent.getByToken(_prunedGenParticleToken, genPartons);
+
   FillMuonInfos( _muonInfos, muonsSelected, primaryVertex, verticesSelected.size(), beamSpotHandle, 
 		 iEvent, iSetup, trigObjsHandle, trigResultsHandle, _trigNames,
 		 _muon_trig_dR, _muon_use_pfIso, _muon_iso_dR, !(_isMonteCarlo), 
-		 _KaMu_calib, _doSys_KaMu, _Roch_calib, _doSys_Roch ); 
+		 _KaMu_calib, _doSys_KaMu, _Roch_calib, _doSys_Roch, genPartons ); 
   _nMuons = _muonInfos.size();
 
   CalcTrigEff( _IsoMu_eff_3, _IsoMu_eff_3_up, _IsoMu_eff_3_down, 
@@ -231,6 +241,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   if (_isVerbose) std::cout << "\nFilling PairInfo" << std::endl;
   FillPairInfos( _pairInfos, _muonInfos );
   _nPairs = _pairInfos.size();
+  // Throw away events with only low-mass pairs
+  if ( _skim_nMuons == 2 && _nPairs == 1 )
+    if ( _pairInfos.at(0).mass < 12 )
+      return;
 
   // -----------------------
   // MC PILEUP / GEN WEIGHTS
@@ -309,6 +323,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 
   // Following https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetCorUncertainties
   edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
+  // Could use ESTransientHandle? https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideHowToGetDataFromES#Optimizing_memory_usage
   iSetup.get<JetCorrectionsRecord>().get("AK4PFchs",JetCorParColl);
   JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
   
@@ -337,6 +352,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     // 						   _jet_ID, _jet_pT_min, _jet_eta_max );
     // pat::JetCollection jets_JER_down = SelectJets( jets, JetCorPar, "JER_down",
     // 						   _jet_ID, _jet_pT_min, _jet_eta_max );
+
+    // delete * JetCorPar; // Avoid nasty memory leak
 
     sort(jets_JES_up.begin(),   jets_JES_up.end(),   sortJetsByPt);
     sort(jets_JES_down.begin(), jets_JES_down.end(), sortJetsByPt);
@@ -371,23 +388,23 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   }
 
 
-  // // As of January 12, not usable - AWB 16.01.17
-  // // https://indico.cern.ch/event/598195/contributions/2429716/attachments/1394701/2125692/met_tails_ppd.pdf
-  // // ---
-  // // MET
-  // // ---
-  // if (_isVerbose) std::cout << "\nFilling MetInfo" << std::endl;
-  // edm::Handle < pat::METCollection > mets;
-  // if (!_metToken.isUninitialized()) 
-  //   iEvent.getByToken(_metToken, mets);
+  // As of January 12, not usable - AWB 16.01.17
+  // https://indico.cern.ch/event/598195/contributions/2429716/attachments/1394701/2125692/met_tails_ppd.pdf
+  // ---
+  // MET
+  // ---
+  if (_isVerbose) std::cout << "\nFilling MetInfo" << std::endl;
+  edm::Handle < pat::METCollection > mets;
+  if (!_metToken.isUninitialized()) 
+    iEvent.getByToken(_metToken, mets);
   
-  // FillMetInfo( _metInfo, mets, iEvent );
+  FillMetInfo( _metInfo, mets, iEvent );
 
-  // // Not using all the correct filters - will need to if we use MET in the analysis - AWB 14.11.16
-  // //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#Analysis_Recommendations_for_ana
-  // // Should propagate JES uncertainties to MET, if we end up using MET - AWB 14.11.16
-  // //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETRun2Corrections#Type_I_Correction_Propagation_of
-  // //   https://github.com/cms-ttH/MiniAOD/blob/master/MiniAODHelper/src/MiniAODHelper.cc#L1085
+  // Not using all the correct filters - will need to if we use MET in the analysis - AWB 14.11.16
+  //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#Analysis_Recommendations_for_ana
+  // Should propagate JES uncertainties to MET, if we end up using MET - AWB 14.11.16
+  //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETRun2Corrections#Type_I_Correction_Propagation_of
+  //   https://github.com/cms-ttH/MiniAOD/blob/master/MiniAODHelper/src/MiniAODHelper.cc#L1085
 
 
   // ---
@@ -402,60 +419,38 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   // FillMhtInfo( _mhtInfo_JER_down, _muonInfos, _eleInfos, _jetInfos_JER_down ); 
 
 
-  // --------
-  // GEN JETS
-  // --------
-  if (_isVerbose) std::cout << "\nFilling GenJetInfo" << std::endl;
+  // -------------
+  // GEN PARTICLES
+  // -------------
   if (_isMonteCarlo) {
+    // Parents
+    if (_isVerbose) std::cout << "\nFilling GenParentInfo" << std::endl;
+
+    FillGenParentInfos( _genParentInfos, genPartons, 
+			std::vector<int> {6, 22, 23, 24, 25}, 
+			_isMonteCarlo );
+    _nGenParents = _genParentInfos.size();
+
+    // Muons
+    if (_isVerbose) std::cout << "\nFilling GenMuonInfo" << std::endl;
+    FillGenMuonInfos( _genMuonInfos, _genParentInfos, genPartons, _isMonteCarlo );
+    _nGenMuons = _genMuonInfos.size();
+    _nGenParents = _genParentInfos.size();
+
+    if (_isVerbose) std::cout << "\nFilling GenPairInfo" << std::endl;
+    FillGenPairInfos( _genPairInfos, _genMuonInfos );
+    _nGenPairs = _genPairInfos.size();
+
+    // Jets
+    if (_isVerbose) std::cout << "\nFilling GenJetInfo" << std::endl;
     edm::Handle < reco::GenJetCollection > genJets;
     if (!_genJetsToken.isUninitialized()) 
       iEvent.getByToken(_genJetsToken, genJets);
 
     FillGenJetInfos( _genJetInfos, genJets, _isMonteCarlo );
     _nGenJets = _genJetInfos.size();
-  }
 
-  // -------------------------------------------
-  // MONTE CARLO GEN INFO: MUONS, Gamma, H, W, Z
-  // -------------------------------------------
-  if (_isVerbose) std::cout << "\nFilling GenPartInfo" << std::endl;
-
-  // Make optional - AWB 08.11.16
-  if (_isMonteCarlo) {
-
-    // initialize Gamma to default values
-    _genGpreFSR.init();  _genM1GpreFSR.init();  _genM2GpreFSR.init();
-    _genGpostFSR.init(); _genM1GpostFSR.init(); _genM2GpostFSR.init();
-
-    // initialize Z to default values
-    _genZpreFSR.init();  _genM1ZpreFSR.init();  _genM2ZpreFSR.init();
-    _genZpostFSR.init(); _genM1ZpostFSR.init(); _genM2ZpostFSR.init();
-
-    // initialize H to default values
-    _genHpreFSR.init();  _genM1HpreFSR.init();  _genM2HpreFSR.init();
-    _genHpostFSR.init(); _genM1HpostFSR.init(); _genM2HpostFSR.init();
-
-    // initialize W to default values
-    _genWpreFSR.init();  _genMWpreFSR.init();
-    _genWpostFSR.init(); _genMWpostFSR.init();
-
-    edm::Handle<reco::GenParticleCollection> prunedGenParticles;
-    iEvent.getByToken(_prunedGenParticleToken, prunedGenParticles);
-
-    for (reco::GenParticle g: *prunedGenParticles) {
-      // Looks for gamma, W, Z, H and the muons from them
-      FillBosonAndMuDaughters( g, 
-			       _genGpreFSR,  _genM1GpreFSR,  _genM2GpreFSR,
-			       _genGpostFSR, _genM1GpostFSR, _genM2GpostFSR,
-			       _genZpreFSR,  _genM1ZpreFSR,  _genM2ZpreFSR,
-			       _genZpostFSR, _genM1ZpostFSR, _genM2ZpostFSR,
-			       _genHpreFSR,  _genM1HpreFSR,  _genM2HpreFSR,
-			       _genHpostFSR, _genM1HpostFSR, _genM2HpostFSR,
-			       _genWpreFSR,  _genMWpreFSR,
-			       _genWpostFSR, _genMWpostFSR );
-    }    
   } // End conditional: if (_isMonteCarlo)
-
 
 
   // ============================
@@ -571,42 +566,17 @@ void UFDiMuonsAnalyzer::beginJob() {
     _outTree->Branch("PU_wgt_down", &_PU_wgt_down, "PU_wgt_down/F" );
     _outTree->Branch("GEN_wgt",     &_GEN_wgt,     "GEN_wgt/I"     );
     
-    _outTree->Branch("genZpostFSR",   (GenPartInfo*) &_genZpostFSR   );
-    _outTree->Branch("genM1ZpostFSR", (GenPartInfo*) &_genM1ZpostFSR );
-    _outTree->Branch("genM2ZpostFSR", (GenPartInfo*) &_genM2ZpostFSR );
-
-    _outTree->Branch("genHpostFSR",   (GenPartInfo*) &_genHpostFSR   );
-    _outTree->Branch("genM1HpostFSR", (GenPartInfo*) &_genM1HpostFSR );
-    _outTree->Branch("genM2HpostFSR", (GenPartInfo*) &_genM2HpostFSR );
+    _outTree->Branch("nGenParents", (int*) &_nGenParents );
+    _outTree->Branch("nGenMuons",   (int*) &_nGenMuons   );
+    _outTree->Branch("nGenPairs",   (int*) &_nGenPairs   );
+    
+    _outTree->Branch("genParents", (GenParentInfos*) &_genParentInfos );
+    _outTree->Branch("genMuons",   (GenMuonInfos*)   &_genMuonInfos   );
+    _outTree->Branch("genPairs",   (GenPairInfos*)   &_genPairInfos   );
 
     if (!_slimOut) {
-    
-      // Off shell gamma block
-      _outTree->Branch("genGpreFSR",   (GenPartInfo*) &_genGpreFSR   );
-      _outTree->Branch("genM1GpreFSR", (GenPartInfo*) &_genM1GpreFSR );
-      _outTree->Branch("genM2GpreFSR", (GenPartInfo*) &_genM2GpreFSR );
-      
-      _outTree->Branch("genGpostFSR",   (GenPartInfo*) &_genGpostFSR   );
-      _outTree->Branch("genM1GpostFSR", (GenPartInfo*) &_genM1GpostFSR );
-      _outTree->Branch("genM2GpostFSR", (GenPartInfo*) &_genM2GpostFSR );
-      
-      // Z block
-      _outTree->Branch("genZpreFSR",   (GenPartInfo*) &_genZpreFSR   );
-      _outTree->Branch("genM1ZpreFSR", (GenPartInfo*) &_genM1ZpreFSR );
-      _outTree->Branch("genM2ZpreFSR", (GenPartInfo*) &_genM2ZpreFSR );
-      
-      // W block
-      _outTree->Branch("genWpreFSR",   (GenPartInfo*) &_genWpreFSR   );
-      _outTree->Branch("genMWpreFSR",  (GenPartInfo*) &_genMWpreFSR  );
-      _outTree->Branch("genWpostFSR",  (GenPartInfo*) &_genWpostFSR  );
-      _outTree->Branch("genMWpostFSR", (GenPartInfo*) &_genMWpostFSR );
-      
-      // H block
-      _outTree->Branch("genHpreFSR",   (GenPartInfo*) &_genHpreFSR   );
-      _outTree->Branch("genM1HpreFSR", (GenPartInfo*) &_genM1HpreFSR );
-      _outTree->Branch("genM2HpreFSR", (GenPartInfo*) &_genM2HpreFSR );
-      
-      _outTree->Branch("genJets", (GenJetInfos*) &_genJetInfos );
+      _outTree->Branch("nGenJets", (int*)         &_nGenJets    );
+      _outTree->Branch("genJets",  (GenJetInfos*) &_genJetInfos );
     }  // End conditional: if (!_slimOut)
 
   }
