@@ -7,9 +7,10 @@ void MuonInfo::init() {
     isStandAlone = -999;
     isGlobal     = -999;
     
-    isTightID    = -999;
-    isMediumID   = -999;
-    isLooseID    = -999;
+    isTightID      = -999;
+    isMediumID     = -999;
+    isMediumID2016 = -999;
+    isLooseID      = -999;
     
     charge = -999;
     pt     = -999;
@@ -29,7 +30,6 @@ void MuonInfo::init() {
     pt_KaMu_clos_down = -999;
 
     pt_Roch          = -999;
-    q_term_Roch      = -999;
     pt_Roch_sys_up   = -999;
     pt_Roch_sys_down = -999;
      
@@ -71,6 +71,9 @@ void MuonInfo::init() {
       hltEta[iTrig]       = -999;
       hltPhi[iTrig]       = -999;
     }
+
+    GEN_pt = -999;
+    GEN_dR = -999;
 
 } // End void MuonInfo::init()
 

@@ -13,6 +13,7 @@ struct MuonInfo {
 
   Bool_t isTightID ;
   Bool_t isMediumID;
+  Bool_t isMediumID2016;
   Bool_t isLooseID ;
 
   Int_t    charge;
@@ -34,7 +35,6 @@ struct MuonInfo {
   Double_t pt_KaMu_clos_down;
 
   Double_t pt_Roch          ;
-  Double_t q_term_Roch      ;
   Double_t pt_Roch_sys_up   ;
   Double_t pt_Roch_sys_down ;
 
@@ -76,6 +76,9 @@ struct MuonInfo {
   Float_t hltPt       [nTrig];
   Float_t hltEta      [nTrig];
   Float_t hltPhi      [nTrig];
+
+  Float_t GEN_pt;
+  Float_t GEN_dR;
 
   void init();
 

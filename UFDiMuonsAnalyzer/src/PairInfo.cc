@@ -12,6 +12,7 @@ void PairInfo::init() {
   y      = -999;
   phi    = -999;
   angle  = -999;
+  // charge = -999;
   
   mass_PF = -999;
   pt_PF   = -999;

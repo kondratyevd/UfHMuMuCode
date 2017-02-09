@@ -16,6 +16,7 @@ struct PairInfo {
   Double_t y   ;
   Double_t phi ;
   Double_t angle;
+  // Int_t charge;
 
   Double_t mass_PF;
   Double_t pt_PF  ;
