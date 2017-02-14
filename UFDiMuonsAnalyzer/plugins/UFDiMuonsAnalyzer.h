@@ -21,7 +21,7 @@
 
 // Special calibration classes
 #include "KaMuCa/Calibration/interface/KalmanMuonCalibrator.h"
-#include "RochCor/Calibration/interface/RoccoR.h"
+#include "UfHMuMuCode/RochCor/interface/RoccoR.h"
 
 ///////////////////////////////////////////////////////////
 // Class Definition ======================================

@@ -89,7 +89,7 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _doSys_KaMu  = iConfig.getParameter<bool>("doSys_KaMu");
 
   // Jigger path name for crab
-  edm::FileInPath cfg_RochCor("RochCor/Calibration/data/Feb06/config.txt");
+  edm::FileInPath cfg_RochCor("UfHMuMuCode/RochCor/data/Feb06/config.txt");
   std::string path_RochCor = cfg_RochCor.fullPath().c_str();
   std::string file_RochCor = "/config.txt";
   std::string::size_type find_RochCor = path_RochCor.find(file_RochCor);
