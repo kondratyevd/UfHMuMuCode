@@ -18,8 +18,8 @@ void FillJetPairInfos( JetPairInfos& _pairInfos, const JetInfos _jetInfos ) {
   for (int i = 0; i < int(_jetInfos.size()); i++) {
     for (int j = i+1; j < int(_jetInfos.size()); j++) {
 
-      // Only consider the first 6 jets
-      if (i > 5 || j > 5) continue;
+      // Only consider the first 8 jets
+      if (i > 7 || j > 7) continue;
       
       jet1_vec.SetPtEtaPhiM(_jetInfos.at(i).pt, _jetInfos.at(i).eta, _jetInfos.at(i).phi, _jetInfos.at(i).mass);
       jet2_vec.SetPtEtaPhiM(_jetInfos.at(j).pt, _jetInfos.at(j).eta, _jetInfos.at(j).phi, _jetInfos.at(j).mass);
@@ -33,8 +33,8 @@ void FillJetPairInfos( JetPairInfos& _pairInfos, const JetInfos _jetInfos ) {
   
   for (int i = 0; i < int(pairs_by_mass.size()); i++) {
 
-    // Only fill the first 6 pairs
-    if (i > 5) continue;
+    // Only fill the first 15 pairs (5+4+3+2+1)
+    if (i > 14) continue;
 
     JetPairInfo _pairInfo;
     _pairInfo.init();

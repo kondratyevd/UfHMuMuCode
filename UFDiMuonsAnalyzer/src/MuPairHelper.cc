@@ -8,6 +8,7 @@ void FillMuPairInfos( MuPairInfos& _pairInfos, const MuonInfos _muonInfos ) {
     return;
 
   double const MASS_MUON  = 0.105658367; // GeV/c^2
+  double const PI         = 3.14159265359;
 
   // 4-vectors: nominal, mu1_up, mu1_down, mu2_up, mu2_down
   muVecSys mu1_vec;
@@ -54,12 +55,17 @@ void FillMuPairInfos( MuPairInfos& _pairInfos, const MuonInfos _muonInfos ) {
     _pairInfo.rapid   = pair_vec.nom.Rapidity();
     _pairInfo.phi     = pair_vec.nom.Phi();
 
-    // Used to check the following quantity ... is this just dR? - AWB 11.03.17
-    // _pairInfo.angle = acos( -mu1.track()->momentum().Dot(mu2.track()->momentum() /
-    // 						  mu1.track()->p()/mu2.track()->p()) );
-    _pairInfo.dR   = mu1_vec.nom.DeltaR(mu2_vec.nom); 
-    _pairInfo.dEta = mu1_vec.nom.PseudoRapidity() - mu2_vec.nom.PseudoRapidity(); 
-    _pairInfo.dPhi = mu1_vec.nom.DeltaPhi(mu2_vec.nom); 
+    double _dR   = mu1_vec.nom.DeltaR(mu2_vec.nom);
+    double _dEta = mu1_vec.nom.PseudoRapidity() - mu2_vec.nom.PseudoRapidity();
+    double _dPhi = mu1_vec.nom.DeltaPhi(mu2_vec.nom);
+
+    double _dThetaStarEta = acos( tanh(_dEta/2) );
+    double _dPhiStar      = tan( (PI - fabs(_dPhi)) / 2) * sin(_dThetaStarEta);
+
+    _pairInfo.dR   = _dR;
+    _pairInfo.dEta = _dEta;
+    _pairInfo.dPhi = _dPhi;
+    _pairInfo.dPhiStar = _dPhiStar;
 
     if ( _muonInfos.at(iMu1).pt_PF > 0 && _muonInfos.at(iMu2).pt_PF > 0 ) {
       FillMuPairMasses( mu1_vec, mu2_vec, pair_vec, massErr, MASS_MUON, 

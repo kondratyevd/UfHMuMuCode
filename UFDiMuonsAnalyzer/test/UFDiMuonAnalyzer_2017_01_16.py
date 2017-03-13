@@ -43,8 +43,9 @@ process.load("Configuration.Geometry.GeometryIdeal_cff")
 # /////////////////////////////////////////////////////////////
 
 # from python.Samples_Moriond17 import SingleMu_2016C as samp
-from python.Samples_Moriond17 import H2Mu_gg as samp
+# from python.Samples_Moriond17 import H2Mu_gg as samp
 # from python.Samples_Moriond17 import ZJets_AMC as samp
+from python.Samples_Moriond17 import ZJets_MG_HT_2500_inf as samp
 
 if samp.isData:
     print '\nRunning over data sample %s' % samp.name
@@ -105,8 +106,8 @@ readFiles.extend(samp.files);
 # ## From /GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/RunIISpring16MiniAODv2-PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/MINIAODSIM
 # readFiles.extend(['/store/user/abrinke1/HiggsToMuMu/samples/GluGlu_HToMuMu_M125_13TeV_powheg_pythia8/PUSpring16RAWAODSIM_reHLT_80X_mcRun2_asymptotic_v14-v1/12B931FE-CD3A-E611-9844-0025905C3D98.root'])
 
-process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(100) )
-process.MessageLogger.cerr.FwkReport.reportEvery = 1
+process.maxEvents = cms.untracked.PSet( input = cms.untracked.int32(10000) )
+process.MessageLogger.cerr.FwkReport.reportEvery = 100
 process.source = cms.Source("PoolSource",fileNames = readFiles)
 process.options   = cms.untracked.PSet( wantSummary = cms.untracked.bool(False) )
 process.source.lumisToProcess = cms.untracked.VLuminosityBlockRange()
@@ -123,8 +124,9 @@ if samp.isData:
 # /////////////////////////////////////////////////////////////
 
 # process.TFileService = cms.Service("TFileService", fileName = cms.string("SingleMu_2016C_Roch_new.root") )
-process.TFileService = cms.Service("TFileService", fileName = cms.string("GluGlu_HToMuMu_M125_GEN_test.root") )
+# process.TFileService = cms.Service("TFileService", fileName = cms.string("GluGlu_HToMuMu_M125_GEN_test.root") )
 # process.TFileService = cms.Service("TFileService", fileName = cms.string("ZJets_AMC_GEN_Roch_test.root") )
+process.TFileService = cms.Service("TFileService", fileName = cms.string("ZJets_MG_HT_2500_inf_test.root") )
 
 # /////////////////////////////////////////////////////////////
 # Load UFDiMuonsAnalyzer
@@ -138,19 +140,21 @@ else:
 process.dimuons = process.DiMuons.clone()
 # process.dimuons.jetsTag    = cms.InputTag("cleanJets")
 process.dimuons.isVerbose  = cms.untracked.bool(False)
-process.dimuons.doSys      = cms.bool(False)
+process.dimuons.doSys      = cms.bool(True)
 process.dimuons.doSys_KaMu = cms.bool(False)
 process.dimuons.doSys_Roch = cms.bool(True)
-process.dimuons.slimOut    = cms.bool(False)
+process.dimuons.slimOut    = cms.bool(True)
 
-process.dimuons.muon_ID        = cms.string("loose")
-process.dimuons.muon_pT_min    = cms.double( 5.0)
-process.dimuons.muon_eta_max   = cms.double( 2.4)
-process.dimuons.muon_trig_dR   = cms.double( 0.1)
-process.dimuons.muon_use_pfIso = cms.bool(True)
-process.dimuons.muon_iso_dR    = cms.double( 0.3)
-process.dimuons.muon_iso_max   = cms.double(999.)
+# /////////////////////////////////////////////////////////////
+# Bad event flags
+# /////////////////////////////////////////////////////////////
 
+## Following https://github.com/MiT-HEP/NeroProducer/blob/master/Nero/test/testNero.py
+## See also https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/2786/2.html
+process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
+process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
+process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
+process.BadPFMuonFilter.taggingMode = cms.bool(True) ## Accept all events, will just flag
 
 # /////////////////////////////////////////////////////////////
 # Electron Cut Based IDs
@@ -175,6 +179,8 @@ for idmod in my_id_modules:
 ##   - Last check that procedure was up-to-date: March 10, 2017 (AWB)
 from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
 
+print 'samp.isData = %d' % samp.isData
+
 if samp.isData:
     JEC_to_apply = cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual'])
 else:
@@ -184,7 +190,7 @@ updateJetCollection(
     process,
     jetSource = cms.InputTag('slimmedJets'),
     labelName = 'UpdatedJEC',
-    jetCorrections = (process.dimuons.jetType, JEC_to_apply, 'None')
+    jetCorrections = ('AK4PFchs', JEC_to_apply, 'None')
     )
 
 process.jecSequence = cms.Sequence(process.patJetCorrFactorsUpdatedJEC * process.updatedPatJetsUpdatedJEC)
@@ -222,7 +228,10 @@ runMetCorAndUncFromMiniAOD(process, isData=samp.isData)
 # Set the order of operations
 # /////////////////////////////////////////////////////////////
     
-process.p = cms.Path( process.egmGsfElectronIDSequence * 
+print 'About to run the process path'
+
+process.p = cms.Path( process.BadPFMuonFilter *
+                      process.egmGsfElectronIDSequence * 
                       process.jecSequence *
                       process.fullPatMetSequence *
                       process.dimuons )

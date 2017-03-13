@@ -5,7 +5,7 @@
 #include <sstream>
 #include "TSystem.h"
 #include "TMath.h"
-#include "RochCor/Calibration/interface/RoccoR.h"
+#include "UfHMuMuCode/RochCor/interface/RoccoR.h"
 
 
 int RocRes::getBin(double x, const int NN, const double *b) const{
@@ -360,10 +360,10 @@ RoccoR::init(std::string dirname){
 	    else{
 		v.push_back(RocOne(inputfile, 0, si, m));
 	    }
-	    std::cout << "    * Pushed back index " << m << std::endl;
+	    // std::cout << "    * Pushed back index " << m << std::endl;
 	}
 	RC.push_back(v);
-	std::cout << "  * Pushed back " << RC.size() << "th RC" << std::endl;
+	// std::cout << "  * Pushed back " << RC.size() << "th RC" << std::endl;
     }
 
     in.close();

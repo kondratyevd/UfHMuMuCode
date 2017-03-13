@@ -72,8 +72,14 @@ public:
   EventInfo _eventInfo;
 
   // event flags
-  int _Flag_badMuons;
-  int _Flag_duplicateMuons;
+  int _Flag_all;
+  int _Flag_badMu;
+  int _Flag_dupMu;
+  int _Flag_halo;
+  int _Flag_PV;
+  int _Flag_HBHE;
+  int _Flag_HBHE_Iso;
+  int _Flag_ECAL_TP;
   
   // vector of vertex information
   VertexInfos _vertexInfos;
@@ -145,6 +151,7 @@ public:
   int _nJets_JER_down, _nJetsCent_JER_down, _nJetsFwd_JER_down;
   int _nBLoose_JER_down, _nBMed_JER_down, _nBTight_JER_down;
 
+  int _nJetPairs;
   JetPairInfos _jetPairInfos;
   JetPairInfos _jetPairInfos_JES_up;
   JetPairInfos _jetPairInfos_JES_down;
@@ -291,8 +298,10 @@ private:
 		     const edm::Handle<edm::TriggerResults>& trigResultsHandle,
 		     const std::vector<std::string> trigNames );
 
-  void printEventFlags( const edm::Event& iEvent, const edm::EventSetup& iSetup,
-			const edm::Handle<edm::TriggerResults>& evtFlagsHandle );
+  void FillEventFlags( const edm::Event& iEvent, const edm::EventSetup& iSetup,
+		       const edm::Handle<edm::TriggerResults>& evtFlagsHandle,
+		       int& _Flag_all, int& _Flag_badMu, int& _Flag_dupMu, int& _Flag_halo,
+		       int& _Flag_PV, int& _Flag_HBHE, int& _Flag_HBHE_Iso, int& _Flag_ECAL_TP );
 
   float calcHtLHE(const edm::Handle<LHEEventProduct>& LHE_handle);
   
@@ -329,9 +338,7 @@ private:
   edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> _trigObjsToken;
 
   // Event flags
-  edm::InputTag _evtFlagsTag;
-  edm::EDGetTokenT< bool > _badMuonToken;
-  edm::EDGetTokenT< bool > _dupMuonToken;
+  edm::EDGetTokenT< edm::TriggerResults > _evtFlagsToken;
   
   // Muons
   edm::EDGetTokenT<pat::MuonCollection> _muonCollToken;
@@ -348,8 +355,9 @@ private:
   std::vector<std::string> _tauIDNames;
 
   // Jets / MET
-  edm::EDGetTokenT<pat::METCollection> _metToken;
   edm::EDGetTokenT<pat::JetCollection> _jetsToken;
+  edm::EDGetTokenT<pat::METCollection> _metToken;
+  edm::EDGetTokenT<double> _rhoToken;
   std::string _jetType;
   std::string _btagName;
 

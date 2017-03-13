@@ -48,7 +48,7 @@ float CalcDPhi( const float phi1, const float phi2 );
 void CalcMuIDIsoEff( float& _ID_eff, float& _ID_eff_up, float& _ID_eff_down,
                      float& _Iso_eff, float& _Iso_eff_up, float& _Iso_eff_down,
                      const TH2F* _ID_hist, const TH2F* _Iso_hist,
-                     const TH1* _ID_vtx, const TH1* _Iso_vtx,
+                     const TH1F* _ID_vtx, const TH1F* _Iso_vtx,
                      const MuonInfos _muonInfos, const int _nVtx );
 
 #endif  // #ifndef MUON_HELPER

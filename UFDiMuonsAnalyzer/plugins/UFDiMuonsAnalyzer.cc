@@ -31,10 +31,7 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _trigObjsToken    = consumes<pat::TriggerObjectStandAloneCollection> (iConfig.getParameter<edm::InputTag>("trigObjs"));
 
   // Event flags
-  // _evtFlagsTag = iConfig.getParameter<edm::InputTag>("evtFlags");
-  _evtFlagsTag  = edm::InputTag("TriggerResults","","PAT");
-  _badMuonToken = consumes<bool>( edm::InputTag("Flag_badMuons") );
-  _dupMuonToken = consumes<bool>( edm::InputTag("Flag_duplicateMuons") );
+  _evtFlagsToken = consumes<edm::TriggerResults>( edm::InputTag("TriggerResults","","PAT") );
 
   // Underlying event
   _beamSpotToken      = consumes<reco::BeamSpot>        (iConfig.getParameter<edm::InputTag>("beamSpotTag"));
@@ -57,9 +54,10 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
 
    // Jets / MET
   _jetsToken = consumes<pat::JetCollection>(iConfig.getParameter<edm::InputTag>("jetsTag"));
+  _metToken  = consumes<pat::METCollection>(iConfig.getParameter<edm::InputTag>("metTag"));  // Correct(ed) MET? - AWB 08.11.16
+  _rhoToken  = consumes<double>( iConfig.getParameter<edm::InputTag>("rhoTag"));
   _jetType   = iConfig.getParameter<std::string>("jetType");
   _btagName  = iConfig.getParameter<std::string>("btagName");
-  _metToken  = consumes<pat::METCollection>(iConfig.getParameter<edm::InputTag>("metTag"));  // Correct(ed) MET? - AWB 08.11.16
 
   // GEN objects
   _genJetsToken           = consumes<reco::GenJetCollection>          (iConfig.getParameter<edm::InputTag>("genJetsTag"));
@@ -135,8 +133,8 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _MuID_eff_4_hist = (TH2F*) _MuID_eff_4_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_pt_eta/efficienciesDATA/abseta_pt_DATA");
   _MuID_SF_3_hist  = (TH2F*) _MuID_eff_3_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_pt_eta/abseta_pt_ratio");
   _MuID_SF_4_hist  = (TH2F*) _MuID_eff_4_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_pt_eta/abseta_pt_ratio");
-  _MuID_eff_3_vtx  = (TH1F*) _MuID_eff_3_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_vtx/efficienciesDATA/tag_nVertices_DATA_norm");
-  _MuID_eff_4_vtx  = (TH1F*) _MuID_eff_4_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_vtx/efficienciesDATA/tag_nVertices_DATA_norm");
+  _MuID_eff_3_vtx  = (TH1F*) _MuID_eff_3_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_vtx/efficienciesDATA/histo_tag_nVertices_DATA_norm");
+  _MuID_eff_4_vtx  = (TH1F*) _MuID_eff_4_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_vtx/efficienciesDATA/histo_tag_nVertices_DATA_norm");
   _MuID_SF_3_vtx   = (TH1F*) _MuID_eff_3_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_vtx/tag_nVertices_ratio_norm");
   _MuID_SF_4_vtx   = (TH1F*) _MuID_eff_4_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_vtx/tag_nVertices_ratio_norm");
 
@@ -148,8 +146,8 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _MuIso_eff_4_hist = (TH2F*) _MuIso_eff_4_file->Get("LooseISO_MediumID_pt_eta/efficienciesDATA/abseta_pt_DATA");
   _MuIso_SF_3_hist  = (TH2F*) _MuIso_eff_3_file->Get("LooseISO_MediumID_pt_eta/abseta_pt_ratio");
   _MuIso_SF_4_hist  = (TH2F*) _MuIso_eff_4_file->Get("LooseISO_MediumID_pt_eta/abseta_pt_ratio");
-  _MuIso_eff_3_vtx  = (TH1F*) _MuIso_eff_3_file->Get("LooseISO_MediumID_vtx/efficienciesDATA/tag_nVertices_DATA_norm");
-  _MuIso_eff_4_vtx  = (TH1F*) _MuIso_eff_4_file->Get("LooseISO_MediumID_vtx/efficienciesDATA/tag_nVertices_DATA_norm");
+  _MuIso_eff_3_vtx  = (TH1F*) _MuIso_eff_3_file->Get("LooseISO_MediumID_vtx/efficienciesDATA/histo_tag_nVertices_DATA_norm");
+  _MuIso_eff_4_vtx  = (TH1F*) _MuIso_eff_4_file->Get("LooseISO_MediumID_vtx/efficienciesDATA/histo_tag_nVertices_DATA_norm");
   _MuIso_SF_3_vtx   = (TH1F*) _MuIso_eff_3_file->Get("LooseISO_MediumID_vtx/tag_nVertices_ratio_norm");
   _MuIso_SF_4_vtx   = (TH1F*) _MuIso_eff_4_file->Get("LooseISO_MediumID_vtx/tag_nVertices_ratio_norm");
 
@@ -231,24 +229,30 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   // -----------
   // EVENT FLAGS
   // -----------  
+
   // "Flag_badMuons", "Flag_duplicateMuons", etc.
   // https://twiki.cern.ch/twiki/bin/view/CMSPublic/ReMiniAOD03Feb2017Notes
+  // https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#Analysis_Recommendations_for_ana
   if (_isVerbose) std::cout << "\nAccessing PAT info" << std::endl;
   edm::Handle<edm::TriggerResults> evtFlagsHandle;
-  iEvent.getByLabel(_evtFlagsTag, evtFlagsHandle);
-  // if (!evtFlagsHandle.isValid()) {
-  //   std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting event flags from Event!" << std::endl;
-  //   return;
-  // }
-  printEventFlags(iEvent, iSetup, evtFlagsHandle);
+  iEvent.getByToken(_evtFlagsToken, evtFlagsHandle);
+  if (!evtFlagsHandle.isValid()) {
+    std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting event flags from Event!" << std::endl;
+    return;
+  }
 
-  edm::Handle<bool> Flag_badMuons_token;
-  iEvent.getByToken(_badMuonToken, Flag_badMuons_token);
-  _Flag_badMuons = *Flag_badMuons_token;
+  FillEventFlags( iEvent, iSetup, evtFlagsHandle,
+		  _Flag_all, _Flag_badMu, _Flag_dupMu, _Flag_halo, 
+		  _Flag_PV, _Flag_HBHE, _Flag_HBHE_Iso, _Flag_ECAL_TP );
 
-  edm::Handle<bool> Flag_duplicateMuons_token;
-  iEvent.getByToken(_dupMuonToken, Flag_duplicateMuons_token);
-  _Flag_duplicateMuons = *Flag_duplicateMuons_token;
+  // if ( !iEvent->HBHENoiseFilter()                    ) break;
+  // if ( !iEvent->HBHENoiseIsoFilter()                 ) break;
+  // if ( !iEvent->EcalDeadCellTriggerPrimitiveFilter() ) break;
+  // if ( !iEvent->goodVertices()                       ) break;
+  // if ( !iEvent->eeBadScFilter()                      ) break;
+  // if ( !iEvent->globalTightHalo2016Filter()          ) break;
+
+
 
   // ----------------
   // RUN / EVENT INFO
@@ -326,7 +330,6 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 		  _MuID_eff_4_hist, _MuIso_eff_4_hist,
 		  _MuID_eff_4_vtx, _MuIso_eff_4_vtx,
 		  _muonInfos, _nVertices);
-
 
   if (_isMonteCarlo) {
     CalcTrigEff( _IsoMu_SF_3, _IsoMu_SF_3_up, _IsoMu_SF_3_down, 
@@ -435,6 +438,10 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   if(!_jetsToken.isUninitialized()) 
     iEvent.getByToken(_jetsToken, jets);
 
+  edm::Handle<double> rhoHandle;
+  iEvent.getByToken(_rhoToken, rhoHandle);
+  double _rho = *rhoHandle;
+
   // Following https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetCorUncertainties
   //   - Last check that procedure was up-to-date: March 10, 2017 (AWB) 
   edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
@@ -448,7 +455,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   JME::JetResolutionScaleFactor JetResSF = JME::JetResolutionScaleFactor::get(iSetup, _jetType);
   
   pat::JetCollection jetsSelected = SelectJets( jets, JetCorPar, JetRes, JetResSF, "none",
-						_muonInfos, _eleInfos,
+						_muonInfos, _eleInfos, _rho,
 						_jet_ID, _jet_pT_min, _jet_eta_max, _dMet );
   
   sort(jetsSelected.begin(), jetsSelected.end(), sortJetsByPt);
@@ -463,19 +470,19 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   // Alternate collections corresponding to jet energy scale up / down
   if (_doSys) {
     pat::JetCollection jets_JES_up   = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JES_up",
-						   _muonInfos, _eleInfos,
+						   _muonInfos, _eleInfos, _rho, 
 						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JES_up );
     pat::JetCollection jets_JES_down = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JES_down",
-						   _muonInfos, _eleInfos,
+						   _muonInfos, _eleInfos, _rho,
 						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JES_down );
     // pat::JetCollection jets_JER_nom  = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JER_nom",
-    // 						   _muonInfos, _eleInfos,
+    // 						   _muonInfos, _eleInfos, _rho,
     // 						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_nom );
     // pat::JetCollection jets_JER_up   = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JER_up",
-    // 						   _muonInfos, _eleInfos,
+    // 						   _muonInfos, _eleInfos, _rho,
     // 						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_up );
     // pat::JetCollection jets_JER_down = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JER_down",
-    // 						   _muonInfos, _eleInfos,
+    // 						   _muonInfos, _eleInfos, _rho,
     // 						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_down );
 
     sort(jets_JES_up.begin(),   jets_JES_up.end(),   sortJetsByPt);
@@ -516,17 +523,20 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     // if (_slimOut) FillSlimJetInfos( _slimJetInfos_JER_down, _jetInfos_JER_down );
   }
 
-  // -----------
-  // DIJET PAIRS
-  // -----------
-  if (_isVerbose) std::cout << "\nFilling JetPairInfo" << std::endl;
-  FillJetPairInfos( _jetPairInfos, _jetInfos );
-  FillJetPairInfos( _jetPairInfos_JES_up, _jetInfos_JES_up );
-  FillJetPairInfos( _jetPairInfos_JES_down, _jetInfos_JES_down );
-  // FillJetPairInfos( _jetPairInfos_JER_nom, _jetInfos_JER_nom );
-  // FillJetPairInfos( _jetPairInfos_JER_up, _jetInfos_JER_up );
-  // FillJetPairInfos( _jetPairInfos_JER_down, _jetInfos_JER_down );
-
+  // // -----------
+  // // DIJET PAIRS
+  // // -----------
+  // if (_isVerbose) std::cout << "\nFilling JetPairInfo" << std::endl;
+  // FillJetPairInfos( _jetPairInfos, _jetInfos );
+  // _nJetPairs = _jetPairInfos.size();
+  // if (_doSys) {
+  //   FillJetPairInfos( _jetPairInfos_JES_up, _jetInfos_JES_up );
+  //   FillJetPairInfos( _jetPairInfos_JES_down, _jetInfos_JES_down );
+  //   // FillJetPairInfos( _jetPairInfos_JER_nom, _jetInfos_JER_nom );
+  //   // FillJetPairInfos( _jetPairInfos_JER_up, _jetInfos_JER_up );
+  //   // FillJetPairInfos( _jetPairInfos_JER_down, _jetInfos_JER_down );
+  // }
+  
   // Instructions for re-miniAOD: https://twiki.cern.ch/twiki/bin/view/CMS/MissingETUncertaintyPrescription - AWB 01.03.17
   // ---
   // MET
@@ -537,24 +547,13 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     iEvent.getByToken(_metToken, mets);
   
   FillMetInfo( _metInfo, mets, iEvent, _dMet );
-  FillMetInfo( _metInfo_JES_up, mets, iEvent, _dMet_JES_up );
-  FillMetInfo( _metInfo_JES_down, mets, iEvent, _dMet_JES_down );
-  // FillMetInfo( _metInfo_JER_nom, mets, iEvent, _dMet_JER_nom );
-  // FillMetInfo( _metInfo_JER_up, mets, iEvent, _dMet_JER_up );
-  // FillMetInfo( _metInfo_JER_down, mets, iEvent, _dMet_JER_down );
-
-  // Not using all the correct filters - will need to if we use MET in the analysis - AWB 14.11.16
-  //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#Analysis_Recommendations_for_ana
-  // Should propagate JES uncertainties to MET, if we end up using MET - AWB 14.11.16
-  //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETRun2Corrections#Type_I_Correction_Propagation_of
-  //   https://github.com/cms-ttH/MiniAOD/blob/master/MiniAODHelper/src/MiniAODHelper.cc#L1085
-
-  // if ( !iEvent->HBHENoiseFilter()                    ) break;
-  // if ( !iEvent->HBHENoiseIsoFilter()                 ) break;
-  // if ( !iEvent->EcalDeadCellTriggerPrimitiveFilter() ) break;
-  // if ( !iEvent->goodVertices()                       ) break;
-  // if ( !iEvent->eeBadScFilter()                      ) break;
-  // if ( !iEvent->globalTightHalo2016Filter()          ) break;
+  if (_doSys) {
+    FillMetInfo( _metInfo_JES_up, mets, iEvent, _dMet_JES_up );
+    FillMetInfo( _metInfo_JES_down, mets, iEvent, _dMet_JES_down );
+    // FillMetInfo( _metInfo_JER_nom, mets, iEvent, _dMet_JER_nom );
+    // FillMetInfo( _metInfo_JER_up, mets, iEvent, _dMet_JER_up );
+    // FillMetInfo( _metInfo_JER_down, mets, iEvent, _dMet_JER_down );
+  }
 
   // ---
   // MHT
@@ -562,12 +561,13 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   if (_isVerbose) std::cout << "\nFilling MhtInfo" << std::endl;
   
   FillMhtInfo( _mhtInfo, _muonInfos, _eleInfos, _jetInfos ); 
-  FillMhtInfo( _mhtInfo_JES_up, _muonInfos, _eleInfos, _jetInfos_JES_up ); 
-  FillMhtInfo( _mhtInfo_JES_down, _muonInfos, _eleInfos, _jetInfos_JES_down ); 
-  // FillMhtInfo( _mhtInfo_JER_nom, _muonInfos, _eleInfos, _jetInfos_JER_nom); 
-  // FillMhtInfo( _mhtInfo_JER_up, _muonInfos, _eleInfos, _jetInfos_JER_up ); 
-  // FillMhtInfo( _mhtInfo_JER_down, _muonInfos, _eleInfos, _jetInfos_JER_down ); 
-
+  if (_doSys) {
+    FillMhtInfo( _mhtInfo_JES_up, _muonInfos, _eleInfos, _jetInfos_JES_up ); 
+    FillMhtInfo( _mhtInfo_JES_down, _muonInfos, _eleInfos, _jetInfos_JES_down ); 
+    // FillMhtInfo( _mhtInfo_JER_nom, _muonInfos, _eleInfos, _jetInfos_JER_nom); 
+    // FillMhtInfo( _mhtInfo_JER_up, _muonInfos, _eleInfos, _jetInfos_JER_up ); 
+    // FillMhtInfo( _mhtInfo_JER_down, _muonInfos, _eleInfos, _jetInfos_JER_down ); 
+  }
 
   // -------------
   // GEN PARTICLES
@@ -628,46 +628,55 @@ void UFDiMuonsAnalyzer::beginJob() {
 
   if (_slimOut) {
     _outTree->Branch("jets",          (SlimJetInfos*)      &_slimJetInfos          );
-    _outTree->Branch("jets_JES_up",   (SlimJetInfos*)      &_slimJetInfos_JES_up   );
-    _outTree->Branch("jets_JES_down", (SlimJetInfos*)      &_slimJetInfos_JES_down );
-    // _outTree->Branch("jets_JER_nom",  (SlimJetInfos*)      &_slimJetInfos_JER_nom  );
-    // _outTree->Branch("jets_JER_up",   (SlimJetInfos*)      &_slimJetInfos_JER_up   );
-    // _outTree->Branch("jets_JER_down", (SlimJetInfos*)      &_slimJetInfos_JER_down );
+    if (_doSys) {
+      _outTree->Branch("jets_JES_up",   (SlimJetInfos*)      &_slimJetInfos_JES_up   );
+      _outTree->Branch("jets_JES_down", (SlimJetInfos*)      &_slimJetInfos_JES_down );
+      // _outTree->Branch("jets_JER_nom",  (SlimJetInfos*)      &_slimJetInfos_JER_nom  );
+      // _outTree->Branch("jets_JER_up",   (SlimJetInfos*)      &_slimJetInfos_JER_up   );
+      // _outTree->Branch("jets_JER_down", (SlimJetInfos*)      &_slimJetInfos_JER_down );
+    }
   } else {
     _outTree->Branch("jets",          (JetInfos*)      &_jetInfos          );
-    _outTree->Branch("jets_JES_up",   (JetInfos*)      &_jetInfos_JES_up   );
-    _outTree->Branch("jets_JES_down", (JetInfos*)      &_jetInfos_JES_down );
-    // _outTree->Branch("jets_JER_nom",  (JetInfos*)      &_jetInfos_JER_nom  );
-    // _outTree->Branch("jets_JER_up",   (JetInfos*)      &_jetInfos_JER_up   );
-    // _outTree->Branch("jets_JER_down", (JetInfos*)      &_jetInfos_JER_down );
-    
-    _outTree->Branch("vertices",      (VertexInfos*)   &_vertexInfos       );
-    // _outTree->Branch("taus",          (TauInfos*)      &_tauInfos          );
+    if (_doSys) {
+      _outTree->Branch("jets_JES_up",   (JetInfos*)      &_jetInfos_JES_up   );
+      _outTree->Branch("jets_JES_down", (JetInfos*)      &_jetInfos_JES_down );
+      // _outTree->Branch("jets_JER_nom",  (JetInfos*)      &_jetInfos_JER_nom  );
+      // _outTree->Branch("jets_JER_up",   (JetInfos*)      &_jetInfos_JER_up   );
+      // _outTree->Branch("jets_JER_down", (JetInfos*)      &_jetInfos_JER_down );
+    }
   }
 
   // Set up the _outTree branches
   _outTree->Branch("event",             (EventInfo*)     &_eventInfo             );
+  _outTree->Branch("vertices",      (VertexInfos*)   &_vertexInfos       );
   _outTree->Branch("jetPairs",          (JetPairInfos*)  &_jetPairInfos          );
-  _outTree->Branch("jetPairs_JES_up",   (JetPairInfos*)  &_jetPairInfos_JES_up   );
-  _outTree->Branch("jetPairs_JES_down", (JetPairInfos*)  &_jetPairInfos_JES_down );
-  // _outTree->Branch("jetPairs_JER_nom",  (JetPairInfos*)  &_jetPairInfos_JER_nom  );
-  // _outTree->Branch("jetPairs_JER_up",   (JetPairInfos*)  &_jetPairInfos_JER_up   );
-  // _outTree->Branch("jetPairs_JER_down", (JetPairInfos*)  &_jetPairInfos_JER_down );
+  if (_doSys) {
+    _outTree->Branch("jetPairs_JES_up",   (JetPairInfos*)  &_jetPairInfos_JES_up   );
+    _outTree->Branch("jetPairs_JES_down", (JetPairInfos*)  &_jetPairInfos_JES_down );
+    // _outTree->Branch("jetPairs_JER_nom",  (JetPairInfos*)  &_jetPairInfos_JER_nom  );
+    // _outTree->Branch("jetPairs_JER_up",   (JetPairInfos*)  &_jetPairInfos_JER_up   );
+    // _outTree->Branch("jetPairs_JER_down", (JetPairInfos*)  &_jetPairInfos_JER_down );
+  }
   _outTree->Branch("muons",             (MuonInfos*)     &_muonInfos         );
   _outTree->Branch("muPairs",           (MuPairInfos*)   &_muPairInfos       );
   _outTree->Branch("eles",              (EleInfos*)      &_eleInfos          );
+  // _outTree->Branch("taus",              (TauInfos*)      &_tauInfos          );
   _outTree->Branch("met",               (MetInfo*)       &_metInfo           );
-  _outTree->Branch("met_JES_up",        (MetInfo*)       &_metInfo_JES_up    );
-  _outTree->Branch("met_JES_down",      (MetInfo*)       &_metInfo_JES_down  );
-  // _outTree->Branch("met_JER_nom",       (MetInfo*)       &_metInfo_JER_nom   );
-  // _outTree->Branch("met_JER_up",        (MetInfo*)       &_metInfo_JER_up    );
-  // _outTree->Branch("met_JER_down",      (MetInfo*)       &_metInfo_JER_down  );
+  if (_doSys) {
+    _outTree->Branch("met_JES_up",        (MetInfo*)       &_metInfo_JES_up    );
+    _outTree->Branch("met_JES_down",      (MetInfo*)       &_metInfo_JES_down  );
+    // _outTree->Branch("met_JER_nom",       (MetInfo*)       &_metInfo_JER_nom   );
+    // _outTree->Branch("met_JER_up",        (MetInfo*)       &_metInfo_JER_up    );
+    // _outTree->Branch("met_JER_down",      (MetInfo*)       &_metInfo_JER_down  );
+  }
   _outTree->Branch("mht",               (MhtInfo*)       &_mhtInfo           );
-  _outTree->Branch("mht_JES_up",        (MhtInfo*)       &_mhtInfo_JES_up    );
-  _outTree->Branch("mht_JES_down",      (MhtInfo*)       &_mhtInfo_JES_down  );
-  // _outTree->Branch("mht_JER_nom",       (MhtInfo*)       &_mhtInfo_JER_nom   );
-  // _outTree->Branch("mht_JER_up",        (MhtInfo*)       &_mhtInfo_JER_up    );
-  // _outTree->Branch("mht_JER_down",      (MhtInfo*)       &_mhtInfo_JER_down  );
+  if (_doSys) {
+    _outTree->Branch("mht_JES_up",        (MhtInfo*)       &_mhtInfo_JES_up    );
+    _outTree->Branch("mht_JES_down",      (MhtInfo*)       &_mhtInfo_JES_down  );
+    // _outTree->Branch("mht_JER_nom",       (MhtInfo*)       &_mhtInfo_JER_nom   );
+    // _outTree->Branch("mht_JER_up",        (MhtInfo*)       &_mhtInfo_JER_up    );
+    // _outTree->Branch("mht_JER_down",      (MhtInfo*)       &_mhtInfo_JER_down  );
+  }
 
   _outTree->Branch("nVertices",          (int*) &_nVertices          );
   _outTree->Branch("nMuons",             (int*) &_nMuons             );
@@ -675,49 +684,59 @@ void UFDiMuonsAnalyzer::beginJob() {
   _outTree->Branch("nEles",              (int*) &_nEles              );
   // _outTree->Branch("nTaus",              (int*) &_nTaus              );
   _outTree->Branch("nJets",              (int*) &_nJets              );
+  _outTree->Branch("nJetPairs",          (int*) &_nJetPairs           );
   _outTree->Branch("nJetsCent",          (int*) &_nJetsCent          );
   _outTree->Branch("nJetsFwd",           (int*) &_nJetsFwd           );
   _outTree->Branch("nBLoose",            (int*) &_nBLoose            );
   _outTree->Branch("nBMed",              (int*) &_nBMed              );
   _outTree->Branch("nBTight",            (int*) &_nBTight            );
-  _outTree->Branch("nJets_JES_up",       (int*) &_nJets_JES_up       );
-  _outTree->Branch("nJetsCent_JES_up",   (int*) &_nJetsCent_JES_up   );
-  _outTree->Branch("nBLoose_JES_up",     (int*) &_nBLoose_JES_up     );
-  _outTree->Branch("nBMed_JES_up",       (int*) &_nBMed_JES_up       );
-  _outTree->Branch("nBTight_JES_up",     (int*) &_nBTight_JES_up     );
-  _outTree->Branch("nJetsFwd_JES_up",    (int*) &_nJetsFwd_JES_up    );
-  _outTree->Branch("nJets_JES_down",     (int*) &_nJets_JES_down     );
-  _outTree->Branch("nJetsCent_JES_down", (int*) &_nJetsCent_JES_down );
-  _outTree->Branch("nJetsFws_JES_down",  (int*) &_nJetsFwd_JES_down  );
-  _outTree->Branch("nBLoose_JES_down",   (int*) &_nBLoose_JES_down   );
-  _outTree->Branch("nBMed_JES_down",     (int*) &_nBMed_JES_down     );
-  _outTree->Branch("nBTight_JES_down",   (int*) &_nBTight_JES_down   );
-  // _outTree->Branch("nJets_JER_nom",      (int*) &_nJets_JER_nom      );
-  // _outTree->Branch("nJetsCent_JER_nom",  (int*) &_nJetsCent_JER_nom  );
-  // _outTree->Branch("nJetsFwd_JER_nom",   (int*) &_nJetsFwd_JER_nom   );
-  // _outTree->Branch("nBLoose_JER_nom",    (int*) &_nBLoose_JER_nom    );
-  // _outTree->Branch("nBMed_JER_nom",      (int*) &_nBMed_JER_nom      );
-  // _outTree->Branch("nBTight_JER_nom",    (int*) &_nBTight_JER_nom    );
-  // _outTree->Branch("nJets_JER_up",       (int*) &_nJets_JER_up       );
-  // _outTree->Branch("nJetsCent_JER_up",   (int*) &_nJetsCent_JER_up   );
-  // _outTree->Branch("nJetsFwd_JER_up",    (int*) &_nJetsFwd_JER_up    );
-  // _outTree->Branch("nBLoose_JER_up",     (int*) &_nBLoose_JER_up     );
-  // _outTree->Branch("nBMed_JER_up",       (int*) &_nBMed_JER_up       );
-  // _outTree->Branch("nBTight_JER_up",     (int*) &_nBTight_JER_up     );
-  // _outTree->Branch("nJets_JER_down",     (int*) &_nJets_JER_down     );
-  // _outTree->Branch("nJetsCent_JER_down", (int*) &_nJetsCent_JER_down );
-  // _outTree->Branch("nJetsFws_JER_down",  (int*) &_nJetsFwd_JER_down  );
-  // _outTree->Branch("nBLoose_JER_down",   (int*) &_nBLoose_JER_down   );
-  // _outTree->Branch("nBMed_JER_down",     (int*) &_nBMed_JER_down     );
-  // _outTree->Branch("nBTight_JER_down",   (int*) &_nBTight_JER_down   );
+
+  if (_doSys) {
+    _outTree->Branch("nJets_JES_up",       (int*) &_nJets_JES_up       );
+    _outTree->Branch("nJetsCent_JES_up",   (int*) &_nJetsCent_JES_up   );
+    _outTree->Branch("nBLoose_JES_up",     (int*) &_nBLoose_JES_up     );
+    _outTree->Branch("nBMed_JES_up",       (int*) &_nBMed_JES_up       );
+    _outTree->Branch("nBTight_JES_up",     (int*) &_nBTight_JES_up     );
+    _outTree->Branch("nJetsFwd_JES_up",    (int*) &_nJetsFwd_JES_up    );
+    _outTree->Branch("nJets_JES_down",     (int*) &_nJets_JES_down     );
+    _outTree->Branch("nJetsCent_JES_down", (int*) &_nJetsCent_JES_down );
+    _outTree->Branch("nJetsFws_JES_down",  (int*) &_nJetsFwd_JES_down  );
+    _outTree->Branch("nBLoose_JES_down",   (int*) &_nBLoose_JES_down   );
+    _outTree->Branch("nBMed_JES_down",     (int*) &_nBMed_JES_down     );
+    _outTree->Branch("nBTight_JES_down",   (int*) &_nBTight_JES_down   );
+    // _outTree->Branch("nJets_JER_nom",      (int*) &_nJets_JER_nom      );
+    // _outTree->Branch("nJetsCent_JER_nom",  (int*) &_nJetsCent_JER_nom  );
+    // _outTree->Branch("nJetsFwd_JER_nom",   (int*) &_nJetsFwd_JER_nom   );
+    // _outTree->Branch("nBLoose_JER_nom",    (int*) &_nBLoose_JER_nom    );
+    // _outTree->Branch("nBMed_JER_nom",      (int*) &_nBMed_JER_nom      );
+    // _outTree->Branch("nBTight_JER_nom",    (int*) &_nBTight_JER_nom    );
+    // _outTree->Branch("nJets_JER_up",       (int*) &_nJets_JER_up       );
+    // _outTree->Branch("nJetsCent_JER_up",   (int*) &_nJetsCent_JER_up   );
+    // _outTree->Branch("nJetsFwd_JER_up",    (int*) &_nJetsFwd_JER_up    );
+    // _outTree->Branch("nBLoose_JER_up",     (int*) &_nBLoose_JER_up     );
+    // _outTree->Branch("nBMed_JER_up",       (int*) &_nBMed_JER_up       );
+    // _outTree->Branch("nBTight_JER_up",     (int*) &_nBTight_JER_up     );
+    // _outTree->Branch("nJets_JER_down",     (int*) &_nJets_JER_down     );
+    // _outTree->Branch("nJetsCent_JER_down", (int*) &_nJetsCent_JER_down );
+    // _outTree->Branch("nJetsFws_JER_down",  (int*) &_nJetsFwd_JER_down  );
+    // _outTree->Branch("nBLoose_JER_down",   (int*) &_nBLoose_JER_down   );
+    // _outTree->Branch("nBMed_JER_down",     (int*) &_nBMed_JER_down     );
+    // _outTree->Branch("nBTight_JER_down",   (int*) &_nBTight_JER_down   );
+  }
 
   _outTree->Branch("hltPaths",      &_trigNames);
   _outTree->Branch("btagName",      &_btagName   );
   // _outTree->Branch("tauIDNames",    &_tauIDNames  );
 
   // Weights and efficiencies
-  _outTree->Branch("Flag_badMuons",       &_Flag_badMuons,       "Flag_badMuons/I"       );
-  _outTree->Branch("Flag_duplicateMuons", &_Flag_duplicateMuons, "Flag_duplicateMuons/I" );
+  _outTree->Branch("Flag_all",      &_Flag_all,      "Flag_all/I"      );
+  _outTree->Branch("Flag_badMu",    &_Flag_badMu,    "Flag_badMu/I"    );
+  _outTree->Branch("Flag_dupMu",    &_Flag_dupMu,    "Flag_dupMu/I"    );
+  _outTree->Branch("Flag_halo",     &_Flag_halo,     "Flag_halo/I"     );
+  _outTree->Branch("Flag_PV",       &_Flag_PV,       "Flag_PV/I"       );
+  _outTree->Branch("Flag_HBHE",     &_Flag_HBHE,     "Flag_HBHE/I"     );
+  _outTree->Branch("Flag_HBHE_Iso", &_Flag_HBHE_Iso, "Flag_HBHE_Iso/I" );
+  _outTree->Branch("Flag_ECAL_TP",  &_Flag_ECAL_TP,  "Flag_ECAL_TP/I"  );
 
   _outTree->Branch("IsoMu_eff_3",        &_IsoMu_eff_3,        "IsoMu_eff_3/F"        );
   _outTree->Branch("IsoMu_eff_3_up",     &_IsoMu_eff_3_up,     "IsoMu_eff_3_up/F"     );
@@ -876,24 +895,55 @@ bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent, const edm::EventSe
 //-------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////
 
-void UFDiMuonsAnalyzer::printEventFlags(const edm::Event& iEvent, const edm::EventSetup& iSetup,
-					const edm::Handle<edm::TriggerResults>& evtFlagsHandle) {
+void UFDiMuonsAnalyzer::FillEventFlags(const edm::Event& iEvent, const edm::EventSetup& iSetup,
+				       const edm::Handle<edm::TriggerResults>& evtFlagsHandle,
+				       int& _Flag_all, int& _Flag_badMu, int& _Flag_dupMu, int& _Flag_halo, 
+				       int& _Flag_PV, int& _Flag_HBHE, int& _Flag_HBHE_Iso, int& _Flag_ECAL_TP ) {
   using namespace std;
   using namespace edm;
   using namespace reco;
   using namespace trigger;
 
-  std::cout << "\n\n***  Printing event flag results  ***" << std::endl;
+  _Flag_all      = -99;
+  _Flag_badMu    = -99;
+  _Flag_dupMu    = -99;
+  _Flag_halo     = -99;
+  _Flag_PV       = -99;
+  _Flag_HBHE     = -99;
+  _Flag_HBHE_Iso = -99;
+  _Flag_ECAL_TP  = -99;
+
   const TriggerNames &flagNames = iEvent.triggerNames(*evtFlagsHandle);
   const unsigned nFlags = evtFlagsHandle->size();
-  std::cout << "Starting loop over " << nFlags << " flags" << std::endl;
   for (unsigned iFlag = 0; iFlag < nFlags; ++iFlag) {
     const string flagName = flagNames.triggerName(iFlag);
     const int flagResult = evtFlagsHandle->accept(iFlag);
-    std::cout << "  * " << flagName << " = " << flagResult << std::endl;
-  }
+    
+    // std::cout << "  * " << flagName << " = " << flagResult << std::endl;
+    if (flagName == "Flag_badMuons")
+      _Flag_badMu = flagResult;
+    if (flagName == "Flag_duplicateMuons")
+      _Flag_dupMu = flagResult;
+    if (flagName == "Flag_CSCTightHaloFilter")
+      _Flag_halo = flagResult;
+    if (flagName == "Flag_goodVertices")
+      _Flag_PV = flagResult;
+    if (flagName == "Flag_HBHENoiseFilter")
+      _Flag_HBHE = flagResult;
+    if (flagName == "Flag_HBHENoiseIsoFilter")
+      _Flag_HBHE_Iso = flagResult;
+    if (flagName == "Flag_EcalDeadCellTriggerPrimitiveFilter")
+      _Flag_ECAL_TP = flagResult;
+  } // End loop: for (unsigned iFlag = 0; iFlag < nFlags; ++iFlag)
 
-}
+  if ( _Flag_badMu == 0 || _Flag_dupMu == 0 || _Flag_halo == 0 ||
+       _Flag_PV == 0 || _Flag_HBHE == 0 || _Flag_ECAL_TP == 0 )
+    _Flag_all = 0;
+  if ( _Flag_badMu == 1 && _Flag_dupMu == 1 && _Flag_halo == 1 &&
+       _Flag_PV == 1 && _Flag_HBHE == 1 && _Flag_ECAL_TP == 1 )
+    _Flag_all = 1;
+  
+} // End function: void UFDiMuonsAnalyzer::FillEventFlags()
 
 ////////////////////////////////////////////////////////////////////////////
 //-------------------------------------------------------------------------

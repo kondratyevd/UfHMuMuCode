@@ -20,6 +20,7 @@ struct MuPairInfo {
   Double_t dR;
   Double_t dEta;
   Double_t dPhi;
+  Double_t dPhiStar;
 
   Double_t mass_PF;
   Double_t massErr_PF;

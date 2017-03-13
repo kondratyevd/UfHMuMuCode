@@ -6,16 +6,17 @@ void MuPairInfo::init() {
   iMu1 = -999;
   iMu2 = -999;
   
-  mass    = -999;
-  massErr = -999;
-  pt      = -999;
-  eta     = -999;
-  rapid   = -999;
-  phi     = -999;
-  charge  = -999;
-  dR      = -999;
-  dEta    = -999;
-  dPhi    = -999;
+  mass     = -999;
+  massErr  = -999;
+  pt       = -999;
+  eta      = -999;
+  rapid    = -999;
+  phi      = -999;
+  charge   = -999;
+  dR       = -999;
+  dEta     = -999;
+  dPhi     = -999;
+  dPhiStar = -999;
   
   mass_PF    = -999;
   massErr_PF = -999;

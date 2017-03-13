@@ -132,7 +132,7 @@ void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
 pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets, 
 			       const JetCorrectorParameters& JetCorPar, JME::JetResolution& JetRes,
 			       JME::JetResolutionScaleFactor& JetResSF, const std::string _JEC_syst,
-			       const MuonInfos&_muonInfos, const EleInfos& _eleInfos,
+			       const MuonInfos&_muonInfos, const EleInfos& _eleInfos, const double _rho,
 			       const std::string _jet_ID, const double _jet_pT_min, const double _jet_eta_max,
 			       TLorentzVector& _dMet ) {
   
@@ -166,6 +166,15 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
     TLorentzVector pre_vec;
     TLorentzVector post_vec;
     pre_vec.SetPtEtaPhiM( corr_jet.pt(), corr_jet.eta(), corr_jet.phi(), corr_jet.mass() );
+
+    // Clean out jets with dR < 0.4 to a selected muon
+    bool pass_muon_dR = true;
+    TLorentzVector mu_vec;
+    for (int iMu = 0; iMu < int(_muonInfos.size()); iMu++) {
+      mu_vec.SetPtEtaPhiM( _muonInfos.at(iMu).pt, _muonInfos.at(iMu).eta, _muonInfos.at(iMu).phi, 0.10566 );
+      if ( pre_vec.DeltaR(mu_vec) < 0.4 ) pass_muon_dR = false;
+    }
+    if (!pass_muon_dR) continue;
     
     // Apply jet energy scale systematics
     // Modeled after https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetCorUncertainties
@@ -178,14 +187,15 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
     // Modeled after https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyResolution
     //   - Last check that procedure was up-to-date: March 10, 2017 (AWB)
     JME::JetParameters JetResParams;
-    JetResParams.setJetEta( corr_jet.pt() );
-    JetResParams.setJetPt ( corr_jet.pt() );
+    JetResParams.setJetEta( corr_jet.eta() );
+    JetResParams.setJetPt ( corr_jet.pt()  );
+    JetResParams.setRho   ( _rho           );
     JetRes.getResolution  ( JetResParams );
     double JER_nom  = JetResSF.getScaleFactor( JetResParams );
     double JER_up   = JetResSF.getScaleFactor( JetResParams, Variation::UP );
     double JER_down = JetResSF.getScaleFactor( JetResParams, Variation::DOWN );
-    std::cout << "JER_nom = " << JER_nom << ", JER_up = " << JER_up << ", JER_down = " << JER_down << std::endl;
-
+    // std::cout << "JER_nom = " << JER_nom << ", JER_up = " << JER_up << ", JER_down = " << JER_down << std::endl;
+    
     if      ( _JEC_syst.find("JES_up")   != std::string::npos )
       corr_jet.scaleEnergy( 1. + JES_uncert );
     else if ( _JEC_syst.find("JES_down") != std::string::npos )

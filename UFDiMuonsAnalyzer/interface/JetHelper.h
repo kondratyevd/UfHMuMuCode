@@ -17,7 +17,7 @@ void FillSlimJetInfos( SlimJetInfos& _slimJetInfos, const JetInfos _jetInfos );
 pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
 			       const JetCorrectorParameters& JetCorPar, JME::JetResolution& JetRes,
                                JME::JetResolutionScaleFactor& JetResSF, const std::string _JES_syst,
-			       const MuonInfos& _muonInfos, const EleInfos& _eleInfos,
+			       const MuonInfos& _muonInfos, const EleInfos& _eleInfos, const double _rho,
 			       const std::string _jet_ID, const double _jet_pT_min, const double _jet_eta_max,
 			       TLorentzVector& _dMet);
 

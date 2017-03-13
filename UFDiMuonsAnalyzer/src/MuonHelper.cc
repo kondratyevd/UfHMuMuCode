@@ -34,22 +34,14 @@ void FillMuonInfos( MuonInfos& _muonInfos,
       continue;
     }
 
-    std::cout << "/n/nMuon is global (tracker) = " << muon.isGlobalMuon() << " (" << muon.isTrackerMuon() << ")" << std::endl;
-    std::cout << "Best track type = " << muon.muonBestTrackType() << std::endl;
-
     // Basic kinematics
     // "muon.pt()" returns PF quantities if PF is available - and all loose/med/tight muons are PF
     _muonInfo.charge = muon.charge();
     _muonInfo.pt     = muon.pt();
-    _muonInfo.ptErr  = track.ptError();
+    _muonInfo.ptErr  = muon.muonBestTrack()->ptError();
     _muonInfo.eta    = muon.eta();
     _muonInfo.phi    = muon.phi();
 
-    // _muonInfo.pt     = ( muon.isTrackerMuon() ? muon.innerTrack()->pt()      : muon.pt()       );
-    // _muonInfo.ptErr  = ( muon.isTrackerMuon() ? muon.innerTrack()->ptError() : track.ptError() );
-    // _muonInfo.eta    = ( muon.isTrackerMuon() ? muon.innerTrack()->eta()     : muon.eta()      );
-    // _muonInfo.phi    = ( muon.isTrackerMuon() ? muon.innerTrack()->phi()     : muon.phi()      );
-    
     // Basic quality
     _muonInfo.isTightID      = MuonIsTight  ( muon, primaryVertex );
     _muonInfo.isMediumID     = MuonIsMedium ( muon ) && muon.innerTrack()->validFraction() > 0.8;
@@ -160,7 +152,7 @@ void FillMuonInfos( MuonInfos& _muonInfos,
     if ( muon.isPFMuon() ) {
       reco::Candidate::LorentzVector pfmuon = muon.pfP4();
       _muonInfo.pt_PF    = pfmuon.Pt();
-      _muonInfo.ptErr    = track.ptError();
+      _muonInfo.ptErr_PF = muon.muonBestTrack()->ptError();
       // Would be nice if we could access deltaP() from PFCandidate.h, but not in PAT::Muon - AWB 10.03.17
       _muonInfo.eta_PF   = pfmuon.Eta();
       _muonInfo.phi_PF   = pfmuon.Phi();
@@ -543,9 +535,8 @@ float CalcDPhi( const float phi1, const float phi2 ) {
 void CalcMuIDIsoEff( float& _ID_eff, float& _ID_eff_up, float& _ID_eff_down,
 		     float& _Iso_eff, float& _Iso_eff_up, float& _Iso_eff_down, 
 		     const TH2F* _ID_hist, const TH2F* _Iso_hist, 
-		     const TH1* _ID_vtx, const TH1* _Iso_vtx,
+		     const TH1F* _ID_vtx, const TH1F* _Iso_vtx,
 		     const MuonInfos _muonInfos, const int _nVtx ) {
-
 
   _ID_eff       = 1.;
   _ID_eff_up    = 1.;
@@ -568,7 +559,7 @@ void CalcMuIDIsoEff( float& _ID_eff, float& _ID_eff_up, float& _ID_eff_down,
 			     _ID_hist->GetXaxis()->GetBinWidth(   _ID_hist->GetNbinsX() ) - 0.01 );
     mu_pt = std::max( mu_pt*1.0, _ID_hist->GetYaxis()->GetBinLowEdge(1) + 0.01 );
     bool found_mu = false;
-    
+
     for (int iPt = 1; iPt <= _ID_hist->GetNbinsY(); iPt++) {
       if ( found_mu ) continue;
       if ( mu_pt < _ID_hist->GetYaxis()->GetBinLowEdge(iPt) ) continue;
@@ -601,7 +592,7 @@ void CalcMuIDIsoEff( float& _ID_eff, float& _ID_eff_up, float& _ID_eff_down,
 			     _Iso_hist->GetXaxis()->GetBinWidth(   _Iso_hist->GetNbinsX() ) - 0.01 );
     mu_pt = std::max( mu_pt*1.0, _Iso_hist->GetYaxis()->GetBinLowEdge(1) + 0.01 );
     bool found_mu = false;
-    
+
     for (int iPt = 1; iPt <= _Iso_hist->GetNbinsY(); iPt++) {
       if ( found_mu ) continue;
       if ( mu_pt < _Iso_hist->GetYaxis()->GetBinLowEdge(iPt) ) continue;
@@ -611,7 +602,7 @@ void CalcMuIDIsoEff( float& _ID_eff, float& _ID_eff_up, float& _ID_eff_down,
 	if ( found_mu ) continue;
 	if ( mu_eta < _Iso_hist->GetXaxis()->GetBinLowEdge(iEta) ) continue;
 	if ( mu_eta > _Iso_hist->GetXaxis()->GetBinLowEdge(iEta) + _Iso_hist->GetXaxis()->GetBinWidth(iEta) ) continue;
-	
+
 	found_mu = true;
 	nFound_Iso += 1;
 
@@ -623,24 +614,25 @@ void CalcMuIDIsoEff( float& _ID_eff, float& _ID_eff_up, float& _ID_eff_down,
     } // End loop: for (int iPt = 1; iPt <= _Iso_hist->GetNbinsY(); iPt++)
   } // End loop: for (int iMu = 0; iMu < nMu; iMu++)
 
+
   assert( nFound_ID == nMu && nFound_Iso == nMu );
 
   // Add pileup dependence
   for (int iPU = 1; iPU <= _ID_vtx->GetNbinsX(); iPU++) {
     if ( _nVtx < _ID_vtx->GetXaxis()->GetBinLowEdge(iPU) ) continue;
     if ( _nVtx > _ID_vtx->GetXaxis()->GetBinLowEdge(iPU) + _ID_vtx->GetXaxis()->GetBinWidth(iPU) ) continue;
-    _ID_eff      *= (_ID_vtx->GetBinContent(iPU) * nMu);
-    _ID_eff_up   *= (_ID_vtx->GetBinContent(iPU) * nMu);
-    _ID_eff_down *= (_ID_vtx->GetBinContent(iPU) * nMu);
+    _ID_eff      *= pow(_ID_vtx->GetBinContent(iPU), nMu);
+    _ID_eff_up   *= pow(_ID_vtx->GetBinContent(iPU), nMu);
+    _ID_eff_down *= pow(_ID_vtx->GetBinContent(iPU), nMu);
     break;
   }
 
   for (int iPU = 1; iPU <= _Iso_vtx->GetNbinsX(); iPU++) {
     if ( _nVtx < _Iso_vtx->GetXaxis()->GetBinLowEdge(iPU) ) continue;
     if ( _nVtx > _Iso_vtx->GetXaxis()->GetBinLowEdge(iPU) + _Iso_vtx->GetXaxis()->GetBinWidth(iPU) ) continue;
-    _Iso_eff      *= (_Iso_vtx->GetBinContent(iPU) * nMu);
-    _Iso_eff_up   *= (_Iso_vtx->GetBinContent(iPU) * nMu);
-    _Iso_eff_down *= (_Iso_vtx->GetBinContent(iPU) * nMu);
+    _Iso_eff      *= pow(_Iso_vtx->GetBinContent(iPU), nMu);
+    _Iso_eff_up   *= pow(_Iso_vtx->GetBinContent(iPU), nMu);
+    _Iso_eff_down *= pow(_Iso_vtx->GetBinContent(iPU), nMu);
     break;
   }
 
