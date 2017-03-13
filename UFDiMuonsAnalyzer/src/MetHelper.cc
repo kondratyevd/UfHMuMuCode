@@ -3,7 +3,7 @@
 
 void FillMetInfo( MetInfo& _metInfo,
 		  const edm::Handle < pat::METCollection >& mets,
-		  const edm::Event& iEvent ) {
+		  const edm::Event& iEvent, const TLorentzVector _dMet ) {
 
   _metInfo.init();
   if ( !mets.isValid() ) {
@@ -14,20 +14,15 @@ void FillMetInfo( MetInfo& _metInfo,
   for (pat::METCollection::const_iterator met = mets->begin(),
          metsEnd = mets->end(); met !=metsEnd; ++met) {
 
-    // // Filter list from https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#Analysis_Recommendations_for_ana
-    // // Incomplete! - AWB 14.11.16
-    // if ( !iEvent->HBHENoiseFilter()                    ) break;
-    // if ( !iEvent->HBHENoiseIsoFilter()                 ) break;
-    // if ( !iEvent->EcalDeadCellTriggerPrimitiveFilter() ) break;
-    // if ( !iEvent->goodVertices()                       ) break;
-    // if ( !iEvent->eeBadScFilter()                      ) break;
-    // if ( !iEvent->globalTightHalo2016Filter()          ) break;
+    TLorentzVector met_vec;
+    met_vec.SetPtEtaPhiM( met->pt(), 0., met->phi(), met->sumEt() );
+    met_vec = met_vec + _dMet;
     
-    _metInfo.px    = met->px();
-    _metInfo.py    = met->py();
-    _metInfo.pt    = met->pt();
-    _metInfo.phi   = met->phi();
-    _metInfo.sumEt = met->sumEt();
+    _metInfo.px    = met_vec.Px();
+    _metInfo.py    = met_vec.Py();
+    _metInfo.pt    = met_vec.Pt();
+    _metInfo.phi   = met_vec.Phi();
+    _metInfo.sumEt = met_vec.E();
 
     break;  // Only use the first "MET" in vector of "METs"
     

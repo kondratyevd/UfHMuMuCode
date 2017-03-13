@@ -112,9 +112,11 @@ void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
     // https://twiki.cern.ch/twiki/bin/view/CMS/BtagPOG
     // https://twiki.cern.ch/twiki/bin/viewauth/CMS/BtagRecommendation80XReReco
     // https://twiki.cern.ch/twiki/bin/view/CMS/BTagSFMethods
-    if ( _jetInfo.CSV > 0.5426 )   _nBLoose  += 1;
-    if ( _jetInfo.CSV > 0.8484 )   _nBMed    += 1;
-    if ( _jetInfo.CSV > 0.9535 )   _nBTight  += 1;
+    if ( fabs( jet.eta() ) < 2.4 ) {
+      if ( _jetInfo.CSV > 0.5426 )   _nBLoose  += 1;
+      if ( _jetInfo.CSV > 0.8484 )   _nBMed    += 1;
+      if ( _jetInfo.CSV > 0.9535 )   _nBTight  += 1;
+    }
     _jetInfos.push_back( _jetInfo );
 
   }  // End loop: for (int i = 0; i < nJets; i++)
@@ -128,11 +130,15 @@ void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
 
 
 pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets, 
-			       const JetCorrectorParameters& JetCorPar, const std::string _JES_syst,
-			       const std::string _jet_ID, const double _jet_pT_min, const double _jet_eta_max ) {
+			       const JetCorrectorParameters& JetCorPar, JME::JetResolution& JetRes,
+			       JME::JetResolutionScaleFactor& JetResSF, const std::string _JEC_syst,
+			       const MuonInfos&_muonInfos, const EleInfos& _eleInfos,
+			       const std::string _jet_ID, const double _jet_pT_min, const double _jet_eta_max,
+			       TLorentzVector& _dMet ) {
   
   // Following https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetID#Recommendations_for_13_TeV_data
   //       and https://twiki.cern.ch/twiki/bin/view/CMS/JetID13TeVRun2016
+  // Last check that cuts were up-to-date: March 10, 2017 (AWB)
   // Modeled after "isGoodJet" in https://github.com/cms-ttH/MiniAOD/blob/master/MiniAODHelper/src/MiniAODHelper.cc
   // VBF H-->bb analysis: http://cms.cern.ch/iCMS/analysisadmin/cadilines?line=HIG-16-003
   // Is PU jet ID used at some point in the sequence? (http://cds.cern.ch/record/1581583) Or just charged hadron subtraction (CHS)?
@@ -140,6 +146,7 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
 
   pat::JetCollection jetsSelected;
   jetsSelected.clear();
+  _dMet.SetPtEtaPhiM( 0., 0., 0., 0.);
 
   if ( !jets.isValid() ) {
     std::cout << "No valid jet collection" << std::endl;
@@ -156,20 +163,62 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
   for (pat::JetCollection::const_iterator jet = jets->begin(), jetsEnd = jets->end(); jet !=jetsEnd; ++jet) {
 
     pat::Jet corr_jet = (*jet);
+    TLorentzVector pre_vec;
+    TLorentzVector post_vec;
+    pre_vec.SetPtEtaPhiM( corr_jet.pt(), corr_jet.eta(), corr_jet.phi(), corr_jet.mass() );
     
     // Apply jet energy scale systematics
     // Modeled after https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetCorUncertainties
     //           and https://github.com/cms-ttH/MiniAOD/blob/master/MiniAODHelper/src/MiniAODHelper.cc#L374
     JecUnc->setJetEta( corr_jet.eta() );
     JecUnc->setJetPt ( corr_jet.pt()  );
-    double uncert = JecUnc->getUncertainty(true);
-    if      ( _JES_syst.find("JES_up")   != std::string::npos )
-      corr_jet.scaleEnergy( 1. + uncert );
-    else if ( _JES_syst.find("JES_down") != std::string::npos )
-      corr_jet.scaleEnergy( 1. - uncert );
-    else if ( _JES_syst.find("none")     == std::string::npos )
-      std::cout << "Invalid jet energy systematic " << _JES_syst << ". Leaving uncorrected." << std::endl;
+    double JES_uncert = JecUnc->getUncertainty(true);
+
+    // Apply jet energy resolution systematics
+    // Modeled after https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyResolution
+    //   - Last check that procedure was up-to-date: March 10, 2017 (AWB)
+    JME::JetParameters JetResParams;
+    JetResParams.setJetEta( corr_jet.pt() );
+    JetResParams.setJetPt ( corr_jet.pt() );
+    JetRes.getResolution  ( JetResParams );
+    double JER_nom  = JetResSF.getScaleFactor( JetResParams );
+    double JER_up   = JetResSF.getScaleFactor( JetResParams, Variation::UP );
+    double JER_down = JetResSF.getScaleFactor( JetResParams, Variation::DOWN );
+    std::cout << "JER_nom = " << JER_nom << ", JER_up = " << JER_up << ", JER_down = " << JER_down << std::endl;
+
+    if      ( _JEC_syst.find("JES_up")   != std::string::npos )
+      corr_jet.scaleEnergy( 1. + JES_uncert );
+    else if ( _JEC_syst.find("JES_down") != std::string::npos )
+      corr_jet.scaleEnergy( 1. - JES_uncert );
+    else if ( _JEC_syst.find("JER_nom")  != std::string::npos )
+      corr_jet.scaleEnergy( JER_nom );
+    else if ( _JEC_syst.find("JER_up")   != std::string::npos )
+      corr_jet.scaleEnergy( JER_up );
+    else if ( _JEC_syst.find("JER_down") != std::string::npos )
+      corr_jet.scaleEnergy( JER_down );
+    else if ( _JEC_syst.find("none")     == std::string::npos )
+      std::cout << "Invalid jet energy systematic " << _JEC_syst << ". Leaving uncorrected." << std::endl;
+
+    post_vec.SetPtEtaPhiM( corr_jet.pt(), corr_jet.eta(), corr_jet.phi(), corr_jet.mass() );
+
+    // Use 15 GeV jets with < 90% EM energy and not overlapping a muon to correct MET
+    // Modeled after https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETRun2Corrections#Type_I_Correction_Propagation_of
+    //  - Last check that procedure was up-to-date: March 10, 2017 (AWB)
+    bool use_for_MET_corr = true;
+    if ( pre_vec.Pt() < 15 || corr_jet.chargedEmEnergyFraction() + corr_jet.neutralEmEnergyFraction() > 0.9 )
+      use_for_MET_corr = false;
+
+    const std::vector<reco::CandidatePtr> & cands = corr_jet.daughterPtrVector();
+    for ( std::vector<reco::CandidatePtr>::const_iterator cand = cands.begin(); cand != cands.end(); ++cand ) {
+      const reco::PFCandidate *pfcand = dynamic_cast<const reco::PFCandidate *>(cand->get());
+      const reco::Candidate *mu = (pfcand != 0 ? ( pfcand->muonRef().isNonnull() ? pfcand->muonRef().get() : 0) : cand->get());
+      if ( mu != 0 ) use_for_MET_corr = false;
+    }
     
+    if (use_for_MET_corr)
+      _dMet = _dMet + pre_vec - post_vec;
+
+    // Apply cuts for selected jets
     if ( corr_jet.pt()          < _jet_pT_min  ) continue;
     if ( fabs( corr_jet.eta() ) > _jet_eta_max ) continue;
     

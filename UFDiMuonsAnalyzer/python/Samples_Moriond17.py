@@ -1,7 +1,7 @@
 
 class sample:
-    def __init__(self, name='', DAS='', nEvt=0, files=[], GT='80X_mcRun2_asymptotic_2016_TrancheIV_v7', 
-                 JEC='Spring16_23Sep2016V2_MC', runs=[], JSON=[], isData=False):
+    def __init__(self, name='', DAS='', nEvt=0, files=[], GT='80X_mcRun2_asymptotic_2016_TrancheIV_v8', 
+                 JEC='Summer16_23Sep2016V4_MC', runs=[], JSON=[], isData=False):
         self.name   = name   ## User-assigned dataset name
         self.DAS    = DAS    ## DAS directory
         self.nEvt   = nEvt   ## Number of events in dataset
@@ -30,82 +30,89 @@ AWB_dir = '/store/user/abrinke1/HiggsToMuMu/samples/'
 ###  Global tag and dataset info  ###
 #####################################
 
-## Up-to-date GT info https://twiki.cern.ch/twiki/bin/view/CMS/PdmV2016Analysis
+## RE-miniAOD info: https://twiki.cern.ch/twiki/bin/view/CMSPublic/ReMiniAOD03Feb2017Notes
+
+## Up-to-date GT info: https://twiki.cern.ch/twiki/bin/view/CMS/PdmV2016Analysis
 ##   * MC:         https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideFrontierConditions#Global_Tags_for_PdmVMCcampaignRu
+##     - Last check that GT 80X_mcRun2_asymptotic_2016_TrancheIV_v8 was up-to-date: March 10, 2017 (AWB)
 ##   * ReReco:     https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideFrontierConditions#Global_Tags_for_2016_data_re_rec
-##   * PromptReco: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideFrontierConditions#Prompt_reconstruction_Global_Tag
+##     - Last check that GT 80X_dataRun2_2016SeptRepro_v7 was up-to-date: March 10, 2017 (AWB)
+##   * PromptReco: https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideFrontierConditions#Prompt_reconstruction_Global_AN1
+##     - Last check that GT 80X_dataRun2_Prompt_v16 was up-to-date: March 10, 2017 (AWB)
 
 ## Jet energy correction info
 ## https://twiki.cern.ch/twiki/bin/view/CMS/JECDataMC
+##  - Last check that data GT Summer16_23Sep2016*V4_DATA was up-to-date: March 10, 2017 (AWB)  
+##  - Last check that MC   GT Summer16_23Sep2016V4_MC    was up-to-date: March 10, 2017 (AWB)  
 ## https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections
 
 SingleMu_2016C_dir = 'SingleMuon_Run2016C/23Sep2016-v1/'
 
 SingleMu_2016B = sample( name   = 'SingleMu_2016B',
-                         DAS    = '/SingleMuon/Run2016B-23Sep2016-v3/MINIAOD',
+                         DAS    = '/SingleMuon/Run2016B-03Feb2017_ver2-v2/MINIAOD',
                          ## No runs from Run2016B-23Sep2016-v1 in the 23Sep2016ReReco JSON
-                         GT     = '80X_dataRun2_2016SeptRepro_v6',
-                         JEC    = 'Spring16_23Sep2016BCDV2_DATA',
+                         GT     = '80X_dataRun2_2016SeptRepro_v7',
+                         JEC    = 'Summer16_23Sep2016BCDV4_DATA',
                          JSON   = JSON_2016[0],
                          isData = True)
 
 SingleMu_2016C = sample( name   = 'SingleMu_2016C',
-                         DAS    = '/SingleMuon/Run2016C-23Sep2016-v1/MINIAOD',
+                         DAS    = '/SingleMuon/Run2016C-03Feb2017-v1/MINIAOD',
                          files = [ AWB_dir+SingleMu_2016C_dir+'3A0D500E-228C-E611-B11E-0CC47AA989C4.root' ],
-                         GT     = '80X_dataRun2_2016SeptRepro_v6',
-                         JEC    = 'Spring16_23Sep2016BCDV2_DATA',
+                         GT     = '80X_dataRun2_2016SeptRepro_v7',
+                         JEC    = 'Summer16_23Sep2016BCDV4_DATA',
                          JSON   = JSON_2016[0],
                          isData = True)
 
 SingleMu_2016D = sample( name   = 'SingleMu_2016D',
-                         DAS    = '/SingleMuon/Run2016D-23Sep2016-v1/MINIAOD',
-                         GT     = '80X_dataRun2_2016SeptRepro_v6',
-                         JEC    = 'Spring16_23Sep2016BCDV2_DATA',
+                         DAS    = '/SingleMuon/Run2016D-03Feb2017-v1/MINIAOD',
+                         GT     = '80X_dataRun2_2016SeptRepro_v7',
+                         JEC    = 'Summer16_23Sep2016BCDV4_DATA',
                          JSON   = JSON_2016[0],
                          isData = True)
 
 SingleMu_2016E = sample( name   = 'SingleMu_2016E',
-                         DAS    = '/SingleMuon/Run2016E-23Sep2016-v1/MINIAOD',
-                         GT     = '80X_dataRun2_2016SeptRepro_v6',
-                         JEC    = 'Spring16_23Sep2016EFV2_DATA',
+                         DAS    = '/SingleMuon/Run2016E-03Feb2017-v1/MINIAOD',
+                         GT     = '80X_dataRun2_2016SeptRepro_v7',
+                         JEC    = 'Summer16_23Sep2016EFV4_DATA',
                          JSON   = JSON_2016[0],
                          isData = True)
 
-SingleMu_2016F_1 = sample( name   = 'SingleMu_2016F_1',
-                           DAS    = '/SingleMuon/Run2016F-23Sep2016-v1/MINIAOD',
-                           GT     = '80X_dataRun2_2016SeptRepro_v6',
-                           JEC    = 'Spring16_23Sep2016EFV2_DATA',
+SingleMu_2016F_1 = sample( name   = 'SingleMu_2016F',
+                           DAS    = '/SingleMuon/Run2016F-03Feb2017-v1/MINIAOD',
+                           GT     = '80X_dataRun2_2016SeptRepro_v7',
+                           JEC    = 'Summer16_23Sep2016EFV4_DATA',
                            runs   = [0, 278801],
                            JSON   = JSON_2016[0],
-                           isData = True)
+                         isData = True)
 
-SingleMu_2016F_2 = sample( name   = 'SingleMu_2016F_2',
-                           DAS    = '/SingleMuon/Run2016F-23Sep2016-v1/MINIAOD',
-                           GT     = '80X_dataRun2_2016SeptRepro_v6',
-                           JEC    = 'Spring16_23Sep2016GV2_DATA',
+SingleMu_2016F_2 = sample( name   = 'SingleMu_2016F',
+                           DAS    = '/SingleMuon/Run2016F-03Feb2017-v1/MINIAOD',
+                           GT     = '80X_dataRun2_2016SeptRepro_v7',
+                           JEC    = 'Summer16_23Sep2016GV4_DATA',
                            runs   = [278802, 999999],
                            JSON   = JSON_2016[0],
                            isData = True)
 
 SingleMu_2016G = sample( name   = 'SingleMu_2016G',
-                         DAS    = '/SingleMuon/Run2016G-23Sep2016-v1/MINIAOD',
-                         GT     = '80X_dataRun2_2016SeptRepro_v6',
-                         JEC    = 'Spring16_23Sep2016GV2_DATA',
+                         DAS    = '/SingleMuon/Run2016G-03Feb2017-v1/MINIAOD',
+                         GT     = '80X_dataRun2_2016SeptRepro_v7',
+                         JEC    = 'Summer16_23Sep2016GV4_DATA',
                          JSON   = JSON_2016[0],
                          isData = True)
 
 SingleMu_2016H_1 = sample( name   = 'SingleMu_2016H_1',
-                           DAS    = '/SingleMuon/Run2016H-PromptReco-v2/MINIAOD',
+                           DAS    = '/SingleMuon/Run2016H-03Feb2017_ver2-v1/MINIAOD',
                            ## No runs from Run2016H-PromptReco-v1 in 23Sep2016ReReco or PromptReco JSON
-                           GT     = '80X_dataRun2_Prompt_v15',
-                           JEC    = 'Spring16_23Sep2016HV2_DATA',
+                           GT     = '80X_dataRun2_Prompt_v16',
+                           JEC    = 'Summer16_23Sep2016HV4_DATA',
                            JSON   = JSON_2016[0],
                            isData = True)
 
 SingleMu_2016H_2 = sample( name   = 'SingleMu_2016H_2',
-                           DAS    = '/SingleMuon/Run2016H-PromptReco-v3/MINIAOD',
-                           GT     = '80X_dataRun2_Prompt_v15',
-                           JEC    = 'Spring16_23Sep2016HV2_DATA',
+                           DAS    = '/SingleMuon/Run2016H-03Feb2017_ver3-v1/MINIAOD',
+                           GT     = '80X_dataRun2_Prompt_v16',
+                           JEC    = 'Summer16_23Sep2016HV4_DATA',
                            JSON   = JSON_2016[0],
                            isData = True)
 

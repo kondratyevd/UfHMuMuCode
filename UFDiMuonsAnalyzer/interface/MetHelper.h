@@ -8,6 +8,6 @@
 
 void FillMetInfo( MetInfo& _metInfo,
 		  const edm::Handle < pat::METCollection >& mets, 
-		  const edm::Event& iEvent );
+		  const edm::Event& iEvent, const TLorentzVector _dMet );
 
 #endif  // #ifndef MET_HELPER

@@ -35,6 +35,7 @@ struct MuonInfo {
   Double_t pt_KaMu_clos_down;
 
   Double_t pt_Roch          ;
+  Double_t ptErr_Roch       ;
   Double_t pt_Roch_sys_up   ;
   Double_t pt_Roch_sys_down ;
 
@@ -54,9 +55,10 @@ struct MuonInfo {
   // PF information
   Bool_t isPF;
 
-  Double_t pt_PF ;
-  Double_t eta_PF;
-  Double_t phi_PF;
+  Double_t pt_PF   ;
+  Double_t ptErr_PF;
+  Double_t eta_PF  ;
+  Double_t phi_PF  ;
   
   Float_t sumChargedHadronPtR03  ;  // sum-pt of charged Hadron
   Float_t sumChargedParticlePtR03;  // sum-pt of charged Particles(inludes e/mu)

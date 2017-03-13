@@ -29,6 +29,7 @@
 <use name="FWCore/ServiceRegistry"/>
 
 <use name="JetMETCorrections/Objects"/>
+<use name="JetMETCorrections/Modules"/>
 
 <use name="KaMuCa/Calibration"/>
 

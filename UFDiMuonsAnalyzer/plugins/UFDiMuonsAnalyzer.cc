@@ -30,6 +30,12 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _trigResultsToken = consumes<edm::TriggerResults>                    (iConfig.getParameter<edm::InputTag>("trigResults"));
   _trigObjsToken    = consumes<pat::TriggerObjectStandAloneCollection> (iConfig.getParameter<edm::InputTag>("trigObjs"));
 
+  // Event flags
+  // _evtFlagsTag = iConfig.getParameter<edm::InputTag>("evtFlags");
+  _evtFlagsTag  = edm::InputTag("TriggerResults","","PAT");
+  _badMuonToken = consumes<bool>( edm::InputTag("Flag_badMuons") );
+  _dupMuonToken = consumes<bool>( edm::InputTag("Flag_duplicateMuons") );
+
   // Underlying event
   _beamSpotToken      = consumes<reco::BeamSpot>        (iConfig.getParameter<edm::InputTag>("beamSpotTag"));
   _primaryVertexToken = consumes<reco::VertexCollection>(iConfig.getParameter<edm::InputTag>("primaryVertexTag"));
@@ -45,12 +51,13 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _eleIdMediumToken = consumes< edm::ValueMap<bool> >    (iConfig.getParameter<edm::InputTag>("eleIdMedium"));
   _eleIdTightToken  = consumes< edm::ValueMap<bool> >    (iConfig.getParameter<edm::InputTag>("eleIdTight"));
 
-  // Taus
-  _tauCollToken = consumes<pat::TauCollection>(iConfig.getParameter<edm::InputTag>("tauColl"));
-  _tauIDNames   = iConfig.getParameter<std::vector<std::string> >("tauIDNames");
+  // // Taus
+  // _tauCollToken = consumes<pat::TauCollection>(iConfig.getParameter<edm::InputTag>("tauColl"));
+  // _tauIDNames   = iConfig.getParameter<std::vector<std::string> >("tauIDNames");
 
    // Jets / MET
   _jetsToken = consumes<pat::JetCollection>(iConfig.getParameter<edm::InputTag>("jetsTag"));
+  _jetType   = iConfig.getParameter<std::string>("jetType");
   _btagName  = iConfig.getParameter<std::string>("btagName");
   _metToken  = consumes<pat::METCollection>(iConfig.getParameter<edm::InputTag>("metTag"));  // Correct(ed) MET? - AWB 08.11.16
 
@@ -60,6 +67,9 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _packedGenParticleToken = consumes<pat::PackedGenParticleCollection>(iConfig.getParameter<edm::InputTag>("packedGenParticleTag"));
   _genEvtInfoToken        = consumes<GenEventInfoProduct>                                  (edm::InputTag ("generator"));
 
+  // LHE weights and info for MC
+  _LHE_token = consumes<LHEEventProduct>   (edm::InputTag("externalLHEProducer"));
+  
   // Object selection from config file
   _vertex_ndof_min = iConfig.getParameter<double> ("vertex_ndof_min");
   _vertex_rho_max  = iConfig.getParameter<double> ("vertex_rho_max");
@@ -77,8 +87,8 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _ele_pT_min  = iConfig.getParameter<double>      ("ele_pT_min");
   _ele_eta_max = iConfig.getParameter<double>      ("ele_eta_max");
 
-  _tau_pT_min  = iConfig.getParameter<double>       ("tau_pT_min");
-  _tau_eta_max = iConfig.getParameter<double>       ("tau_eta_max");
+  // _tau_pT_min  = iConfig.getParameter<double>       ("tau_pT_min");
+  // _tau_eta_max = iConfig.getParameter<double>       ("tau_eta_max");
 
   _jet_ID      = iConfig.getParameter<std::string> ("jet_ID");
   _jet_pT_min  = iConfig.getParameter<double>      ("jet_pT_min");
@@ -114,7 +124,35 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   _IsoMu_eff_4_file = new TFile(path_IsoMu_eff_4.fullPath().c_str());
   _IsoMu_eff_3_hist = (TH2F*) _IsoMu_eff_3_file->Get("IsoMu24_OR_IsoTkMu24_PtEtaBins/efficienciesDATA/abseta_pt_DATA");
   _IsoMu_eff_4_hist = (TH2F*) _IsoMu_eff_4_file->Get("IsoMu24_OR_IsoTkMu24_PtEtaBins/efficienciesDATA/abseta_pt_DATA");
-  
+  _IsoMu_SF_3_hist = (TH2F*) _IsoMu_eff_3_file->Get("IsoMu24_OR_IsoTkMu24_PtEtaBins/abseta_pt_ratio");
+  _IsoMu_SF_4_hist = (TH2F*) _IsoMu_eff_4_file->Get("IsoMu24_OR_IsoTkMu24_PtEtaBins/abseta_pt_ratio");
+
+  edm::FileInPath path_MuID_eff_3("UfHMuMuCode/UFDiMuonsAnalyzer/data/MuonIDIso/"+iConfig.getParameter<std::string>("MuID_eff_3_file"));
+  edm::FileInPath path_MuID_eff_4("UfHMuMuCode/UFDiMuonsAnalyzer/data/MuonIDIso/"+iConfig.getParameter<std::string>("MuID_eff_4_file"));
+  _MuID_eff_3_file = new TFile(path_MuID_eff_3.fullPath().c_str());
+  _MuID_eff_4_file = new TFile(path_MuID_eff_4.fullPath().c_str());
+  _MuID_eff_3_hist = (TH2F*) _MuID_eff_3_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_pt_eta/efficienciesDATA/abseta_pt_DATA");
+  _MuID_eff_4_hist = (TH2F*) _MuID_eff_4_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_pt_eta/efficienciesDATA/abseta_pt_DATA");
+  _MuID_SF_3_hist  = (TH2F*) _MuID_eff_3_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_pt_eta/abseta_pt_ratio");
+  _MuID_SF_4_hist  = (TH2F*) _MuID_eff_4_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_pt_eta/abseta_pt_ratio");
+  _MuID_eff_3_vtx  = (TH1F*) _MuID_eff_3_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_vtx/efficienciesDATA/tag_nVertices_DATA_norm");
+  _MuID_eff_4_vtx  = (TH1F*) _MuID_eff_4_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_vtx/efficienciesDATA/tag_nVertices_DATA_norm");
+  _MuID_SF_3_vtx   = (TH1F*) _MuID_eff_3_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_vtx/tag_nVertices_ratio_norm");
+  _MuID_SF_4_vtx   = (TH1F*) _MuID_eff_4_file->Get("MC_NUM_MediumID_DEN_genTracks_PAR_vtx/tag_nVertices_ratio_norm");
+
+  edm::FileInPath path_MuIso_eff_3("UfHMuMuCode/UFDiMuonsAnalyzer/data/MuonIDIso/"+iConfig.getParameter<std::string>("MuIso_eff_3_file"));
+  edm::FileInPath path_MuIso_eff_4("UfHMuMuCode/UFDiMuonsAnalyzer/data/MuonIDIso/"+iConfig.getParameter<std::string>("MuIso_eff_4_file"));
+  _MuIso_eff_3_file = new TFile(path_MuIso_eff_3.fullPath().c_str());
+  _MuIso_eff_4_file = new TFile(path_MuIso_eff_4.fullPath().c_str());
+  _MuIso_eff_3_hist = (TH2F*) _MuIso_eff_3_file->Get("LooseISO_MediumID_pt_eta/efficienciesDATA/abseta_pt_DATA");
+  _MuIso_eff_4_hist = (TH2F*) _MuIso_eff_4_file->Get("LooseISO_MediumID_pt_eta/efficienciesDATA/abseta_pt_DATA");
+  _MuIso_SF_3_hist  = (TH2F*) _MuIso_eff_3_file->Get("LooseISO_MediumID_pt_eta/abseta_pt_ratio");
+  _MuIso_SF_4_hist  = (TH2F*) _MuIso_eff_4_file->Get("LooseISO_MediumID_pt_eta/abseta_pt_ratio");
+  _MuIso_eff_3_vtx  = (TH1F*) _MuIso_eff_3_file->Get("LooseISO_MediumID_vtx/efficienciesDATA/tag_nVertices_DATA_norm");
+  _MuIso_eff_4_vtx  = (TH1F*) _MuIso_eff_4_file->Get("LooseISO_MediumID_vtx/efficienciesDATA/tag_nVertices_DATA_norm");
+  _MuIso_SF_3_vtx   = (TH1F*) _MuIso_eff_3_file->Get("LooseISO_MediumID_vtx/tag_nVertices_ratio_norm");
+  _MuIso_SF_4_vtx   = (TH1F*) _MuIso_eff_4_file->Get("LooseISO_MediumID_vtx/tag_nVertices_ratio_norm");
+
 } // End constructor: UFDiMuonsAnalyzer::UFDiMuonsAnalyzer
 
 // Destructor
@@ -146,6 +184,23 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     iEvent.getByToken(_genEvtInfoToken, genEvtInfo );
     _GEN_wgt = (genEvtInfo->weight() > 0) ? 1 : -1;  // Why don't we use the decimal weight? - AWB 08.11.16
     _sumEventWeights += _GEN_wgt;
+
+    if (_isVerbose) std::cout << "\nAccessing LHEEventProduct info" << std::endl;
+    edm::Handle<LHEEventProduct> LHE_handle;
+    iEvent.getByToken(_LHE_token, LHE_handle);
+    if (!LHE_handle.isValid()) {
+      std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting LHEEventProduct from Event!" << std::endl;
+      return;
+    }
+
+    _LHE_HT = calcHtLHE( LHE_handle );
+
+    // std::cout << "\n\n***  Printing LHEEventProduct variables  ***" << std::endl;
+    // std::cout << "Original weight = " << LHE_handle->originalXWGTUP() <<  std::endl;
+    // for (uint i = 0; i < LHE_handle->weights().size(); i++) {
+    //   std::cout << "  * Weight " << i << ", " << LHE_handle->weights()[i].id << " = " << LHE_handle->weights()[i].wgt << std::endl;
+    // }
+
   }
 
   // -------------------
@@ -173,6 +228,28 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     return;
   }
 
+  // -----------
+  // EVENT FLAGS
+  // -----------  
+  // "Flag_badMuons", "Flag_duplicateMuons", etc.
+  // https://twiki.cern.ch/twiki/bin/view/CMSPublic/ReMiniAOD03Feb2017Notes
+  if (_isVerbose) std::cout << "\nAccessing PAT info" << std::endl;
+  edm::Handle<edm::TriggerResults> evtFlagsHandle;
+  iEvent.getByLabel(_evtFlagsTag, evtFlagsHandle);
+  // if (!evtFlagsHandle.isValid()) {
+  //   std::cout << "UFDiMuonsAnalyzer::analyze: Error in getting event flags from Event!" << std::endl;
+  //   return;
+  // }
+  printEventFlags(iEvent, iSetup, evtFlagsHandle);
+
+  edm::Handle<bool> Flag_badMuons_token;
+  iEvent.getByToken(_badMuonToken, Flag_badMuons_token);
+  _Flag_badMuons = *Flag_badMuons_token;
+
+  edm::Handle<bool> Flag_duplicateMuons_token;
+  iEvent.getByToken(_dupMuonToken, Flag_duplicateMuons_token);
+  _Flag_duplicateMuons = *Flag_duplicateMuons_token;
+
   // ----------------
   // RUN / EVENT INFO
   // ----------------
@@ -189,10 +266,15 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   edm::Handle<reco::VertexCollection> vertices;
   iEvent.getByToken(_primaryVertexToken, vertices);
 
-  reco::VertexCollection verticesSelected = SelectVertices( vertices, _vertex_ndof_min,
-							    _vertex_rho_max, _vertex_z_max );
+  bool goodPV = false;
+  reco::VertexCollection verticesSelected = SelectVertices( vertices, _vertex_ndof_min, _vertex_rho_max, 
+							    _vertex_z_max, goodPV );
   if (verticesSelected.size() == 0) {
     std::cout << "BUGGY EVENT!  There are no good vertices!  Skipping ..." << std::endl;
+    return;
+  }
+  if (!goodPV) {
+    std::cout << "BUGGY EVENT!  Primary vertex fails quality cuts!  Skipping ..." << std::endl;
     return;
   }
   reco::Vertex primaryVertex = verticesSelected.at(0);
@@ -234,16 +316,48 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   CalcTrigEff( _IsoMu_eff_bug, _IsoMu_eff_bug_up, _IsoMu_eff_bug_down, 
 	       _IsoMu_eff_3_hist, _muonInfos, true );
 
+  CalcMuIDIsoEff( _MuID_eff_3, _MuID_eff_3_up, _MuID_eff_3_down,
+		  _MuIso_eff_3, _MuIso_eff_3_up, _MuIso_eff_3_down,
+		  _MuID_eff_3_hist, _MuIso_eff_3_hist,
+		  _MuID_eff_3_vtx, _MuIso_eff_3_vtx,
+		  _muonInfos, _nVertices);
+  CalcMuIDIsoEff( _MuID_eff_4, _MuID_eff_4_up, _MuID_eff_4_down,
+		  _MuIso_eff_4, _MuIso_eff_4_up, _MuIso_eff_4_down,
+		  _MuID_eff_4_hist, _MuIso_eff_4_hist,
+		  _MuID_eff_4_vtx, _MuIso_eff_4_vtx,
+		  _muonInfos, _nVertices);
+
+
+  if (_isMonteCarlo) {
+    CalcTrigEff( _IsoMu_SF_3, _IsoMu_SF_3_up, _IsoMu_SF_3_down, 
+		 _IsoMu_SF_3_hist, _muonInfos, false );
+    CalcTrigEff( _IsoMu_SF_4, _IsoMu_SF_4_up, _IsoMu_SF_4_down, 
+		 _IsoMu_SF_4_hist, _muonInfos, false );
+    CalcTrigEff( _IsoMu_SF_bug, _IsoMu_SF_bug_up, _IsoMu_SF_bug_down, 
+		 _IsoMu_SF_3_hist, _muonInfos, true );
+
+    CalcMuIDIsoEff( _MuID_SF_3, _MuID_SF_3_up, _MuID_SF_3_down,
+		    _MuIso_SF_3, _MuIso_SF_3_up, _MuIso_SF_3_down,
+		    _MuID_SF_3_hist, _MuIso_SF_3_hist,
+		    _MuID_SF_3_vtx, _MuIso_SF_3_vtx,
+		    _muonInfos, _nVertices);
+    CalcMuIDIsoEff( _MuID_SF_4, _MuID_SF_4_up, _MuID_SF_4_down,
+		    _MuIso_SF_4, _MuIso_SF_4_up, _MuIso_SF_4_down,
+		    _MuID_SF_4_hist, _MuIso_SF_4_hist,
+		    _MuID_SF_4_vtx, _MuIso_SF_4_vtx,
+		    _muonInfos, _nVertices);
+  }
+
 
   // ------------
   // DIMUON PAIRS
   // ------------
-  if (_isVerbose) std::cout << "\nFilling PairInfo" << std::endl;
-  FillPairInfos( _pairInfos, _muonInfos );
-  _nPairs = _pairInfos.size();
+  if (_isVerbose) std::cout << "\nFilling MuPairInfo" << std::endl;
+  FillMuPairInfos( _muPairInfos, _muonInfos );
+  _nMuPairs = _muPairInfos.size();
   // Throw away events with only low-mass pairs
-  if ( _skim_nMuons == 2 && _nPairs == 1 )
-    if ( _pairInfos.at(0).mass < 12 )
+  if ( _skim_nMuons == 2 && _nMuPairs == 1 )
+    if ( _muPairInfos.at(0).mass < 12 )
       return;
 
   // -----------------------
@@ -322,16 +436,20 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     iEvent.getByToken(_jetsToken, jets);
 
   // Following https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#JetCorUncertainties
+  //   - Last check that procedure was up-to-date: March 10, 2017 (AWB) 
   edm::ESHandle<JetCorrectorParametersCollection> JetCorParColl;
-  // Could use ESTransientHandle? https://twiki.cern.ch/twiki/bin/view/CMSPublic/SWGuideHowToGetDataFromES#Optimizing_memory_usage
-  iSetup.get<JetCorrectionsRecord>().get("AK4PFchs",JetCorParColl);
+  iSetup.get<JetCorrectionsRecord>().get(_jetType, JetCorParColl);
   JetCorrectorParameters const & JetCorPar = (*JetCorParColl)["Uncertainty"];
-  
-  // Might we need to re-compute the central scale via this recipe? - AWB 14.11.16
-  // https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#CorrPatJets
 
-  pat::JetCollection jetsSelected = SelectJets( jets, JetCorPar, "none",
-						_jet_ID, _jet_pT_min, _jet_eta_max );
+  // Following https://twiki.cern.ch/twiki/bin/viewauth/CMS/JetResolution
+  //       and https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyResolution
+  //   - Last check that procedure was up-to-date: March 10, 2017 (AWB) 
+  JME::JetResolution            JetRes   = JME::JetResolution::get(iSetup, _jetType+"_pt");
+  JME::JetResolutionScaleFactor JetResSF = JME::JetResolutionScaleFactor::get(iSetup, _jetType);
+  
+  pat::JetCollection jetsSelected = SelectJets( jets, JetCorPar, JetRes, JetResSF, "none",
+						_muonInfos, _eleInfos,
+						_jet_ID, _jet_pT_min, _jet_eta_max, _dMet );
   
   sort(jetsSelected.begin(), jetsSelected.end(), sortJetsByPt);
 
@@ -344,19 +462,25 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   
   // Alternate collections corresponding to jet energy scale up / down
   if (_doSys) {
-    pat::JetCollection jets_JES_up   = SelectJets( jets, JetCorPar, "JES_up",
-						   _jet_ID, _jet_pT_min, _jet_eta_max );
-    pat::JetCollection jets_JES_down = SelectJets( jets, JetCorPar, "JES_down",
-						   _jet_ID, _jet_pT_min, _jet_eta_max );
-    // pat::JetCollection jets_JER_up   = SelectJets( jets, JetCorPar, "JER_up",
-    // 						   _jet_ID, _jet_pT_min, _jet_eta_max );
-    // pat::JetCollection jets_JER_down = SelectJets( jets, JetCorPar, "JER_down",
-    // 						   _jet_ID, _jet_pT_min, _jet_eta_max );
-
-    // delete * JetCorPar; // Avoid nasty memory leak
+    pat::JetCollection jets_JES_up   = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JES_up",
+						   _muonInfos, _eleInfos,
+						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JES_up );
+    pat::JetCollection jets_JES_down = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JES_down",
+						   _muonInfos, _eleInfos,
+						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JES_down );
+    // pat::JetCollection jets_JER_nom  = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JER_nom",
+    // 						   _muonInfos, _eleInfos,
+    // 						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_nom );
+    // pat::JetCollection jets_JER_up   = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JER_up",
+    // 						   _muonInfos, _eleInfos,
+    // 						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_up );
+    // pat::JetCollection jets_JER_down = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JER_down",
+    // 						   _muonInfos, _eleInfos,
+    // 						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_down );
 
     sort(jets_JES_up.begin(),   jets_JES_up.end(),   sortJetsByPt);
     sort(jets_JES_down.begin(), jets_JES_down.end(), sortJetsByPt);
+    // sort(jets_JER_nom.begin(),  jets_JER_nom.end(),  sortJetsByPt);
     // sort(jets_JER_up.begin(),   jets_JER_up.end(),   sortJetsByPt);
     // sort(jets_JER_down.begin(), jets_JER_down.end(), sortJetsByPt);
     
@@ -373,23 +497,37 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     if (_slimOut) FillSlimJetInfos( _slimJetInfos_JES_up,   _jetInfos_JES_up   );
     if (_slimOut) FillSlimJetInfos( _slimJetInfos_JES_down, _jetInfos_JES_down );
 
+    // FillJetInfos( _jetInfos_JER_nom,  _nJetsFwd_JER_nom,   
+    // 		  _nBLoose_JER_nom,  _nBMed_JER_nom,  _nBTight_JER_nom, 
     // FillJetInfos( _jetInfos_JER_up,   _nJetsFwd_JER_up,   
-    // 		  _nBLoose_JER_up, _nBMed_JER_up, _nBTight_JER_up, 
+    // 		  _nBLoose_JER_up,   _nBMed_JER_up,   _nBTight_JER_up, 
     // 		  jets_JER_up,   _btagName );
     // FillJetInfos( _jetInfos_JER_down, _nJetsFwd_JER_down, 
     // 		  _nBLoose_JER_down, _nBMed_JER_down, _nBTight_JER_down, 
     // 		  jets_JER_down, _btagName );
+    // _nJets_JER_nom  = _jetInfos_JER_nom.size();
     // _nJets_JER_up   = _jetInfos_JER_up.size();
     // _nJets_JER_down = _jetInfos_JER_down.size();
+    // _nJetsCent_JER_nom  = _nJets_JER_nom  - _nJetsFwd_JER_nom;
     // _nJetsCent_JER_up   = _nJets_JER_up   - _nJetsFwd_JER_up;
     // _nJetsCent_JER_down = _nJets_JER_down - _nJetsFwd_JER_down;
+    // if (_slimOut) FillSlimJetInfos( _slimJetInfos_JER_nom,  _jetInfos_JER_nom  );
     // if (_slimOut) FillSlimJetInfos( _slimJetInfos_JER_up,   _jetInfos_JER_up   );
     // if (_slimOut) FillSlimJetInfos( _slimJetInfos_JER_down, _jetInfos_JER_down );
   }
 
+  // -----------
+  // DIJET PAIRS
+  // -----------
+  if (_isVerbose) std::cout << "\nFilling JetPairInfo" << std::endl;
+  FillJetPairInfos( _jetPairInfos, _jetInfos );
+  FillJetPairInfos( _jetPairInfos_JES_up, _jetInfos_JES_up );
+  FillJetPairInfos( _jetPairInfos_JES_down, _jetInfos_JES_down );
+  // FillJetPairInfos( _jetPairInfos_JER_nom, _jetInfos_JER_nom );
+  // FillJetPairInfos( _jetPairInfos_JER_up, _jetInfos_JER_up );
+  // FillJetPairInfos( _jetPairInfos_JER_down, _jetInfos_JER_down );
 
-  // As of January 12, not usable - AWB 16.01.17
-  // https://indico.cern.ch/event/598195/contributions/2429716/attachments/1394701/2125692/met_tails_ppd.pdf
+  // Instructions for re-miniAOD: https://twiki.cern.ch/twiki/bin/view/CMS/MissingETUncertaintyPrescription - AWB 01.03.17
   // ---
   // MET
   // ---
@@ -398,7 +536,12 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   if (!_metToken.isUninitialized()) 
     iEvent.getByToken(_metToken, mets);
   
-  FillMetInfo( _metInfo, mets, iEvent );
+  FillMetInfo( _metInfo, mets, iEvent, _dMet );
+  FillMetInfo( _metInfo_JES_up, mets, iEvent, _dMet_JES_up );
+  FillMetInfo( _metInfo_JES_down, mets, iEvent, _dMet_JES_down );
+  // FillMetInfo( _metInfo_JER_nom, mets, iEvent, _dMet_JER_nom );
+  // FillMetInfo( _metInfo_JER_up, mets, iEvent, _dMet_JER_up );
+  // FillMetInfo( _metInfo_JER_down, mets, iEvent, _dMet_JER_down );
 
   // Not using all the correct filters - will need to if we use MET in the analysis - AWB 14.11.16
   //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETOptionalFiltersRun2#Analysis_Recommendations_for_ana
@@ -406,6 +549,12 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   //   https://twiki.cern.ch/twiki/bin/viewauth/CMS/MissingETRun2Corrections#Type_I_Correction_Propagation_of
   //   https://github.com/cms-ttH/MiniAOD/blob/master/MiniAODHelper/src/MiniAODHelper.cc#L1085
 
+  // if ( !iEvent->HBHENoiseFilter()                    ) break;
+  // if ( !iEvent->HBHENoiseIsoFilter()                 ) break;
+  // if ( !iEvent->EcalDeadCellTriggerPrimitiveFilter() ) break;
+  // if ( !iEvent->goodVertices()                       ) break;
+  // if ( !iEvent->eeBadScFilter()                      ) break;
+  // if ( !iEvent->globalTightHalo2016Filter()          ) break;
 
   // ---
   // MHT
@@ -415,6 +564,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   FillMhtInfo( _mhtInfo, _muonInfos, _eleInfos, _jetInfos ); 
   FillMhtInfo( _mhtInfo_JES_up, _muonInfos, _eleInfos, _jetInfos_JES_up ); 
   FillMhtInfo( _mhtInfo_JES_down, _muonInfos, _eleInfos, _jetInfos_JES_down ); 
+  // FillMhtInfo( _mhtInfo_JER_nom, _muonInfos, _eleInfos, _jetInfos_JER_nom); 
   // FillMhtInfo( _mhtInfo_JER_up, _muonInfos, _eleInfos, _jetInfos_JER_up ); 
   // FillMhtInfo( _mhtInfo_JER_down, _muonInfos, _eleInfos, _jetInfos_JER_down ); 
 
@@ -437,9 +587,9 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     _nGenMuons = _genMuonInfos.size();
     _nGenParents = _genParentInfos.size();
 
-    if (_isVerbose) std::cout << "\nFilling GenPairInfo" << std::endl;
-    FillGenPairInfos( _genPairInfos, _genMuonInfos );
-    _nGenPairs = _genPairInfos.size();
+    if (_isVerbose) std::cout << "\nFilling GenMuPairInfo" << std::endl;
+    FillGenMuPairInfos( _genMuPairInfos, _genMuonInfos );
+    _nGenMuPairs = _genMuPairInfos.size();
 
     // Jets
     if (_isVerbose) std::cout << "\nFilling GenJetInfo" << std::endl;
@@ -480,36 +630,50 @@ void UFDiMuonsAnalyzer::beginJob() {
     _outTree->Branch("jets",          (SlimJetInfos*)      &_slimJetInfos          );
     _outTree->Branch("jets_JES_up",   (SlimJetInfos*)      &_slimJetInfos_JES_up   );
     _outTree->Branch("jets_JES_down", (SlimJetInfos*)      &_slimJetInfos_JES_down );
+    // _outTree->Branch("jets_JER_nom",  (SlimJetInfos*)      &_slimJetInfos_JER_nom  );
     // _outTree->Branch("jets_JER_up",   (SlimJetInfos*)      &_slimJetInfos_JER_up   );
     // _outTree->Branch("jets_JER_down", (SlimJetInfos*)      &_slimJetInfos_JER_down );
   } else {
-  _outTree->Branch("jets",          (JetInfos*)      &_jetInfos          );
-  _outTree->Branch("jets_JES_up",   (JetInfos*)      &_jetInfos_JES_up   );
-  _outTree->Branch("jets_JES_down", (JetInfos*)      &_jetInfos_JES_down );
-  // _outTree->Branch("jets_JER_up",   (JetInfos*)      &_jetInfos_JER_up   );
-  // _outTree->Branch("jets_JER_down", (JetInfos*)      &_jetInfos_JER_down );
-
-  _outTree->Branch("vertices",      (VertexInfos*)   &_vertexInfos       );
-  _outTree->Branch("taus",          (TauInfos*)      &_tauInfos          );
+    _outTree->Branch("jets",          (JetInfos*)      &_jetInfos          );
+    _outTree->Branch("jets_JES_up",   (JetInfos*)      &_jetInfos_JES_up   );
+    _outTree->Branch("jets_JES_down", (JetInfos*)      &_jetInfos_JES_down );
+    // _outTree->Branch("jets_JER_nom",  (JetInfos*)      &_jetInfos_JER_nom  );
+    // _outTree->Branch("jets_JER_up",   (JetInfos*)      &_jetInfos_JER_up   );
+    // _outTree->Branch("jets_JER_down", (JetInfos*)      &_jetInfos_JER_down );
+    
+    _outTree->Branch("vertices",      (VertexInfos*)   &_vertexInfos       );
+    // _outTree->Branch("taus",          (TauInfos*)      &_tauInfos          );
   }
 
   // Set up the _outTree branches
-  _outTree->Branch("event",         (EventInfo*)     &_eventInfo         );
-  _outTree->Branch("muons",         (MuonInfos*)     &_muonInfos         );
-  _outTree->Branch("pairs",         (PairInfos*)     &_pairInfos         );
-  _outTree->Branch("eles",          (EleInfos*)      &_eleInfos          );
-  // _outTree->Branch("met",           (MetInfo*)       &_metInfo           );
-  _outTree->Branch("mht",           (MhtInfo*)       &_mhtInfo           );
-  _outTree->Branch("mht_JES_up",    (MhtInfo*)       &_mhtInfo_JES_up    );
-  _outTree->Branch("mht_JES_down",  (MhtInfo*)       &_mhtInfo_JES_down  );
-  // _outTree->Branch("mht_JER_up",    (MhtInfo*)       &_mhtInfo_JER_up    );
-  // _outTree->Branch("mht_JER_down",  (MhtInfo*)       &_mhtInfo_JER_down  );
+  _outTree->Branch("event",             (EventInfo*)     &_eventInfo             );
+  _outTree->Branch("jetPairs",          (JetPairInfos*)  &_jetPairInfos          );
+  _outTree->Branch("jetPairs_JES_up",   (JetPairInfos*)  &_jetPairInfos_JES_up   );
+  _outTree->Branch("jetPairs_JES_down", (JetPairInfos*)  &_jetPairInfos_JES_down );
+  // _outTree->Branch("jetPairs_JER_nom",  (JetPairInfos*)  &_jetPairInfos_JER_nom  );
+  // _outTree->Branch("jetPairs_JER_up",   (JetPairInfos*)  &_jetPairInfos_JER_up   );
+  // _outTree->Branch("jetPairs_JER_down", (JetPairInfos*)  &_jetPairInfos_JER_down );
+  _outTree->Branch("muons",             (MuonInfos*)     &_muonInfos         );
+  _outTree->Branch("muPairs",           (MuPairInfos*)   &_muPairInfos       );
+  _outTree->Branch("eles",              (EleInfos*)      &_eleInfos          );
+  _outTree->Branch("met",               (MetInfo*)       &_metInfo           );
+  _outTree->Branch("met_JES_up",        (MetInfo*)       &_metInfo_JES_up    );
+  _outTree->Branch("met_JES_down",      (MetInfo*)       &_metInfo_JES_down  );
+  // _outTree->Branch("met_JER_nom",       (MetInfo*)       &_metInfo_JER_nom   );
+  // _outTree->Branch("met_JER_up",        (MetInfo*)       &_metInfo_JER_up    );
+  // _outTree->Branch("met_JER_down",      (MetInfo*)       &_metInfo_JER_down  );
+  _outTree->Branch("mht",               (MhtInfo*)       &_mhtInfo           );
+  _outTree->Branch("mht_JES_up",        (MhtInfo*)       &_mhtInfo_JES_up    );
+  _outTree->Branch("mht_JES_down",      (MhtInfo*)       &_mhtInfo_JES_down  );
+  // _outTree->Branch("mht_JER_nom",       (MhtInfo*)       &_mhtInfo_JER_nom   );
+  // _outTree->Branch("mht_JER_up",        (MhtInfo*)       &_mhtInfo_JER_up    );
+  // _outTree->Branch("mht_JER_down",      (MhtInfo*)       &_mhtInfo_JER_down  );
 
   _outTree->Branch("nVertices",          (int*) &_nVertices          );
   _outTree->Branch("nMuons",             (int*) &_nMuons             );
-  _outTree->Branch("nPairs",             (int*) &_nPairs             );
+  _outTree->Branch("nMuPairs",           (int*) &_nMuPairs           );
   _outTree->Branch("nEles",              (int*) &_nEles              );
-  _outTree->Branch("nTaus",              (int*) &_nTaus              );
+  // _outTree->Branch("nTaus",              (int*) &_nTaus              );
   _outTree->Branch("nJets",              (int*) &_nJets              );
   _outTree->Branch("nJetsCent",          (int*) &_nJetsCent          );
   _outTree->Branch("nJetsFwd",           (int*) &_nJetsFwd           );
@@ -528,6 +692,12 @@ void UFDiMuonsAnalyzer::beginJob() {
   _outTree->Branch("nBLoose_JES_down",   (int*) &_nBLoose_JES_down   );
   _outTree->Branch("nBMed_JES_down",     (int*) &_nBMed_JES_down     );
   _outTree->Branch("nBTight_JES_down",   (int*) &_nBTight_JES_down   );
+  // _outTree->Branch("nJets_JER_nom",      (int*) &_nJets_JER_nom      );
+  // _outTree->Branch("nJetsCent_JER_nom",  (int*) &_nJetsCent_JER_nom  );
+  // _outTree->Branch("nJetsFwd_JER_nom",   (int*) &_nJetsFwd_JER_nom   );
+  // _outTree->Branch("nBLoose_JER_nom",    (int*) &_nBLoose_JER_nom    );
+  // _outTree->Branch("nBMed_JER_nom",      (int*) &_nBMed_JER_nom      );
+  // _outTree->Branch("nBTight_JER_nom",    (int*) &_nBTight_JER_nom    );
   // _outTree->Branch("nJets_JER_up",       (int*) &_nJets_JER_up       );
   // _outTree->Branch("nJetsCent_JER_up",   (int*) &_nJetsCent_JER_up   );
   // _outTree->Branch("nJetsFwd_JER_up",    (int*) &_nJetsFwd_JER_up    );
@@ -543,9 +713,12 @@ void UFDiMuonsAnalyzer::beginJob() {
 
   _outTree->Branch("hltPaths",      &_trigNames);
   _outTree->Branch("btagName",      &_btagName   );
-  _outTree->Branch("tauIDNames",    &_tauIDNames  );
+  // _outTree->Branch("tauIDNames",    &_tauIDNames  );
 
   // Weights and efficiencies
+  _outTree->Branch("Flag_badMuons",       &_Flag_badMuons,       "Flag_badMuons/I"       );
+  _outTree->Branch("Flag_duplicateMuons", &_Flag_duplicateMuons, "Flag_duplicateMuons/I" );
+
   _outTree->Branch("IsoMu_eff_3",        &_IsoMu_eff_3,        "IsoMu_eff_3/F"        );
   _outTree->Branch("IsoMu_eff_3_up",     &_IsoMu_eff_3_up,     "IsoMu_eff_3_up/F"     );
   _outTree->Branch("IsoMu_eff_3_down",   &_IsoMu_eff_3_down,   "IsoMu_eff_3_down/F"   );
@@ -556,10 +729,50 @@ void UFDiMuonsAnalyzer::beginJob() {
   _outTree->Branch("IsoMu_eff_bug_up",   &_IsoMu_eff_bug_up,   "IsoMu_eff_bug_up/F"   );
   _outTree->Branch("IsoMu_eff_bug_down", &_IsoMu_eff_bug_down, "IsoMu_eff_bug_down/F" );
 
+  _outTree->Branch("MuID_eff_3",        &_MuID_eff_3,        "MuID_eff_3/F"        );
+  _outTree->Branch("MuID_eff_3_up",     &_MuID_eff_3_up,     "MuID_eff_3_up/F"     );
+  _outTree->Branch("MuID_eff_3_down",   &_MuID_eff_3_down,   "MuID_eff_3_down/F"   );
+  _outTree->Branch("MuID_eff_4",        &_MuID_eff_4,        "MuID_eff_4/F"        );
+  _outTree->Branch("MuID_eff_4_up",     &_MuID_eff_4_up,     "MuID_eff_4_up/F"     );
+  _outTree->Branch("MuID_eff_4_down",   &_MuID_eff_4_down,   "MuID_eff_4_down/F"   );
+
+  _outTree->Branch("MuIso_eff_3",        &_MuIso_eff_3,        "MuIso_eff_3/F"        );
+  _outTree->Branch("MuIso_eff_3_up",     &_MuIso_eff_3_up,     "MuIso_eff_3_up/F"     );
+  _outTree->Branch("MuIso_eff_3_down",   &_MuIso_eff_3_down,   "MuIso_eff_3_down/F"   );
+  _outTree->Branch("MuIso_eff_4",        &_MuIso_eff_4,        "MuIso_eff_4/F"        );
+  _outTree->Branch("MuIso_eff_4_up",     &_MuIso_eff_4_up,     "MuIso_eff_4_up/F"     );
+  _outTree->Branch("MuIso_eff_4_down",   &_MuIso_eff_4_down,   "MuIso_eff_4_down/F"   );
+
+  if (_isMonteCarlo) {
+      _outTree->Branch("IsoMu_SF_3",        &_IsoMu_SF_3,        "IsoMu_SF_3/F"        );
+    _outTree->Branch("IsoMu_SF_3_up",     &_IsoMu_SF_3_up,     "IsoMu_SF_3_up/F"     );
+    _outTree->Branch("IsoMu_SF_3_down",   &_IsoMu_SF_3_down,   "IsoMu_SF_3_down/F"   );
+    _outTree->Branch("IsoMu_SF_4",        &_IsoMu_SF_4,        "IsoMu_SF_4/F"        );
+    _outTree->Branch("IsoMu_SF_4_up",     &_IsoMu_SF_4_up,     "IsoMu_SF_4_up/F"     );
+    _outTree->Branch("IsoMu_SF_4_down",   &_IsoMu_SF_4_down,   "IsoMu_SF_4_down/F"   );
+    _outTree->Branch("IsoMu_SF_bug",      &_IsoMu_SF_bug,      "IsoMu_SF_bug/F"      );
+    _outTree->Branch("IsoMu_SF_bug_up",   &_IsoMu_SF_bug_up,   "IsoMu_SF_bug_up/F"   );
+    _outTree->Branch("IsoMu_SF_bug_down", &_IsoMu_SF_bug_down, "IsoMu_SF_bug_down/F" );
+    
+    _outTree->Branch("MuID_SF_3",        &_MuID_SF_3,        "MuID_SF_3/F"        );
+    _outTree->Branch("MuID_SF_3_up",     &_MuID_SF_3_up,     "MuID_SF_3_up/F"     );
+    _outTree->Branch("MuID_SF_3_down",   &_MuID_SF_3_down,   "MuID_SF_3_down/F"   );
+    _outTree->Branch("MuID_SF_4",        &_MuID_SF_4,        "MuID_SF_4/F"        );
+    _outTree->Branch("MuID_SF_4_up",     &_MuID_SF_4_up,     "MuID_SF_4_up/F"     );
+    _outTree->Branch("MuID_SF_4_down",   &_MuID_SF_4_down,   "MuID_SF_4_down/F"   );
+    
+    _outTree->Branch("MuIso_SF_3",        &_MuIso_SF_3,        "MuIso_SF_3/F"        );
+    _outTree->Branch("MuIso_SF_3_up",     &_MuIso_SF_3_up,     "MuIso_SF_3_up/F"     );
+    _outTree->Branch("MuIso_SF_3_down",   &_MuIso_SF_3_down,   "MuIso_SF_3_down/F"   );
+    _outTree->Branch("MuIso_SF_4",        &_MuIso_SF_4,        "MuIso_SF_4/F"        );
+    _outTree->Branch("MuIso_SF_4_up",     &_MuIso_SF_4_up,     "MuIso_SF_4_up/F"     );
+    _outTree->Branch("MuIso_SF_4_down",   &_MuIso_SF_4_down,   "MuIso_SF_4_down/F"   );
+  }
 
   // MC information
   if (_isMonteCarlo) {
 
+    _outTree->Branch("LHE_HT",      &_LHE_HT,      "LHT_HT/F"      );
     _outTree->Branch("nPU", 	    &_nPU,         "nPU/I"         );
     _outTree->Branch("PU_wgt",      &_PU_wgt,      "PU_wgt/F"      );
     _outTree->Branch("PU_wgt_up",   &_PU_wgt_up,   "PU_wgt_up/F"   );
@@ -568,11 +781,11 @@ void UFDiMuonsAnalyzer::beginJob() {
     
     _outTree->Branch("nGenParents", (int*) &_nGenParents );
     _outTree->Branch("nGenMuons",   (int*) &_nGenMuons   );
-    _outTree->Branch("nGenPairs",   (int*) &_nGenPairs   );
+    _outTree->Branch("nGenMuPairs", (int*) &_nGenMuPairs );
     
     _outTree->Branch("genParents", (GenParentInfos*) &_genParentInfos );
     _outTree->Branch("genMuons",   (GenMuonInfos*)   &_genMuonInfos   );
-    _outTree->Branch("genPairs",   (GenPairInfos*)   &_genPairInfos   );
+    _outTree->Branch("genMuPairs", (GenMuPairInfos*) &_genMuPairInfos );
 
     if (!_slimOut) {
       _outTree->Branch("nGenJets", (int*)         &_nGenJets    );
@@ -605,7 +818,7 @@ void UFDiMuonsAnalyzer::endJob()
 
   _outTreeMetadata->Branch("trigNames",  "std::vector< std::string >", &_trigNames);
   _outTreeMetadata->Branch("btagName",   "std::string",                &_btagName);
-  _outTreeMetadata->Branch("tauIDNames", "std::vector< std::string >", &_tauIDNames);
+  // _outTreeMetadata->Branch("tauIDNames", "std::vector< std::string >", &_tauIDNames);
 
   _outTreeMetadata->Fill();
 
@@ -660,7 +873,63 @@ bool UFDiMuonsAnalyzer::isHltPassed(const edm::Event& iEvent, const edm::EventSe
 }
 
 ////////////////////////////////////////////////////////////////////////////
-//-- ----------------------------------------------------------------------
+//-------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+void UFDiMuonsAnalyzer::printEventFlags(const edm::Event& iEvent, const edm::EventSetup& iSetup,
+					const edm::Handle<edm::TriggerResults>& evtFlagsHandle) {
+  using namespace std;
+  using namespace edm;
+  using namespace reco;
+  using namespace trigger;
+
+  std::cout << "\n\n***  Printing event flag results  ***" << std::endl;
+  const TriggerNames &flagNames = iEvent.triggerNames(*evtFlagsHandle);
+  const unsigned nFlags = evtFlagsHandle->size();
+  std::cout << "Starting loop over " << nFlags << " flags" << std::endl;
+  for (unsigned iFlag = 0; iFlag < nFlags; ++iFlag) {
+    const string flagName = flagNames.triggerName(iFlag);
+    const int flagResult = evtFlagsHandle->accept(iFlag);
+    std::cout << "  * " << flagName << " = " << flagResult << std::endl;
+  }
+
+}
+
+////////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
+////////////////////////////////////////////////////////////////////////////
+
+float UFDiMuonsAnalyzer::calcHtLHE(const edm::Handle<LHEEventProduct>& LHE_handle) {
+
+  int   num_isr_me = 0;
+  float ht_isr_me  = 0;
+
+  for (int i = 0 ; i < LHE_handle->hepeup().NUP; i++) {
+    int pdgid    = abs(LHE_handle->hepeup().IDUP[i]);
+    int status   = LHE_handle->hepeup().ISTUP[i];
+    int mom1_idx = LHE_handle->hepeup().MOTHUP[i].first;
+    int mom2_idx = LHE_handle->hepeup().MOTHUP[i].second;
+    int mom1id   = mom1_idx==0 ? 0 : abs(LHE_handle->hepeup().IDUP[mom1_idx-1]);
+    int mom2id   = mom2_idx==0 ? 0 : abs(LHE_handle->hepeup().IDUP[mom2_idx-1]);
+    
+    float px = (LHE_handle->hepeup().PUP[i])[0];
+    float py = (LHE_handle->hepeup().PUP[i])[1];
+    float pt = sqrt(px*px+py*py);
+    
+    if ( status == 1 && (pdgid < 6 || pdgid == 21) && mom1id != 6 && mom2id != 6 && 
+	 abs(mom1id - 24) > 1 && abs(mom2id - 24) > 1 ) {
+      num_isr_me += 1;
+      ht_isr_me  += pt;
+    }
+  }
+
+  // std::cout << "\n\nOut of " << LHE_handle->hepeup().NUP << " particles, nISR = " << num_isr_me << ", HT = " << ht_isr_me << std::endl;
+  return ht_isr_me;
+  
+}
+
+////////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------
 ////////////////////////////////////////////////////////////////////////////
 
 void UFDiMuonsAnalyzer::displaySelection() {
@@ -684,8 +953,8 @@ void UFDiMuonsAnalyzer::displaySelection() {
   std::cout << "_ele_pT_min  = " << _ele_pT_min << std::endl;
   std::cout << "_ele_eta_max = " << _ele_eta_max << std::endl;
 
-  std::cout << "_tau_pT_min  = " << _tau_pT_min << std::endl;
-  std::cout << "_tau_eta_max = " << _tau_eta_max << std::endl;
+  // std::cout << "_tau_pT_min  = " << _tau_pT_min << std::endl;
+  // std::cout << "_tau_eta_max = " << _tau_eta_max << std::endl;
 
   std::cout << "_jet_ID      = " << _jet_ID << std::endl;
   std::cout << "_jet_pT_min  = " << _jet_pT_min << std::endl;
@@ -708,6 +977,6 @@ void UFDiMuonsAnalyzer::displaySelection() {
 
 bool UFDiMuonsAnalyzer::sortMuonsByPt    (pat::Muon i,     pat::Muon j    ) { return (i.pt() > j.pt()); }
 bool UFDiMuonsAnalyzer::sortElesByPt     (pat::Electron i, pat::Electron j) { return (i.pt() > j.pt()); }
-bool UFDiMuonsAnalyzer::sortTausByPt     (pat::Tau i,      pat::Tau j     ) { return (i.pt() > j.pt()); }
+// bool UFDiMuonsAnalyzer::sortTausByPt     (pat::Tau i,      pat::Tau j     ) { return (i.pt() > j.pt()); }
 bool UFDiMuonsAnalyzer::sortJetsByPt     (pat::Jet i,      pat::Jet j     ) { return (i.pt() > j.pt()); }
 

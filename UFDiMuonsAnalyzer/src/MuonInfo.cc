@@ -30,6 +30,7 @@ void MuonInfo::init() {
     pt_KaMu_clos_down = -999;
 
     pt_Roch          = -999;
+    ptErr_Roch       = -999;
     pt_Roch_sys_up   = -999;
     pt_Roch_sys_down = -999;
      
@@ -49,9 +50,10 @@ void MuonInfo::init() {
     
     isPF = -999;
     
-    pt_PF  = -999;
-    eta_PF = -999;
-    phi_PF = -999;
+    pt_PF     = -999;
+    ptErr_PF  = -999;
+    eta_PF    = -999;
+    phi_PF    = -999;
     
     sumChargedHadronPtR03   = -999;
     sumChargedParticlePtR03 = -999;

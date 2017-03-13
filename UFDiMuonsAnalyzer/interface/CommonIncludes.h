@@ -25,6 +25,8 @@
 // CMSSW includes
 #include "CommonTools/UtilAlgos/interface/TFileService.h"
 #include "SimDataFormats/GeneratorProducts/interface/GenEventInfoProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/LHEEventProduct.h"
+#include "SimDataFormats/GeneratorProducts/interface/LHERunInfoProduct.h"
 
 // FWCore General
 #include "FWCore/ServiceRegistry/interface/Service.h"
@@ -99,8 +101,10 @@
 #include "DataFormats/PatCandidates/interface/MET.h"
 #include "DataFormats/PatCandidates/interface/Jet.h"
 #include "DataFormats/JetReco/interface/GenJetCollection.h"
+#include "CondFormats/DataRecord/interface/JetResolutionScaleFactorRcd.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectorParameters.h"
 #include "CondFormats/JetMETObjects/interface/JetCorrectionUncertainty.h"
+#include "JetMETCorrections/Modules/interface/JetResolution.h"
 #include "JetMETCorrections/Objects/interface/JetCorrectionsRecord.h"
 
 // PU Info

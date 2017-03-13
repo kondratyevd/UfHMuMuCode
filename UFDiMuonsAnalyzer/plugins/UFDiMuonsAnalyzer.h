@@ -52,6 +52,7 @@ public:
   typedef std::vector<TrackPair> TrackPairs;
 
   // GEN info
+  float  _LHE_HT;
   int    _nPU;     // True number of vertices
   float  _PU_wgt;  // Pileup weight
   float  _PU_wgt_up;
@@ -70,6 +71,10 @@ public:
   // general event information	
   EventInfo _eventInfo;
 
+  // event flags
+  int _Flag_badMuons;
+  int _Flag_duplicateMuons;
+  
   // vector of vertex information
   VertexInfos _vertexInfos;
   int _nVertices;
@@ -79,8 +84,8 @@ public:
   int _nMuons;
 
   // info about the dimuon candidates in _muonInfos
-  PairInfos _pairInfos;
-  int _nPairs;
+  MuPairInfos _muPairInfos;
+  int _nMuPairs;
 
   // vector of electrons
   EleInfos  _eleInfos;
@@ -127,6 +132,10 @@ public:
   SlimJetInfos _slimJetInfos_JES_down;
   int _nJets_JES_down, _nJetsCent_JES_down, _nJetsFwd_JES_down;
   int _nBLoose_JES_down, _nBMed_JES_down, _nBTight_JES_down;
+  JetInfos     _jetInfos_JER_nom;
+  SlimJetInfos _slimJetInfos_JER_nom;
+  int _nJets_JER_nom, _nJetsCent_JER_nom, _nJetsFwd_JER_nom;
+  int _nBLoose_JER_nom, _nBMed_JER_nom, _nBTight_JER_nom;
   JetInfos     _jetInfos_JER_up;
   SlimJetInfos _slimJetInfos_JER_up;
   int _nJets_JER_up, _nJetsCent_JER_up, _nJetsFwd_JER_up;
@@ -136,36 +145,121 @@ public:
   int _nJets_JER_down, _nJetsCent_JER_down, _nJetsFwd_JER_down;
   int _nBLoose_JER_down, _nBMed_JER_down, _nBTight_JER_down;
 
+  JetPairInfos _jetPairInfos;
+  JetPairInfos _jetPairInfos_JES_up;
+  JetPairInfos _jetPairInfos_JES_down;
+  JetPairInfos _jetPairInfos_JER_nom;
+  JetPairInfos _jetPairInfos_JER_up;
+  JetPairInfos _jetPairInfos_JER_down;
+
   GenParentInfos _genParentInfos;
   int _nGenParents;
   GenMuonInfos _genMuonInfos;
   int _nGenMuons;
-  GenPairInfos _genPairInfos;
-  int _nGenPairs;
+  GenMuPairInfos _genMuPairInfos;
+  int _nGenMuPairs;
   GenJetInfos _genJetInfos;
   int _nGenJets;
 
-  MetInfo     _metInfo;
-  MhtInfo     _mhtInfo;
-  MhtInfo     _mhtInfo_JES_up;
-  MhtInfo     _mhtInfo_JES_down;
-  MhtInfo     _mhtInfo_JER_up;
-  MhtInfo     _mhtInfo_JER_down;
+  TLorentzVector _dMet;
+  TLorentzVector _dMet_JES_up;
+  TLorentzVector _dMet_JES_down;
+  TLorentzVector _dMet_JER_nom;
+  TLorentzVector _dMet_JER_up;
+  TLorentzVector _dMet_JER_down;
+
+  MetInfo _metInfo;
+  MetInfo _metInfo_JES_up;
+  MetInfo _metInfo_JES_down;
+  MetInfo _metInfo_JER_nom;
+  MetInfo _metInfo_JER_up;
+  MetInfo _metInfo_JER_down;
+
+  MhtInfo _mhtInfo;
+  MhtInfo _mhtInfo_JES_up;
+  MhtInfo _mhtInfo_JES_down;
+  MhtInfo _mhtInfo_JER_nom;
+  MhtInfo _mhtInfo_JER_up;
+  MhtInfo _mhtInfo_JER_down;
 
   // Weights and efficiencies
+  TFile* _IsoMu_eff_3_file;
+  TFile* _IsoMu_eff_4_file;
+  TFile* _MuID_eff_3_file;
+  TFile* _MuID_eff_4_file;
+  TFile* _MuIso_eff_3_file;
+  TFile* _MuIso_eff_4_file;
+
+  TH2F* _IsoMu_eff_3_hist;
+  TH2F* _IsoMu_eff_4_hist;
+  TH2F* _IsoMu_SF_3_hist;
+  TH2F* _IsoMu_SF_4_hist;
+
+  TH2F* _MuID_eff_3_hist;
+  TH2F* _MuID_eff_4_hist;
+  TH2F* _MuID_SF_3_hist;
+  TH2F* _MuID_SF_4_hist;
+  TH1F* _MuID_eff_3_vtx;
+  TH1F* _MuID_eff_4_vtx;
+  TH1F* _MuID_SF_3_vtx;
+  TH1F* _MuID_SF_4_vtx;
+
+  TH2F* _MuIso_eff_3_hist;
+  TH2F* _MuIso_eff_4_hist;
+  TH2F* _MuIso_SF_3_hist;
+  TH2F* _MuIso_SF_4_hist;
+  TH1F* _MuIso_eff_3_vtx;
+  TH1F* _MuIso_eff_4_vtx;
+  TH1F* _MuIso_SF_3_vtx;
+  TH1F* _MuIso_SF_4_vtx;
+
   float  _IsoMu_eff_3;
   float  _IsoMu_eff_3_up;
   float  _IsoMu_eff_3_down;
-  TH2F*  _IsoMu_eff_3_hist;
-  TFile* _IsoMu_eff_3_file;
   float  _IsoMu_eff_4;
   float  _IsoMu_eff_4_up;
   float  _IsoMu_eff_4_down;
-  TH2F*  _IsoMu_eff_4_hist;
-  TFile* _IsoMu_eff_4_file;
   float  _IsoMu_eff_bug;
   float  _IsoMu_eff_bug_up;
   float  _IsoMu_eff_bug_down;
+
+  float  _IsoMu_SF_3;
+  float  _IsoMu_SF_3_up;
+  float  _IsoMu_SF_3_down;
+  float  _IsoMu_SF_4;
+  float  _IsoMu_SF_4_up;
+  float  _IsoMu_SF_4_down;
+  float  _IsoMu_SF_bug;
+  float  _IsoMu_SF_bug_up;
+  float  _IsoMu_SF_bug_down;
+
+  float  _MuID_eff_3;
+  float  _MuID_eff_3_up;
+  float  _MuID_eff_3_down;
+  float  _MuID_eff_4;
+  float  _MuID_eff_4_up;
+  float  _MuID_eff_4_down;
+
+  float  _MuID_SF_3;
+  float  _MuID_SF_3_up;
+  float  _MuID_SF_3_down;
+  float  _MuID_SF_4;
+  float  _MuID_SF_4_up;
+  float  _MuID_SF_4_down;
+
+  float  _MuIso_eff_3;
+  float  _MuIso_eff_3_up;
+  float  _MuIso_eff_3_down;
+  float  _MuIso_eff_4;
+  float  _MuIso_eff_4_up;
+  float  _MuIso_eff_4_down;
+
+  float  _MuIso_SF_3;
+  float  _MuIso_SF_3_up;
+  float  _MuIso_SF_3_down;
+  float  _MuIso_SF_4;
+  float  _MuIso_SF_4_up;
+  float  _MuIso_SF_4_down;
 
   ///////////////////////////////////////////////////////////
   // Trees  ================================================
@@ -193,10 +287,15 @@ private:
   edm::Service<TFileService> fs;
 
   // methods for selection
-  bool isHltPassed (const edm::Event&, const edm::EventSetup&, 
-		    const edm::Handle<edm::TriggerResults>& trigResultsHandle,
-		    const std::vector<std::string> trigNames);
+  bool isHltPassed ( const edm::Event&, const edm::EventSetup&, 
+		     const edm::Handle<edm::TriggerResults>& trigResultsHandle,
+		     const std::vector<std::string> trigNames );
 
+  void printEventFlags( const edm::Event& iEvent, const edm::EventSetup& iSetup,
+			const edm::Handle<edm::TriggerResults>& evtFlagsHandle );
+
+  float calcHtLHE(const edm::Handle<LHEEventProduct>& LHE_handle);
+  
   void displaySelection();
 
   static bool sortMuonsByPt (pat::Muon i,     pat::Muon j    );
@@ -228,6 +327,11 @@ private:
 
   edm::EDGetTokenT<edm::TriggerResults> _trigResultsToken;
   edm::EDGetTokenT<pat::TriggerObjectStandAloneCollection> _trigObjsToken;
+
+  // Event flags
+  edm::InputTag _evtFlagsTag;
+  edm::EDGetTokenT< bool > _badMuonToken;
+  edm::EDGetTokenT< bool > _dupMuonToken;
   
   // Muons
   edm::EDGetTokenT<pat::MuonCollection> _muonCollToken;
@@ -246,6 +350,7 @@ private:
   // Jets / MET
   edm::EDGetTokenT<pat::METCollection> _metToken;
   edm::EDGetTokenT<pat::JetCollection> _jetsToken;
+  std::string _jetType;
   std::string _btagName;
 
   // Event info
@@ -258,6 +363,9 @@ private:
   edm::EDGetTokenT<reco::GenParticleCollection> _prunedGenParticleToken;		
   edm::EDGetTokenT<pat::PackedGenParticleCollection> _packedGenParticleToken;		
   edm::EDGetTokenT<GenEventInfoProduct> _genEvtInfoToken;		
+
+  // LHE weights and info for MC
+  edm::EDGetTokenT<LHEEventProduct> _LHE_token;
 
   ///////////////////////////////////////////////////////////
   // Basic types  ===========================================

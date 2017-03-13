@@ -146,9 +146,10 @@ bool ElePassKinematics( const pat::Electron ele, const reco::Vertex primaryVerte
 double EleCalcRelIsoPF_DeltaBeta( const pat::Electron ele ) {
   // Following https://twiki.cern.ch/twiki/bin/view/CMS/EgammaPFBasedIsolationRun2
   // Using Delta Beta corrections - simpler, only slightly worse performance
+  // Last check that cuts were up-to-date: March 10, 2017 (AWB)
   
-  double iso_charged    = ele.pfIsolationVariables().sumChargedHadronPt;  // Is this correct? should be chargedHadronIso?   - AWB 14.11.16
-  double iso_neutral    = ele.pfIsolationVariables().sumNeutralHadronEt;  // Is this correct? should be sumNeutralHadronPt? - AWB 14.11.16
+  double iso_charged    = ele.pfIsolationVariables().sumChargedHadronPt;
+  double iso_neutral    = ele.pfIsolationVariables().sumNeutralHadronEt;
   double iso_photon     = ele.pfIsolationVariables().sumPhotonEt;
   double iso_PU_charged = ele.pfIsolationVariables().sumPUPt;
   

@@ -10,6 +10,6 @@ void FillVertexInfos( VertexInfos& _vertexInfos, int& _nVertices,
                       const bool _onlyPV );
 
 reco::VertexCollection SelectVertices( const edm::Handle<reco::VertexCollection>& vertices, const double _vertex_ndof_min,
-				       const double _vertex_rho_max, const double _vertex_z_max );
+				       const double _vertex_rho_max, const double _vertex_z_max, bool& _goodPV );
 
 #endif  // #ifndef VERTEX_HELPER

@@ -18,13 +18,16 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          ## Unprescaled triggers at the end of 2016
                          ## https://cmswbm.web.cern.ch/cmswbm/cmsdb/servlet/TriggerMode?KEY=l1_hlt_collisions2016/v450
                          trigNames = cms.vstring("HLT_IsoMu22_eta2p1", "HLT_IsoTkMu22_eta2p1", 
-                                                    "HLT_IsoMu24", "HLT_IsoTkMu24", 
-                                                    "HLT_Mu50", "HLT_TkMu50"),
+                                                 "HLT_IsoMu24", "HLT_IsoTkMu24", 
+                                                 "HLT_Mu50", "HLT_TkMu50"),
 
                          trigResults = cms.InputTag("TriggerResults","","HLT"),
                          ## trigResults = cms.InputTag("TriggerResults","","HLT2"),  ## For reHLT MC samples
                          trigObjs    = cms.InputTag("selectedPatTrigger"),
-                         
+
+                         ## Event flags
+                         evtFlags = cms.InputTag("TriggerResults","","PAT"),
+
                          ## Vertex and Beam Spot
                          primaryVertexTag = cms.InputTag("offlineSlimmedPrimaryVertices"),
                          beamSpotTag      = cms.InputTag("offlineBeamSpot"),
@@ -41,31 +44,13 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          eleIdMedium = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-medium"),
                          eleIdTight  = cms.InputTag("egmGsfElectronIDs:cutBasedElectronID-Summer16-80X-V1-tight"),
 
-                         ## Taus
-                         tauColl    = cms.InputTag("slimmedTaus"),
-                         tauIDNames = cms.vstring(["decayModeFinding",
-                                                   "byLooseCombinedIsolationDeltaBetaCorr3Hits",
-                                                   "byMediumCombinedIsolationDeltaBetaCorr3Hits",
-                                                   "byTightCombinedIsolationDeltaBetaCorr3Hits",
-                                                   "byVLooseIsolationMVArun2v1DBoldDMwLT",
-                                                   "byLooseIsolationMVArun2v1DBoldDMwLT",
-                                                   "byMediumIsolationMVArun2v1DBoldDMwLT",
-                                                   "byTightIsolationMVArun2v1DBoldDMwLT",
-                                                   "byVTightIsolationMVArun2v1DBoldDMwLT",
-                                                   "againstMuonLoose3",
-                                                   "againstMuonTight3",
-                                                   "againstElectronVLooseMVA6",
-                                                   "againstElectronLooseMVA6",
-                                                   "againstElectronMediumMVA6",
-                                                   "againstElectronTightMVA6",
-                                                   "againstElectronVTightMVA6"]),
                          ## Jets
-                         jetsTag  = cms.InputTag("slimmedJets"),
-                         # jetsTag  = cms.InputTag("JetCorrectorParametersCollection_Spring16_23Sep2016V2_MC_AK4PFchs"),
+                         jetsTag  = cms.InputTag("updatedPatJetsUpdatedJEC"),
+                         jetType  = cms.string("AK4PFchs"),
                          btagName = cms.string("pfCombinedInclusiveSecondaryVertexV2BJetTags"),
 
                          ## MET
-                         metTag         = cms.InputTag("slimmedMETs"),
+                         metTag = cms.InputTag("slimmedMETs"),
 
                          ## GEN particle collections
                          genJetsTag           = cms.InputTag("slimmedGenJets"),
@@ -82,24 +67,46 @@ DiMuons = cms.EDAnalyzer('UFDiMuonsAnalyzer',
                          muon_eta_max   = cms.double( 2.4),
                          muon_trig_dR   = cms.double( 0.1),
                          muon_use_pfIso = cms.bool(True),
-                         muon_iso_dR    = cms.double( 0.3),
+                         muon_iso_dR    = cms.double( 0.4),
                          muon_iso_max   = cms.double(0.25),
 
                          ele_ID      = cms.string("loose"),
                          ele_pT_min  = cms.double(10.),
                          ele_eta_max = cms.double(2.5),
 
-                         tau_pT_min  = cms.double(10.),
-                         tau_eta_max = cms.double(2.5),
-                         
                          jet_ID      = cms.string("loose"),
-                         jet_pT_min  = cms.double(20.0),
+                         jet_pT_min  = cms.double(30.0),
                          jet_eta_max = cms.double(4.7),
 
                          ## Event weights and efficiencies
-                         PU_wgt_file = cms.string("PU_wgt_2016_Summer16_v0.root"),
-                         # PU_wgt_file = cms.string("PU_wgt_2016_Spring16_v0.root"),
-                         Trig_eff_3_file = cms.string("EfficienciesAndSF_Period3.root"),
-                         Trig_eff_4_file = cms.string("EfficienciesAndSF_Period4.root"),
+                         PU_wgt_file      = cms.string("PU_wgt_2016_Summer16_v0.root"),
+                         Trig_eff_3_file  = cms.string("EfficienciesAndSF_RunBtoF_MuTrig.root"),
+                         Trig_eff_4_file  = cms.string("EfficienciesAndSF_Period4_MuTrig.root"),
+                         MuID_eff_3_file  = cms.string("EfficienciesAndSF_BCDEF_MuID.root"),
+                         MuID_eff_4_file  = cms.string("EfficienciesAndSF_GH_MuID.root"),
+                         MuIso_eff_3_file = cms.string("EfficienciesAndSF_BCDEF_MuIso.root"),
+                         MuIso_eff_4_file = cms.string("EfficienciesAndSF_GH_MuIso.root"),
+
+                         # ## Taus
+                         # tauColl    = cms.InputTag("slimmedTaus"),
+                         # tauIDNames = cms.vstring(["decayModeFinding",
+                         #                           "byLooseCombinedIsolationDeltaBetaCorr3Hits",
+                         #                           "byMediumCombinedIsolationDeltaBetaCorr3Hits",
+                         #                           "byTightCombinedIsolationDeltaBetaCorr3Hits",
+                         #                           "byVLooseIsolationMVArun2v1DBoldDMwLT",
+                         #                           "byLooseIsolationMVArun2v1DBoldDMwLT",
+                         #                           "byMediumIsolationMVArun2v1DBoldDMwLT",
+                         #                           "byTightIsolationMVArun2v1DBoldDMwLT",
+                         #                           "byVTightIsolationMVArun2v1DBoldDMwLT",
+                         #                           "againstMuonLoose3",
+                         #                           "againstMuonTight3",
+                         #                           "againstElectronVLooseMVA6",
+                         #                           "againstElectronLooseMVA6",
+                         #                           "againstElectronMediumMVA6",
+                         #                           "againstElectronTightMVA6",
+                         #                           "againstElectronVTightMVA6"]),
+                         # tau_pT_min  = cms.double(10.),
+                         # tau_eta_max = cms.double(2.5),
+                         
 
                          )

@@ -13,9 +13,9 @@
   <class name="GenMuonInfos"/>
   <class name="edm::Wrapper<GenMuonInfos>"/>
   
-  <class name="GenPairInfo"/>
-  <class name="GenPairInfos"/>
-  <class name="edm::Wrapper<GenPairInfos>"/>
+  <class name="GenMuPairInfo"/>
+  <class name="GenMuPairInfos"/>
+  <class name="edm::Wrapper<GenMuPairInfos>"/>
   
   <class name="GenParentInfo"/> 
   <class name="GenParentInfos"/> 
@@ -29,9 +29,17 @@
   <class name="SlimJetInfos"/> 
   <class name="edm::Wrapper<SlimJetInfos>"/>
   
+  <class name="JetPairInfo"/> 
+  <class name="JetPairInfos"/> 
+  <class name="edm::Wrapper<JetPairInfos>"/>
+  
   <class name="MuonInfo"/> 
   <class name="MuonInfos"/> 
   <class name="edm::Wrapper<MuonInfos>"/>
+  
+  <class name="MuPairInfo"/> 
+  <class name="MuPairInfos"/> 
+  <class name="edm::Wrapper<MuPairInfos>"/>
   
   <class name="TauInfo"/> 
   <class name="TauInfos"/>
@@ -49,10 +57,6 @@
   
   <class name="MhtInfo"/> 
   <class name="edm::Wrapper<MhtInfo>"/>
-  
-  <class name="PairInfo"/> 
-  <class name="PairInfos"/> 
-  <class name="edm::Wrapper<PairInfos>"/>
   
   <class name="VertexInfo"/> 
   <class name="VertexInfos"/> 

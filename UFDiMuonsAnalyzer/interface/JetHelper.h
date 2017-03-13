@@ -4,6 +4,8 @@
 
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/CommonIncludes.h"
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/JetInfo.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/MuonInfo.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/EleInfo.h"
 
 void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
 		   int& _nBLoose, int& _nBMed, int& _nBTight,
@@ -13,7 +15,10 @@ void FillJetInfos( JetInfos& _jetInfos, int& _nJetsFwd,
 void FillSlimJetInfos( SlimJetInfos& _slimJetInfos, const JetInfos _jetInfos );
 
 pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
-			       const JetCorrectorParameters& JetCorPar, const std::string _JES_syst,
-			       const std::string _jet_ID, const double _jet_pT_min, const double _jet_eta_max );
+			       const JetCorrectorParameters& JetCorPar, JME::JetResolution& JetRes,
+                               JME::JetResolutionScaleFactor& JetResSF, const std::string _JES_syst,
+			       const MuonInfos& _muonInfos, const EleInfos& _eleInfos,
+			       const std::string _jet_ID, const double _jet_pT_min, const double _jet_eta_max,
+			       TLorentzVector& _dMet);
 
 #endif  // #ifndef JET_HELPER

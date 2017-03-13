@@ -2,27 +2,34 @@
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/PtCorrRoch.h"
 
 void CorrectPtRoch( const RoccoR _calib, const bool _doSys, const TLorentzVector _mu_vec, 
-		    float& _pt, float& _pt_sys_up, float& _pt_sys_down, const int _charge, 
-		    const int _trk_layers, const float _GEN_pt, const bool _isData ) {
+		    float& _pt, float& _ptErr, float& _pt_sys_up, float& _pt_sys_down, 
+		    const int _charge, const int _trk_layers, const float _GEN_pt, const bool _isData ) {
   
   _pt = _mu_vec.Pt();
   _pt_sys_up = -999;
   _pt_sys_down = -999;
   float q_term     = 1.0;
   float q_term_sys = -99;
-  
-  srand( time(NULL) );
-  int iRand_1 = rand();
-  int iRand_2 = (iRand_1 % 1000)*(iRand_1 % 1000);
-  float fRand_1 = (iRand_1 % 1000) * 0.001;
-  float fRand_2 = (iRand_2 % 1000) * 0.001;
-  
+
+  float fRand_1 = gRandom->Rndm();
+  float fRand_2 = gRandom->Rndm();
+
   // For default computation, error set and error member are 0
-  if (_isData)          q_term = _calib.kScaleDT( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(), 0, 0 );
-  else if (_GEN_pt > 0) q_term = _calib.kScaleFromGenMC( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(),
-							 _trk_layers, _GEN_pt, fRand_1, 0, 0 );
-  else                  q_term = _calib.kScaleAndSmearMC( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(),
-							  _trk_layers, fRand_1, fRand_2, 0, 0 );
+  if (_isData)            q_term = _calib.kScaleDT( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(), 0, 0 );
+  else if (_GEN_pt > 0) { q_term = _calib.kScaleFromGenMC( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(),
+							   _trk_layers, _GEN_pt, fRand_1, 0, 0 );
+  } else {                q_term = _calib.kScaleAndSmearMC( _charge, _mu_vec.Pt(), _mu_vec.Eta(), _mu_vec.Phi(),
+							    _trk_layers, fRand_1, fRand_2, 0, 0 );
+  }
+  if ( fabs(q_term - 1.0) > 0.4 ) {
+    std::cout << "\n*** BIZZARELY HIGH QTERM ***" << std::endl;
+    std::cout << "GEN pT = " << _GEN_pt << ", RECO pT = " << _mu_vec.Pt() << ", Q term = " << q_term
+	      << ", fRand_1 = " << fRand_1 << ", fRand_2 = " << fRand_2 << std::endl;
+    std::cout << "Layers = " << _trk_layers << ", charge = " << _charge 
+	      << ", eta = " << _mu_vec.Eta() << ", phi = " << _mu_vec.Phi() << std::endl;
+  }
+    
+    
   int nUp   = 0;
   int nDown = 0;
   double sum_sq_up   = 0;
@@ -48,6 +55,8 @@ void CorrectPtRoch( const RoccoR _calib, const bool _doSys, const TLorentzVector
   }
   
   _pt          = _mu_vec.Pt() * q_term;
+  _ptErr       = _ptErr * q_term; // Account for shift in pT scale
+  if (!_isData)  _ptErr *= std::fmax(q_term, 1./q_term); // Account for smearing in MC
   _pt_sys_up   = ( _doSys ? _pt * sqrt(sum_sq_up   / nUp)   : -999 );
   _pt_sys_down = ( _doSys ? _pt * sqrt(sum_sq_down / nDown) : -999 ); 
 

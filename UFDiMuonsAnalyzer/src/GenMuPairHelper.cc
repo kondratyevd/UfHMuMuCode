@@ -1,14 +1,12 @@
 
-#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenPairHelper.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenMuPairHelper.h"
 
-void FillGenPairInfos( GenPairInfos& _genPairInfos, const GenMuonInfos _muonInfos ) {
+void FillGenMuPairInfos( GenMuPairInfos& _genPairInfos, const GenMuonInfos _muonInfos ) {
   
   _genPairInfos.clear();
   if (_muonInfos.size() < 2)
     return;
   
-  double const PDG_MASS_Z = 91.1876;     // GeV/c^2
-
   int charge_FSR[2][2] = {{0,0},{0,0}};
   for (int i = 0; i < int(_muonInfos.size()); i++)
     charge_FSR[(_muonInfos.at(i).charge == 1)][(_muonInfos.at(i).postFSR == 1)] += 1;
@@ -19,18 +17,17 @@ void FillGenPairInfos( GenPairInfos& _genPairInfos, const GenMuonInfos _muonInfo
   TLorentzVector mu2_vec;
   TLorentzVector pair_vec;
   
-  std::vector< std::pair< double, std::pair<int, int> > > dMass;
-  std::vector< std::pair< double, std::pair<int, int> > > dMass_pre;
-  std::vector< std::pair< double, std::pair<int, int> > > dMass_post;
-  dMass.clear();
-  dMass_pre.clear();
-  dMass_post.clear();
+  std::vector< std::pair< double, std::pair<int, int> > > isOS;
+  std::vector< std::pair< double, std::pair<int, int> > > isOS_pre;
+  std::vector< std::pair< double, std::pair<int, int> > > isOS_post;
+  isOS.clear();
+  isOS_pre.clear();
+  isOS_post.clear();
 
-  // Sort pairs by mass difference from Z boson (smallest to largest)
+  // Sort pairs by OS/SS, then highest mu1 pT, then highest mu2 pT
+  // Muons come sorted by pT, so only need to stable sort by OS/SS
   for (int i = 0; i < int(_muonInfos.size()); i++) {
     for (int j = i+1; j < int(_muonInfos.size()); j++) {
-
-      if (_muonInfos.at(i).charge + _muonInfos.at(j).charge != 0) continue;
 
       if (_muonInfos.at(i).postFSR || _muonInfos.at(j).postFSR) {
 	postFSR = true;
@@ -55,33 +52,36 @@ void FillGenPairInfos( GenPairInfos& _genPairInfos, const GenMuonInfos _muonInfo
 						    pow(mu1_vec.Pz() - mu2_vec.Pz(), 2) +
 						    pow(mu1_vec.M()  + mu2_vec.M(),  2) ) );
       }
-      
-      double mass_diff = fabs(pair_vec.M() - PDG_MASS_Z);
+
+
+      bool isOS = (_muonInfos.at(i).charge + _muonInfos.at(j).charge == 0);
       if (postFSR)
-	dMass_post.push_back(std::make_pair(mass_diff, std::make_pair(i, j)));
+	isOS_post.push_back(std::make_pair(isOS, std::make_pair(i, j)));
       else
-	dMass_pre.push_back(std::make_pair(mass_diff, std::make_pair(i, j)));
+	isOS_pre.push_back(std::make_pair(isOS, std::make_pair(i, j)));
     }
   }
+  
+  int nPairs_pre = isOS_pre.size();
+  int nPairs_post = isOS_post.size();
 
-  int nPairs_pre = dMass_pre.size();
-  int nPairs_post = dMass_post.size();
-  std::stable_sort( dMass_pre.begin(), dMass_pre.end(), genPair_smaller_dMass );
-  std::stable_sort( dMass_post.begin(), dMass_post.end(), genPair_smaller_dMass );
+  std::stable_sort( isOS_pre.begin(), isOS_pre.end(), gen_pair_is_OS );
+  std::stable_sort( isOS_post.begin(), isOS_post.end(), gen_pair_is_OS );
 
-  dMass.insert( dMass.end(), dMass_pre.begin(), dMass_pre.end() );
-  dMass.insert( dMass.end(), dMass_post.begin(), dMass_post.end() );
+  isOS.insert( isOS.end(), isOS_pre.begin(), isOS_pre.end() );
+  isOS.insert( isOS.end(), isOS_post.begin(), isOS_post.end() );
 
-  for (int i = 0; i < int(dMass.size()); i++) {
+  for (int i = 0; i < int(isOS.size()); i++) {
 
-    GenPairInfo _genPairInfo;
+    GenMuPairInfo _genPairInfo;
     _genPairInfo.init();
     
-    int iMu1 = dMass.at(i).second.first;
-    int iMu2 = dMass.at(i).second.second;
+    int iMu1 = isOS.at(i).second.first;
+    int iMu2 = isOS.at(i).second.second;
 
-    _genPairInfo.iMu1 = iMu1;
-    _genPairInfo.iMu2 = iMu2;
+    _genPairInfo.iMu1      = iMu1;
+    _genPairInfo.iMu2      = iMu2;
+    _genPairInfo.charge    = _muonInfos.at(iMu1).charge + _muonInfos.at(iMu2).charge;
     _genPairInfo.mother_ID = _muonInfos.at(iMu1).mother_ID;
     if (_muonInfos.at(iMu1).postFSR || _muonInfos.at(iMu2).postFSR)
       _genPairInfo.postFSR = 1;
@@ -99,26 +99,26 @@ void FillGenPairInfos( GenPairInfos& _genPairInfos, const GenMuonInfos _muonInfo
 						  pow(mu1_vec.M()  + mu2_vec.M(),  2) ) );
     }
 
-    _genPairInfo.mass = pair_vec.M();
-    _genPairInfo.pt   = pair_vec.Pt();
-    _genPairInfo.eta  = pair_vec.PseudoRapidity();
-    _genPairInfo.y    = pair_vec.Rapidity();
-    _genPairInfo.phi  = pair_vec.Phi();
+    _genPairInfo.mass  = pair_vec.M();
+    _genPairInfo.pt    = pair_vec.Pt();
+    _genPairInfo.eta   = pair_vec.PseudoRapidity();
+    _genPairInfo.rapid = pair_vec.Rapidity();
+    _genPairInfo.phi   = pair_vec.Phi();
 
-    _genPairInfo.angle = mu1_vec.DeltaR(mu2_vec); // Need to check that this is correct - AWB 10.11.16
-    // _genPairInfo.angle = acos( -mu1.track()->momentum().Dot(mu2.track()->momentum() /
-    // 						  mu1.track()->p()/mu2.track()->p()) );
+    _genPairInfo.dR   = mu1_vec.DeltaR(mu2_vec);
+    _genPairInfo.dEta = mu1_vec.PseudoRapidity() - mu2_vec.PseudoRapidity();
+    _genPairInfo.dPhi = mu1_vec.DeltaPhi(mu2_vec);
 
     _genPairInfos.push_back( _genPairInfo );
-  } // End loop: for (int i = 0; i < dMass.size(); i++)
+  } // End loop: for (int i = 0; i < isOS.size(); i++)
   
   if ( int(_genPairInfos.size()) != nPairs_pre + nPairs_post )
-    std::cout << "Bizzare error: _genPairInfos.size() = " << _genPairInfos.size()
+    std::cout << "Bizzare error: muon _genPairInfos.size() = " << _genPairInfos.size()
 	      << ", nPairs_pre = " << nPairs_pre << ", nPairs_post = " << nPairs_post << std::endl;
   
-} // End void FillGenPairInfos( GenPairInfos& _genPairInfos, const GenMuonInfos _muonInfos )
+} // End void FillGenMuPairInfos( GenMuPairInfos& _genPairInfos, const GenMuonInfos _muonInfos )
 
-bool genPair_smaller_dMass( std::pair< double, std::pair<int, int> > i, 
-			    std::pair< double, std::pair<int, int> > j) {
-  return (i.first < j.first);
+bool gen_pair_is_OS( std::pair< bool, std::pair<int, int> > i,
+		     std::pair< bool, std::pair<int, int> > j) {
+  return (i.first || !j.first);
 }

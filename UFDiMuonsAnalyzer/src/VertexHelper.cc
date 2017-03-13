@@ -19,6 +19,7 @@ void FillVertexInfos( VertexInfos& _vertexInfos, int& _nVertices,
     _vertexInfo.x        = vertex.position().X();
     _vertexInfo.y        = vertex.position().Y();
     _vertexInfo.z        = vertex.position().Z();
+    _vertexInfo.rho      = vertex.position().Rho();
     _vertexInfo.xErr     = vertex.xError();
     _vertexInfo.yErr     = vertex.yError();
     _vertexInfo.zErr     = vertex.zError();
@@ -35,8 +36,9 @@ void FillVertexInfos( VertexInfos& _vertexInfos, int& _nVertices,
 } // End function: void FillVertexInfo     
   
 
-reco::VertexCollection SelectVertices( const edm::Handle<reco::VertexCollection>& vertices, const double _vertex_ndof_min,
-				       const double _vertex_rho_max, const double _vertex_z_max ) {
+reco::VertexCollection SelectVertices( const edm::Handle<reco::VertexCollection>& vertices, 
+				       const double _vertex_ndof_min, const double _vertex_rho_max, 
+				       const double _vertex_z_max, bool& _goodPV ) {
 
   // Following no official recipe: should find? - AWB 12.11.16
   // Modeled after https://github.com/ikrav/EgammaWork/blob/ntupler_and_VID_demos_8.0.3/ElectronNtupler/plugins/ElectronNtuplerVIDDemo.cc#L284
@@ -48,7 +50,8 @@ reco::VertexCollection SelectVertices( const edm::Handle<reco::VertexCollection>
     std::cout << "No valid vertex collection" << std::endl;
     return verticesSelected;
   }
-  
+
+  _goodPV = false;  
   for (reco::VertexCollection::const_iterator vertex = vertices->begin(), verticesEnd = vertices->end(); vertex !=verticesEnd; ++vertex) {
     
     if ( vertex->isFake()                                    ) continue;
@@ -56,6 +59,7 @@ reco::VertexCollection SelectVertices( const edm::Handle<reco::VertexCollection>
     if ( vertex->position().Rho()         > _vertex_rho_max  ) continue;
     if ( fabs( vertex->position().Z() )   > _vertex_z_max    ) continue;
     
+    if (verticesSelected.size() == 0) _goodPV = true;  // The first vertex is always the PV
     verticesSelected.push_back(*vertex);
   }
 

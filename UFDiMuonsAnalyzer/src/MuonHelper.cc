@@ -34,6 +34,9 @@ void FillMuonInfos( MuonInfos& _muonInfos,
       continue;
     }
 
+    std::cout << "/n/nMuon is global (tracker) = " << muon.isGlobalMuon() << " (" << muon.isTrackerMuon() << ")" << std::endl;
+    std::cout << "Best track type = " << muon.muonBestTrackType() << std::endl;
+
     // Basic kinematics
     // "muon.pt()" returns PF quantities if PF is available - and all loose/med/tight muons are PF
     _muonInfo.charge = muon.charge();
@@ -111,6 +114,7 @@ void FillMuonInfos( MuonInfos& _muonInfos,
       mu_vec_Roch.SetPtEtaPhiM( muon.innerTrack()->pt(), muon.innerTrack()->eta(),
       				muon.innerTrack()->phi(), MASS_MUON );
       float pt_Roch, pt_Roch_sys_up, pt_Roch_sys_down;
+      float ptErr_Roch    = muon.innerTrack()->ptError();
       int charge_Roch     = muon.innerTrack()->charge();
       int trk_layers_Roch = muon.innerTrack()->hitPattern().trackerLayersWithMeasurement(); 
 
@@ -139,24 +143,27 @@ void FillMuonInfos( MuonInfos& _muonInfos,
 	}
       } // End conditional: if (not _isData)
 
-      float GEN_pt = (iMatch > 0) ? GEN_vec.Pt() : -99;
+      float GEN_pt = (iMatch > 0) ? _muonInfo.GEN_pt : -99;
       
       CorrectPtRoch( _Roch_calib, _doSys_Roch, mu_vec_Roch, 
-      		     pt_Roch, pt_Roch_sys_up, pt_Roch_sys_down,
+      		     pt_Roch, ptErr_Roch, pt_Roch_sys_up, pt_Roch_sys_down,
       		     charge_Roch, trk_layers_Roch, GEN_pt, _isData );
       
       _muonInfo.pt_Roch           = pt_Roch;
+      _muonInfo.ptErr_Roch        = ptErr_Roch;
       _muonInfo.pt_Roch_sys_up    = pt_Roch_sys_up;
       _muonInfo.pt_Roch_sys_down  = pt_Roch_sys_down;
-
+      
     } // End if (muon.isTrackerMuon())
 
     // Particle flow kinematics
     if ( muon.isPFMuon() ) {
       reco::Candidate::LorentzVector pfmuon = muon.pfP4();
-      _muonInfo.pt_PF  = pfmuon.Pt();
-      _muonInfo.eta_PF = pfmuon.Eta();
-      _muonInfo.phi_PF = pfmuon.Phi();
+      _muonInfo.pt_PF    = pfmuon.Pt();
+      _muonInfo.ptErr    = track.ptError();
+      // Would be nice if we could access deltaP() from PFCandidate.h, but not in PAT::Muon - AWB 10.03.17
+      _muonInfo.eta_PF   = pfmuon.Eta();
+      _muonInfo.phi_PF   = pfmuon.Phi();
     }
 
     // Standard quality
@@ -531,3 +538,111 @@ float CalcDPhi( const float phi1, const float phi2 ) {
   std::cout << "phi1 = " << phi1 << ", phi2 = " << phi2 << ", dPhi = " << abs_dPhi*sign_dPhi << " (sign = " << sign_dPhi << ")" << std::endl;
   return abs_dPhi*sign_dPhi;
 }
+
+
+void CalcMuIDIsoEff( float& _ID_eff, float& _ID_eff_up, float& _ID_eff_down,
+		     float& _Iso_eff, float& _Iso_eff_up, float& _Iso_eff_down, 
+		     const TH2F* _ID_hist, const TH2F* _Iso_hist, 
+		     const TH1* _ID_vtx, const TH1* _Iso_vtx,
+		     const MuonInfos _muonInfos, const int _nVtx ) {
+
+
+  _ID_eff       = 1.;
+  _ID_eff_up    = 1.;
+  _ID_eff_down  = 1.;
+  _Iso_eff      = 1.;
+  _Iso_eff_up   = 1.;
+  _Iso_eff_down = 1.;
+
+  int nMu = int(_muonInfos.size());
+  int nFound_ID  = 0;
+  int nFound_Iso = 0;
+
+  // Compute muon ID efficiency or scale factor
+  for (int iMu = 0; iMu < nMu; iMu++) {
+    float mu_pt  = std::min( _muonInfos.at(iMu).pt, 
+			     _ID_hist->GetYaxis()->GetBinLowEdge( _ID_hist->GetNbinsY() ) +
+			     _ID_hist->GetYaxis()->GetBinWidth(   _ID_hist->GetNbinsY() ) - 0.01 );
+    float mu_eta = std::min( fabs(_muonInfos.at(iMu).eta),
+			     _ID_hist->GetXaxis()->GetBinLowEdge( _ID_hist->GetNbinsX() ) +
+			     _ID_hist->GetXaxis()->GetBinWidth(   _ID_hist->GetNbinsX() ) - 0.01 );
+    mu_pt = std::max( mu_pt*1.0, _ID_hist->GetYaxis()->GetBinLowEdge(1) + 0.01 );
+    bool found_mu = false;
+    
+    for (int iPt = 1; iPt <= _ID_hist->GetNbinsY(); iPt++) {
+      if ( found_mu ) continue;
+      if ( mu_pt < _ID_hist->GetYaxis()->GetBinLowEdge(iPt) ) continue;
+      if ( mu_pt > _ID_hist->GetYaxis()->GetBinLowEdge(iPt) + _ID_hist->GetYaxis()->GetBinWidth(iPt) ) continue;
+      
+      for (int iEta = 1; iEta <= _ID_hist->GetNbinsX(); iEta++) {
+	if ( found_mu ) continue;
+	if ( mu_eta < _ID_hist->GetXaxis()->GetBinLowEdge(iEta) ) continue;
+	if ( mu_eta > _ID_hist->GetXaxis()->GetBinLowEdge(iEta) + _ID_hist->GetXaxis()->GetBinWidth(iEta) ) continue;
+
+	found_mu = true;
+	nFound_ID += 1;
+
+	_ID_eff      *= _ID_hist->GetBinContent(iEta, iPt);
+	_ID_eff_up   *= _ID_hist->GetBinContent(iEta, iPt) + _ID_hist->GetBinError(iEta, iPt);
+	_ID_eff_down *= _ID_hist->GetBinContent(iEta, iPt) - _ID_hist->GetBinError(iEta, iPt);
+
+      } // End loop: for (int iEta = 1; iEta <= _ID_hist->GetNbinsX(); iEta++)
+    } // End loop: for (int iPt = 1; iPt <= _ID_hist->GetNbinsY(); iPt++)
+  } // End loop: for (int iMu = 0; iMu < nMu; iMu++)
+
+
+  // Compute muon isolation efficiency or scale factor
+  for (int iMu = 0; iMu < nMu; iMu++) {
+    float mu_pt  = std::min( _muonInfos.at(iMu).pt, 
+			     _Iso_hist->GetYaxis()->GetBinLowEdge( _Iso_hist->GetNbinsY() ) +
+			     _Iso_hist->GetYaxis()->GetBinWidth(   _Iso_hist->GetNbinsY() ) - 0.01 );
+    float mu_eta = std::min( fabs(_muonInfos.at(iMu).eta),
+			     _Iso_hist->GetXaxis()->GetBinLowEdge( _Iso_hist->GetNbinsX() ) +
+			     _Iso_hist->GetXaxis()->GetBinWidth(   _Iso_hist->GetNbinsX() ) - 0.01 );
+    mu_pt = std::max( mu_pt*1.0, _Iso_hist->GetYaxis()->GetBinLowEdge(1) + 0.01 );
+    bool found_mu = false;
+    
+    for (int iPt = 1; iPt <= _Iso_hist->GetNbinsY(); iPt++) {
+      if ( found_mu ) continue;
+      if ( mu_pt < _Iso_hist->GetYaxis()->GetBinLowEdge(iPt) ) continue;
+      if ( mu_pt > _Iso_hist->GetYaxis()->GetBinLowEdge(iPt) + _Iso_hist->GetYaxis()->GetBinWidth(iPt) ) continue;
+      
+      for (int iEta = 1; iEta <= _Iso_hist->GetNbinsX(); iEta++) {
+	if ( found_mu ) continue;
+	if ( mu_eta < _Iso_hist->GetXaxis()->GetBinLowEdge(iEta) ) continue;
+	if ( mu_eta > _Iso_hist->GetXaxis()->GetBinLowEdge(iEta) + _Iso_hist->GetXaxis()->GetBinWidth(iEta) ) continue;
+	
+	found_mu = true;
+	nFound_Iso += 1;
+
+	_Iso_eff      *= _Iso_hist->GetBinContent(iEta, iPt);
+	_Iso_eff_up   *= _Iso_hist->GetBinContent(iEta, iPt) + _Iso_hist->GetBinError(iEta, iPt);
+	_Iso_eff_down *= _Iso_hist->GetBinContent(iEta, iPt) - _Iso_hist->GetBinError(iEta, iPt);
+
+      } // End loop: for (int iEta = 1; iEta <= _Iso_hist->GetNbinsX(); iEta++)
+    } // End loop: for (int iPt = 1; iPt <= _Iso_hist->GetNbinsY(); iPt++)
+  } // End loop: for (int iMu = 0; iMu < nMu; iMu++)
+
+  assert( nFound_ID == nMu && nFound_Iso == nMu );
+
+  // Add pileup dependence
+  for (int iPU = 1; iPU <= _ID_vtx->GetNbinsX(); iPU++) {
+    if ( _nVtx < _ID_vtx->GetXaxis()->GetBinLowEdge(iPU) ) continue;
+    if ( _nVtx > _ID_vtx->GetXaxis()->GetBinLowEdge(iPU) + _ID_vtx->GetXaxis()->GetBinWidth(iPU) ) continue;
+    _ID_eff      *= (_ID_vtx->GetBinContent(iPU) * nMu);
+    _ID_eff_up   *= (_ID_vtx->GetBinContent(iPU) * nMu);
+    _ID_eff_down *= (_ID_vtx->GetBinContent(iPU) * nMu);
+    break;
+  }
+
+  for (int iPU = 1; iPU <= _Iso_vtx->GetNbinsX(); iPU++) {
+    if ( _nVtx < _Iso_vtx->GetXaxis()->GetBinLowEdge(iPU) ) continue;
+    if ( _nVtx > _Iso_vtx->GetXaxis()->GetBinLowEdge(iPU) + _Iso_vtx->GetXaxis()->GetBinWidth(iPU) ) continue;
+    _Iso_eff      *= (_Iso_vtx->GetBinContent(iPU) * nMu);
+    _Iso_eff_up   *= (_Iso_vtx->GetBinContent(iPU) * nMu);
+    _Iso_eff_down *= (_Iso_vtx->GetBinContent(iPU) * nMu);
+    break;
+  }
+
+}
+
