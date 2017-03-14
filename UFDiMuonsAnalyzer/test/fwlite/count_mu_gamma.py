@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 # import ROOT in batch mode
-from Samples_v3 import dy_jetsToLL_asympt50 as s
-
 import sys
 oldargv = sys.argv[:]
 sys.argv = [ '-b-' ]
@@ -13,7 +11,7 @@ sys.argv = oldargv
 # load FWLite C++ libraries
 ROOT.gSystem.Load("libFWCoreFWLite.so");
 ROOT.gSystem.Load("libDataFormatsFWLite.so");
-ROOT.AutoLibraryLoader.enable()
+ROOT.FWLiteEnabler.enable()
 
 # load FWlite python libraries
 from DataFormats.FWLite import Handle, Events
@@ -65,7 +63,7 @@ prunedGenParts, prunedGenPartLabel = Handle("std::vector<reco::GenParticle>"), "
 
 # open file (you can use 'edmFileUtil -d /store/whatever.root' to get the physical file name)
 #events = Events("root://eoscms//eos/cms/store/cmst3/user/gpetrucc/miniAOD/v1/TT_Tune4C_13TeV-pythia8-tauola_PU_S14_PAT.root")
-events = Events('dy_jetsToLL_asympt50.root')
+events = Events('../dy_jetsToLL.root')
 
 numZ22 = 0
 numZ62 = 0
@@ -76,6 +74,9 @@ numMu23 = 0
 numMu1 = 0
 
 numGamma = 0
+numGamma22 = 0
+numGamma62 = 0
+numGamma23 = 0
 
 numGammaFromMu = 0
 numMuFromZ = 0
@@ -106,6 +107,7 @@ for iev,event in enumerate(events):
                 numZ62+=1
                 numZ+=1
                 Z.append(part)
+                printMothers(part)
         
         if(abs(part.pdgId()) == 13):
             if(part.status() == 23):
@@ -118,6 +120,16 @@ for iev,event in enumerate(events):
         if(abs(part.pdgId()) == 22):
             if part.status() != 1:
                 print "!! photon status = ", part.status()
+            if(part.status() == 22):
+                numGamma22+=1
+                numGamma+=1
+            if(part.status() == 62):
+                numGamma62+=1
+                numGamma+=1
+            if(part.status() == 23):
+                numGamma23+=1
+                numGamma+=1
+
 
     for i,part in enumerate(packedGenParts.product()): 
         if(abs(part.pdgId()) == 13 or abs(part.pdgId()) == 23):
@@ -140,7 +152,8 @@ for iev,event in enumerate(events):
             printMothers(part)
             if part.status() != 1:
                 print "!! photon status = ", part.status()
-            numGamma+=1
+            else:
+                numGamma+=1
             if isGammaFromMuFromZ(part):
                 numGammaFromMuFromZ+=1
             if hasMotherWithId(part, 23):
@@ -156,6 +169,9 @@ print "numMu1:  ", numMu1
 print "numMu23: ", numMu23
 print " "
 print "numGamma: ", numGamma
+print "numGamma62: ", numGamma62
+print "numGamma22: ", numGamma22
+print "numGamma23: ", numGamma23
 print " "
 
 print "numMuFromZ:  ", numMuFromZ

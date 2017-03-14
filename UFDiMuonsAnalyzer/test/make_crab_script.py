@@ -4,7 +4,11 @@ samples = []
 
 # get the samples you want to make a crab config file for 
 #samples.extend(Samples_v3.MC);
-samples.extend(Samples_v3.singleMuon);
+#samples.extend(Samples_v3.background);
+#samples.extend(Samples_v3.signal);
+#samples.extend(Samples_v3.singleMuon);
+samples.extend(Samples_v3.singleAndMC);
+#samples.extend(Samples_v3.singleMuon);
 
 json_number = 1
 
@@ -47,7 +51,7 @@ for s in samples:
         outfile = open('crab_auto_submit_'+s.name+'_JSON'+str(json_number)+'.py', 'w')
 
     else:
-        outfile = open('crab_auto_submit_'+s.name+'_JSON.py', 'w')
+        outfile = open('crab_auto_submit_'+s.name+'.py', 'w')
     
     # read in the template and replace the parameters to make a
     # crab submission file that uses the above cmssw script
