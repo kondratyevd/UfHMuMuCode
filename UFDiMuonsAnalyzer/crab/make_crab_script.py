@@ -7,13 +7,18 @@ import os  ## For executable permissions on scripts
 samps = []
 
 ## Get the samples you want to make a crab config file for 
+test_run = False
+test_str = ''
 # samps.extend(SingleMu)
 # samps.extend(Signal)
 # samps.extend(Background)
 samps.extend(DataAndMC)
 
+# test_run = True
+# test_str = '_v1'
 # samps.append(SingleMu_2016C)
 # samps.append(H2Mu_gg)
+# samps.append(ZJets_MG_HT_2500_inf)
 
 for samp in samps:
     print '\nCreating analyzer and crab config for %s' % samp.name
@@ -48,7 +53,7 @@ for samp in samps:
     # crab submission file that uses the above CMSSW analyzer
     for line in in_file:
         if 'requestName' in line:
-            line = line.replace("= 'STR'", "= '%s_%s'" % (samp.name, time.strftime('%Y_%m_%d')) ) 
+            line = line.replace("= 'STR'", "= '%s_%s%s'" % (samp.name, time.strftime('%Y_%m_%d'), test_str) ) 
 
         if 'psetName' in line: 
             line = line.replace("= 'STR'", "= 'analyzers/%s.py'" % samp.name)
@@ -67,12 +72,14 @@ for samp in samps:
                 line = line.replace("= 'STR'", "= 'FileBased'")
 
         if 'unitsPerJob' in line:
-            if samp.isData:
-                line = line.replace('= NUM', '= 200')
-            else if samp.name == 'ZJets_MG' or ('ZJets_MG' in samp.name and '_B' in samp.name) or samp.name == 'ZZ_4l_AMC':
-                line = line.replace('= NUM', '=  5')  ## 10-file jobs fail with too much RAM
+            if test_run:
+                line = line.replace('= NUM', '= 1')
+            elif samp.isData:
+                line = line.replace('= NUM', '= 100')
+            elif samp.name == 'ZJets_MG' or ('ZJets_MG' in samp.name and '_B' in samp.name) or samp.name == 'ZZ_4l_AMC':
+                line = line.replace('= NUM', '= 3')  ## 10-file jobs fail with too much RAM
             else:
-                line = line.replace('= NUM', '= 10')
+                line = line.replace('= NUM', '= 5')
 
         if 'outputDatasetTag' in line:
             line = line.replace("= 'STR'", "= '%s'" % samp.name)
@@ -107,5 +114,3 @@ for samp in samps:
     out_file.write('crab status -d logs/crab_%s_%s\n' % (samp.name, time.strftime('%Y_%m_%d')))
 out_file.close()
 os.chmod('check_all.sh', 0o744)
-
-

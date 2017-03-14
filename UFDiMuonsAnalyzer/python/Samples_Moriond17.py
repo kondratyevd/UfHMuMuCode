@@ -78,7 +78,7 @@ SingleMu_2016E = sample( name   = 'SingleMu_2016E',
                          JSON   = JSON_2016[0],
                          isData = True)
 
-SingleMu_2016F_1 = sample( name   = 'SingleMu_2016F',
+SingleMu_2016F_1 = sample( name   = 'SingleMu_2016F_1',
                            DAS    = '/SingleMuon/Run2016F-03Feb2017-v1/MINIAOD',
                            GT     = '80X_dataRun2_2016SeptRepro_v7',
                            JEC    = 'Summer16_23Sep2016EFV4_DATA',
@@ -86,7 +86,7 @@ SingleMu_2016F_1 = sample( name   = 'SingleMu_2016F',
                            JSON   = JSON_2016[0],
                          isData = True)
 
-SingleMu_2016F_2 = sample( name   = 'SingleMu_2016F',
+SingleMu_2016F_2 = sample( name   = 'SingleMu_2016F_1',
                            DAS    = '/SingleMuon/Run2016F-03Feb2017-v1/MINIAOD',
                            GT     = '80X_dataRun2_2016SeptRepro_v7',
                            JEC    = 'Summer16_23Sep2016GV4_DATA',

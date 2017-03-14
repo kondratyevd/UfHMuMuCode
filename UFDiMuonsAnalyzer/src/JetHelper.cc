@@ -209,6 +209,7 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
     else if ( _JEC_syst.find("none")     == std::string::npos )
       std::cout << "Invalid jet energy systematic " << _JEC_syst << ". Leaving uncorrected." << std::endl;
 
+    // Set negative for cancellation
     post_vec.SetPtEtaPhiM( corr_jet.pt(), corr_jet.eta(), corr_jet.phi(), corr_jet.mass() );
 
     // Use 15 GeV jets with < 90% EM energy and not overlapping a muon to correct MET
@@ -218,15 +219,18 @@ pat::JetCollection SelectJets( const edm::Handle<pat::JetCollection>& jets,
     if ( pre_vec.Pt() < 15 || corr_jet.chargedEmEnergyFraction() + corr_jet.neutralEmEnergyFraction() > 0.9 )
       use_for_MET_corr = false;
 
-    const std::vector<reco::CandidatePtr> & cands = corr_jet.daughterPtrVector();
-    for ( std::vector<reco::CandidatePtr>::const_iterator cand = cands.begin(); cand != cands.end(); ++cand ) {
-      const reco::PFCandidate *pfcand = dynamic_cast<const reco::PFCandidate *>(cand->get());
-      const reco::Candidate *mu = (pfcand != 0 ? ( pfcand->muonRef().isNonnull() ? pfcand->muonRef().get() : 0) : cand->get());
-      if ( mu != 0 ) use_for_MET_corr = false;
-    }
+    // // Seems to find all jets? - AWB 13.03.17
+    // const std::vector<reco::CandidatePtr> & cands = corr_jet.daughterPtrVector();
+    // for ( std::vector<reco::CandidatePtr>::const_iterator cand = cands.begin(); cand != cands.end(); ++cand ) {
+    //   const reco::PFCandidate *pfcand = dynamic_cast<const reco::PFCandidate *>(cand->get());
+    //   const reco::Candidate *mu = (pfcand != 0 ? ( pfcand->muonRef().isNonnull() ? pfcand->muonRef().get() : 0) : cand->get());
+    //   if ( mu != 0 ) use_for_MET_corr = false;
+    // }
     
-    if (use_for_MET_corr)
+    if (use_for_MET_corr) {
       _dMet = _dMet + pre_vec - post_vec;
+      // std::cout << "pre_vec.Pt() = " << pre_vec.Pt() << ", post_vec.Pt() = " << post_vec.Pt() << ", _dMet.Pt() = " << _dMet.Pt() << std::endl;
+    }
 
     // Apply cuts for selected jets
     if ( corr_jet.pt()          < _jet_pT_min  ) continue;

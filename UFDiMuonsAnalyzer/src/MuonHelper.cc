@@ -275,7 +275,7 @@ bool MuonIsMedium( const pat::Muon muon ) {
   bool _isMedium = ( MuonIsLoose( muon )                                            && 
 		     muon.innerTrack()->validFraction() > 0.49                      && 
 		     muon::segmentCompatibility(muon) > (_goodGlob ? 0.303 : 0.451) ); 
-  if ( _isMedium  != muon::isMediumMuon(muon)  )
+  if ( _isMedium  != muon::isMediumMuon(muon) && muon.innerTrack()->validFraction() > 0.8 )
     std::cout << "Manual muon isMedium = " << _isMedium << ", muon::isMediumMuon = " 
 	      << muon::isMediumMuon(muon) << ". Using manual version ..." << std::endl;
   return _isMedium;

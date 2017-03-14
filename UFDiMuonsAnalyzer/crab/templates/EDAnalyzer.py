@@ -136,8 +136,50 @@ my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.cutBasedElect
 for idmod in my_id_modules:
     setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
+
+# /////////////////////////////////////////////////////////////
+# Updated Jet Energy Scale corrections
+# /////////////////////////////////////////////////////////////
+
+## Following https://twiki.cern.ch/twiki/bin/view/CMSPublic/WorkBookJetEnergyCorrections#CorrPatJets
+##   - Last check that procedure was up-to-date: March 10, 2017 (AWB)
+from PhysicsTools.PatAlgos.tools.jetTools import updateJetCollection
+
+if samp.isData:
+    JEC_to_apply = cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute', 'L2L3Residual'])
+else:
+    JEC_to_apply = cms.vstring(['L1FastJet', 'L2Relative', 'L3Absolute'])
+    
+updateJetCollection(
+    process,
+    jetSource = cms.InputTag('slimmedJets'),
+    labelName = 'UpdatedJEC',
+    jetCorrections = ('AK4PFchs', JEC_to_apply, 'None')
+    )
+
+process.jecSequence = cms.Sequence(process.patJetCorrFactorsUpdatedJEC * process.updatedPatJetsUpdatedJEC)
+
+
+# /////////////////////////////////////////////////////////////
+# Corrected MET (and jets?)
+# /////////////////////////////////////////////////////////////
+
+## Following https://twiki.cern.ch/twiki/bin/view/CMS/MissingETUncertaintyPrescription
+##   - Last check that procedure was up-to-date: March 10, 2017 (AWB)
+
+## First need to run: git cms-merge-topic cms-met:METRecipe_8020 -u
+from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
+
+## If you only want to re-correct and get the proper uncertainties
+runMetCorAndUncFromMiniAOD(process, isData=samp.isData)
+
 # /////////////////////////////////////////////////////////////
 # Set the order of operations
 # /////////////////////////////////////////////////////////////
     
-process.p = cms.Path(process.egmGsfElectronIDSequence * process.dimuons)
+process.p = cms.Path( # process.BadPFMuonFilter *
+                      process.egmGsfElectronIDSequence *
+                      process.jecSequence *
+                      process.fullPatMetSequence *
+                      process.dimuons )
+

@@ -523,19 +523,19 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     // if (_slimOut) FillSlimJetInfos( _slimJetInfos_JER_down, _jetInfos_JER_down );
   }
 
-  // // -----------
-  // // DIJET PAIRS
-  // // -----------
-  // if (_isVerbose) std::cout << "\nFilling JetPairInfo" << std::endl;
-  // FillJetPairInfos( _jetPairInfos, _jetInfos );
-  // _nJetPairs = _jetPairInfos.size();
-  // if (_doSys) {
-  //   FillJetPairInfos( _jetPairInfos_JES_up, _jetInfos_JES_up );
-  //   FillJetPairInfos( _jetPairInfos_JES_down, _jetInfos_JES_down );
-  //   // FillJetPairInfos( _jetPairInfos_JER_nom, _jetInfos_JER_nom );
-  //   // FillJetPairInfos( _jetPairInfos_JER_up, _jetInfos_JER_up );
-  //   // FillJetPairInfos( _jetPairInfos_JER_down, _jetInfos_JER_down );
-  // }
+  // -----------
+  // DIJET PAIRS
+  // -----------
+  if (_isVerbose) std::cout << "\nFilling JetPairInfo" << std::endl;
+  FillJetPairInfos( _jetPairInfos, _jetInfos );
+  _nJetPairs = _jetPairInfos.size();
+  if (_doSys) {
+    FillJetPairInfos( _jetPairInfos_JES_up, _jetInfos_JES_up );
+    FillJetPairInfos( _jetPairInfos_JES_down, _jetInfos_JES_down );
+    // FillJetPairInfos( _jetPairInfos_JER_nom, _jetInfos_JER_nom );
+    // FillJetPairInfos( _jetPairInfos_JER_up, _jetInfos_JER_up );
+    // FillJetPairInfos( _jetPairInfos_JER_down, _jetInfos_JER_down );
+  }
   
   // Instructions for re-miniAOD: https://twiki.cern.ch/twiki/bin/view/CMS/MissingETUncertaintyPrescription - AWB 01.03.17
   // ---
@@ -921,9 +921,9 @@ void UFDiMuonsAnalyzer::FillEventFlags(const edm::Event& iEvent, const edm::Even
     
     // std::cout << "  * " << flagName << " = " << flagResult << std::endl;
     if (flagName == "Flag_badMuons")
-      _Flag_badMu = flagResult;
+      _Flag_badMu = abs(flagResult - 1); // Reversed, for some reason
     if (flagName == "Flag_duplicateMuons")
-      _Flag_dupMu = flagResult;
+      _Flag_dupMu = abs(flagResult - 1); // Reversed, for some reason
     if (flagName == "Flag_CSCTightHaloFilter")
       _Flag_halo = flagResult;
     if (flagName == "Flag_goodVertices")

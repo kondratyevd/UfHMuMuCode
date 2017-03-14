@@ -42,10 +42,10 @@ process.load("Configuration.Geometry.GeometryIdeal_cff")
 # Get a sample from our collection of samples
 # /////////////////////////////////////////////////////////////
 
-# from python.Samples_Moriond17 import SingleMu_2016C as samp
+from python.Samples_Moriond17 import SingleMu_2016C as samp
 # from python.Samples_Moriond17 import H2Mu_gg as samp
 # from python.Samples_Moriond17 import ZJets_AMC as samp
-from python.Samples_Moriond17 import ZJets_MG_HT_2500_inf as samp
+# from python.Samples_Moriond17 import ZJets_MG_HT_2500_inf as samp
 
 if samp.isData:
     print '\nRunning over data sample %s' % samp.name
@@ -123,10 +123,10 @@ if samp.isData:
 # Save output with TFileService
 # /////////////////////////////////////////////////////////////
 
-# process.TFileService = cms.Service("TFileService", fileName = cms.string("SingleMu_2016C_Roch_new.root") )
+process.TFileService = cms.Service("TFileService", fileName = cms.string("SingleMu_2016C_test.root") )
 # process.TFileService = cms.Service("TFileService", fileName = cms.string("GluGlu_HToMuMu_M125_GEN_test.root") )
 # process.TFileService = cms.Service("TFileService", fileName = cms.string("ZJets_AMC_GEN_Roch_test.root") )
-process.TFileService = cms.Service("TFileService", fileName = cms.string("ZJets_MG_HT_2500_inf_test.root") )
+# process.TFileService = cms.Service("TFileService", fileName = cms.string("ZJets_MG_HT_2500_inf_test_100.root") )
 
 # /////////////////////////////////////////////////////////////
 # Load UFDiMuonsAnalyzer
@@ -145,16 +145,16 @@ process.dimuons.doSys_KaMu = cms.bool(False)
 process.dimuons.doSys_Roch = cms.bool(True)
 process.dimuons.slimOut    = cms.bool(True)
 
-# /////////////////////////////////////////////////////////////
-# Bad event flags
-# /////////////////////////////////////////////////////////////
+# # /////////////////////////////////////////////////////////////
+# # Bad event flags
+# # /////////////////////////////////////////////////////////////
 
-## Following https://github.com/MiT-HEP/NeroProducer/blob/master/Nero/test/testNero.py
-## See also https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/2786/2.html
-process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
-process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
-process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
-process.BadPFMuonFilter.taggingMode = cms.bool(True) ## Accept all events, will just flag
+# ## Following https://github.com/MiT-HEP/NeroProducer/blob/master/Nero/test/testNero.py
+# ## See also https://hypernews.cern.ch/HyperNews/CMS/get/physics-validation/2786/2.html
+# process.load('RecoMET.METFilters.BadPFMuonFilter_cfi')
+# process.BadPFMuonFilter.muons = cms.InputTag("slimmedMuons")
+# process.BadPFMuonFilter.PFCandidates = cms.InputTag("packedPFCandidates")
+# process.BadPFMuonFilter.taggingMode = cms.bool(True) ## Accept all events, will just flag
 
 # /////////////////////////////////////////////////////////////
 # Electron Cut Based IDs
@@ -230,7 +230,7 @@ runMetCorAndUncFromMiniAOD(process, isData=samp.isData)
     
 print 'About to run the process path'
 
-process.p = cms.Path( process.BadPFMuonFilter *
+process.p = cms.Path( # process.BadPFMuonFilter *
                       process.egmGsfElectronIDSequence * 
                       process.jecSequence *
                       process.fullPatMetSequence *
