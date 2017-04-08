@@ -358,10 +358,24 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   if (_isVerbose) std::cout << "\nFilling MuPairInfo" << std::endl;
   FillMuPairInfos( _muPairInfos, _muonInfos );
   _nMuPairs = _muPairInfos.size();
+
   // Throw away events with only low-mass pairs
   if ( _skim_nMuons == 2 && _nMuPairs == 1 )
     if ( _muPairInfos.at(0).mass < 12 )
       return;
+
+  // Throw away events without a high-mass pair
+  bool hasHighMass = false;
+  for (int iPair = 0; iPair < _nMuPairs; iPair++) {
+    if ( _muPairInfos.at(iPair).mass > 100              || _muPairInfos.at(iPair).mass_PF > 100          || 
+	 _muPairInfos.at(iPair).mass_trk > 100          || _muPairInfos.at(iPair).mass_KaMu > 100        || 
+	 _muPairInfos.at(iPair).mass_KaMu_clos_up > 100 || _muPairInfos.at(iPair).mass_KaMu_sys_up > 100 ||
+	 _muPairInfos.at(iPair).mass_Roch > 100         || _muPairInfos.at(iPair).mass_Roch_sys_up > 100  )
+      hasHighMass = true;
+  }
+  if (!hasHighMass)
+    return;
+
 
   // -----------------------
   // MC PILEUP / GEN WEIGHTS
