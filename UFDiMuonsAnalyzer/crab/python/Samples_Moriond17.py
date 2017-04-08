@@ -86,7 +86,7 @@ SingleMu_2016F_1 = sample( name   = 'SingleMu_2016F_1',
                            JSON   = JSON_2016[0],
                          isData = True)
 
-SingleMu_2016F_2 = sample( name   = 'SingleMu_2016F_1',
+SingleMu_2016F_2 = sample( name   = 'SingleMu_2016F_2',
                            DAS    = '/SingleMuon/Run2016F-03Feb2017-v1/MINIAOD',
                            GT     = '80X_dataRun2_2016SeptRepro_v7',
                            JEC    = 'Summer16_23Sep2016GV4_DATA',
@@ -142,22 +142,68 @@ H2Mu_gg = sample( name  = 'H2Mu_gg',
                   nEvt  = 250000, ## 250 k
                   files = [ AWB_dir+H2Mu_gg_dir+'C0801715-85C0-E611-97A8-001E67396A18.root' ] )
 
+H2Mu_gg_120 = sample( name  = 'H2Mu_gg_120',
+                      DAS   = '/GluGlu_HToMuMu_M120_13TeV_powheg_pythia8/'+DAS_era_sig,
+                      nEvt  = 250000, ## 250 k
+                      files = [ AWB_dir+H2Mu_gg_dir+'C0801715-85C0-E611-97A8-001E67396A18.root' ] )
+
+H2Mu_gg_130 = sample( name  = 'H2Mu_gg_130',
+                      DAS   = '/GluGlu_HToMuMu_M130_13TeV_powheg_pythia8/'+DAS_era_sig,
+                      nEvt  = 250000, ## 250 k
+                      files = [ AWB_dir+H2Mu_gg_dir+'C0801715-85C0-E611-97A8-001E67396A18.root' ] )
+
 ## Vector boson fusion
 H2Mu_VBF = sample( name = 'H2Mu_VBF',
                    DAS  = '/VBF_HToMuMu_M125_13TeV_powheg_pythia8/'+DAS_era_sig,
                    nEvt = 249200 ) ## 250 k
+
+H2Mu_VBF_120 = sample( name = 'H2Mu_VBF_120',
+                       DAS  = '/VBF_HToMuMu_M120_13TeV_powheg_pythia8/'+DAS_era_sig,
+                       nEvt = 249200 ) ## 250 k
+
+H2Mu_VBF_120 = sample( name = 'H2Mu_VBF_130',
+                       DAS  = '/VBF_HToMuMu_M130_13TeV_powheg_pythia8/'+DAS_era_sig,
+                       nEvt = 249200 ) ## 250 k
+
 ## WH (+)
 H2Mu_WH_pos = sample( name = 'H2Mu_WH_pos',
                       DAS  = '/WPlusH_HToMuMu_M125_13TeV_powheg_pythia8/'+DAS_era_sig,
                       nEvt = 124547 ) ## 125 k
+
+H2Mu_WH_pos_120 = sample( name = 'H2Mu_WH_pos_120',
+                          DAS  = '/WPlusH_HToMuMu_M120_13TeV_powheg_pythia8/'+DAS_era_sig,
+                          nEvt = 124547 ) ## 125 k
+
+H2Mu_WH_pos_130 = sample( name = 'H2Mu_WH_pos_130',
+                          DAS  = '/WPlusH_HToMuMu_M130_13TeV_powheg_pythia8/'+DAS_era_sig,
+                          nEvt = 124547 ) ## 125 k
+
 ## WH (-)
 H2Mu_WH_neg = sample( name = 'H2Mu_WH_neg',
                       DAS  = '/WMinusH_HToMuMu_M125_13TeV_powheg_pythia8/'+DAS_era_sig,
                       nEvt = 125000 ) ## 125 k
+
+H2Mu_WH_neg_120 = sample( name = 'H2Mu_WH_neg_120',
+                          DAS  = '/WMinusH_HToMuMu_M120_13TeV_powheg_pythia8/'+DAS_era_sig,
+                          nEvt = 125000 ) ## 125 k
+
+H2Mu_WH_neg_130 = sample( name = 'H2Mu_WH_neg_130',
+                          DAS  = '/WMinusH_HToMuMu_M130_13TeV_powheg_pythia8/'+DAS_era_sig,
+                          nEvt = 125000 ) ## 125 k
+
 ## ZH
 H2Mu_ZH = sample( name = 'H2Mu_ZH',
                   DAS  = '/ZH_HToMuMu_M125_13TeV_powheg_pythia8/'+DAS_era_sig,
                   nEvt = 249748 ) ## 250 k
+
+H2Mu_ZH_120 = sample( name = 'H2Mu_ZH_120',
+                  DAS  = '/ZH_HToMuMu_M125_13TeV_powheg_pythia8/'+DAS_era_sig,
+                  nEvt = 249748 ) ## 250 k
+
+H2Mu_ZH_130 = sample( name = 'H2Mu_ZH_130',
+                      DAS  = '/ZH_HToMuMu_M125_13TeV_powheg_pythia8/'+DAS_era_sig,
+                      nEvt = 249748 ) ## 250 k
+
 # ## ttH
 # H2Mu_ttH = sample( name = 'H2Mu_ttH',
 #                    DAS  = '',
@@ -170,6 +216,19 @@ Signal.append(H2Mu_WH_pos)
 Signal.append(H2Mu_WH_neg)
 Signal.append(H2Mu_ZH)
 # Signal.append(H2Mu_ttH)
+
+Signal.append(H2Mu_gg_120)
+Signal.append(H2Mu_VBF_120)
+Signal.append(H2Mu_WH_pos_120)
+Signal.append(H2Mu_WH_neg_120)
+Signal.append(H2Mu_ZH_120)
+
+Signal.append(H2Mu_gg_130)
+Signal.append(H2Mu_VBF_130)
+Signal.append(H2Mu_WH_pos_130)
+Signal.append(H2Mu_WH_neg_130)
+Signal.append(H2Mu_ZH_130)
+
 
 
 # =======================================================================================================
