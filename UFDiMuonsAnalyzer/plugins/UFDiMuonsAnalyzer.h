@@ -20,7 +20,7 @@
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/NTupleHelpers.h"
 
 // Special calibration classes
-#include "KaMuCa/Calibration/interface/KalmanMuonCalibrator.h"
+//#include "KaMuCa/Calibration/interface/KalmanMuonCalibrator.h"
 #include "UfHMuMuCode/RochCor/interface/RoccoR.h"
 
 ///////////////////////////////////////////////////////////
@@ -158,6 +158,8 @@ public:
   JetPairInfos _jetPairInfos_JER_nom;
   JetPairInfos _jetPairInfos_JER_up;
   JetPairInfos _jetPairInfos_JER_down;
+
+  std::vector<Float_t> dPhi_muPair0JetPairs;
 
   GenParentInfos _genParentInfos;
   int _nGenParents;

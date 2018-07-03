@@ -376,6 +376,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   if (!hasHighMass)
     return;
 
+  TLorentzVector muPair0;
+  muPair0.SetPtEtaPhiM(_muPairInfos.at(0).pt,_muPairInfos.at(0).eta,_muPairInfos.at(0).phi,_muPairInfos.at(0).mass);
 
   // -----------------------
   // MC PILEUP / GEN WEIGHTS
@@ -550,6 +552,14 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     // FillJetPairInfos( _jetPairInfos_JER_up, _jetInfos_JER_up );
     // FillJetPairInfos( _jetPairInfos_JER_down, _jetInfos_JER_down );
   }
+
+  dPhi_muPair0JetPairs.clear();
+
+  for(int i = 0; i<_nJetPairs; i++){
+    TLorentzVector iJetPair;
+    iJetPair.SetPtEtaPhiM(_jetPairInfos.at(0).pt,_jetPairInfos.at(0).eta,_jetPairInfos.at(0).phi,_jetPairInfos.at(0).mass);
+    dPhi_muPair0JetPairs.push_back(fabs(muPair0.DeltaPhi(iJetPair)));
+  }
   
   // Instructions for re-miniAOD: https://twiki.cern.ch/twiki/bin/view/CMS/MissingETUncertaintyPrescription - AWB 01.03.17
   // ---
@@ -705,7 +715,9 @@ void UFDiMuonsAnalyzer::beginJob() {
   _outTree->Branch("nBMed",              (int*) &_nBMed              );
   _outTree->Branch("nBTight",            (int*) &_nBTight            );
 
-  if (_doSys) {
+  _outTree->Branch("dPhi_muPair0JetPairs",  &dPhi_muPair0JetPairs);
+  
+if (_doSys) {
     _outTree->Branch("nJets_JES_up",       (int*) &_nJets_JES_up       );
     _outTree->Branch("nJetsCent_JES_up",   (int*) &_nJetsCent_JES_up   );
     _outTree->Branch("nBLoose_JES_up",     (int*) &_nBLoose_JES_up     );
