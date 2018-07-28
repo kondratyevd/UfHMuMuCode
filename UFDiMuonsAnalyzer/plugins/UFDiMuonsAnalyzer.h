@@ -97,6 +97,10 @@ public:
   EleInfos  _eleInfos;
   int _nEles;
 
+  // info about the dielectron candidates in _eleInfos
+  ElePairInfos _elePairInfos;
+  int _nElePairs;
+
   // vector of taus
   TauInfos  _tauInfos;
   int _nTaus;
@@ -421,4 +425,3 @@ private:
 
 DEFINE_FWK_MODULE(UFDiMuonsAnalyzer);
 #endif
-

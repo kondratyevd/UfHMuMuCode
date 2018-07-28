@@ -14,8 +14,8 @@ UFDiMuonsAnalyzer::UFDiMuonsAnalyzer(const edm::ParameterSet& iConfig):
   // Get the collections designated from the python config file and load them into the tokens
 
   // Boolean switches from config file
-  _isVerbose	 = iConfig.getUntrackedParameter<bool>("isVerbose", false);
-  _isMonteCarlo	 = iConfig.getParameter         <bool>("isMonteCarlo");
+  _isVerbose   = iConfig.getUntrackedParameter<bool>("isVerbose", false);
+  _isMonteCarlo  = iConfig.getParameter         <bool>("isMonteCarlo");
   _doSys         = iConfig.getParameter         <bool>("doSys");
   _slimOut       = iConfig.getParameter         <bool>("slimOut");
   
@@ -242,8 +242,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   }
 
   FillEventFlags( iEvent, iSetup, evtFlagsHandle,
-		  _Flag_all, _Flag_badMu, _Flag_dupMu, _Flag_halo, 
-		  _Flag_PV, _Flag_HBHE, _Flag_HBHE_Iso, _Flag_ECAL_TP );
+      _Flag_all, _Flag_badMu, _Flag_dupMu, _Flag_halo, 
+      _Flag_PV, _Flag_HBHE, _Flag_HBHE_Iso, _Flag_ECAL_TP );
 
   // if ( !iEvent->HBHENoiseFilter()                    ) break;
   // if ( !iEvent->HBHENoiseIsoFilter()                 ) break;
@@ -272,7 +272,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 
   bool goodPV = false;
   reco::VertexCollection verticesSelected = SelectVertices( vertices, _vertex_ndof_min, _vertex_rho_max, 
-							    _vertex_z_max, goodPV );
+                  _vertex_z_max, goodPV );
   if (verticesSelected.size() == 0) {
     std::cout << "BUGGY EVENT!  There are no good vertices!  Skipping ..." << std::endl;
     return;
@@ -294,8 +294,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   iEvent.getByToken(_muonCollToken, muons);
 
   pat::MuonCollection muonsSelected = SelectMuons( muons, primaryVertex, _muon_ID,
-						   _muon_pT_min, _muon_eta_max, _muon_trig_dR,
-						   _muon_use_pfIso, _muon_iso_dR, _muon_iso_max );
+               _muon_pT_min, _muon_eta_max, _muon_trig_dR,
+               _muon_use_pfIso, _muon_iso_dR, _muon_iso_max );
   // Throw away event if there are too few muons
   if ( muonsSelected.size() < (unsigned int) _skim_nMuons )
     return;
@@ -308,47 +308,47 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   iEvent.getByToken(_prunedGenParticleToken, genPartons);
 
   FillMuonInfos( _muonInfos, muonsSelected, primaryVertex, verticesSelected.size(), beamSpotHandle, 
-		 iEvent, iSetup, trigObjsHandle, trigResultsHandle, _trigNames,
-		 _muon_trig_dR, _muon_use_pfIso, _muon_iso_dR, !(_isMonteCarlo), 
-		 _KaMu_calib, _doSys_KaMu, _Roch_calib, _doSys_Roch, genPartons ); 
+     iEvent, iSetup, trigObjsHandle, trigResultsHandle, _trigNames,
+     _muon_trig_dR, _muon_use_pfIso, _muon_iso_dR, !(_isMonteCarlo), 
+     _KaMu_calib, _doSys_KaMu, _Roch_calib, _doSys_Roch, genPartons ); 
   _nMuons = _muonInfos.size();
 
   CalcTrigEff( _IsoMu_eff_3, _IsoMu_eff_3_up, _IsoMu_eff_3_down, 
-	       _IsoMu_eff_3_hist, _muonInfos, false );
+         _IsoMu_eff_3_hist, _muonInfos, false );
   CalcTrigEff( _IsoMu_eff_4, _IsoMu_eff_4_up, _IsoMu_eff_4_down, 
-	       _IsoMu_eff_4_hist, _muonInfos, false );
+         _IsoMu_eff_4_hist, _muonInfos, false );
   CalcTrigEff( _IsoMu_eff_bug, _IsoMu_eff_bug_up, _IsoMu_eff_bug_down, 
-	       _IsoMu_eff_3_hist, _muonInfos, true );
+         _IsoMu_eff_3_hist, _muonInfos, true );
 
   CalcMuIDIsoEff( _MuID_eff_3, _MuID_eff_3_up, _MuID_eff_3_down,
-		  _MuIso_eff_3, _MuIso_eff_3_up, _MuIso_eff_3_down,
-		  _MuID_eff_3_hist, _MuIso_eff_3_hist,
-		  _MuID_eff_3_vtx, _MuIso_eff_3_vtx,
-		  _muonInfos, _nVertices);
+      _MuIso_eff_3, _MuIso_eff_3_up, _MuIso_eff_3_down,
+      _MuID_eff_3_hist, _MuIso_eff_3_hist,
+      _MuID_eff_3_vtx, _MuIso_eff_3_vtx,
+      _muonInfos, _nVertices);
   CalcMuIDIsoEff( _MuID_eff_4, _MuID_eff_4_up, _MuID_eff_4_down,
-		  _MuIso_eff_4, _MuIso_eff_4_up, _MuIso_eff_4_down,
-		  _MuID_eff_4_hist, _MuIso_eff_4_hist,
-		  _MuID_eff_4_vtx, _MuIso_eff_4_vtx,
-		  _muonInfos, _nVertices);
+      _MuIso_eff_4, _MuIso_eff_4_up, _MuIso_eff_4_down,
+      _MuID_eff_4_hist, _MuIso_eff_4_hist,
+      _MuID_eff_4_vtx, _MuIso_eff_4_vtx,
+      _muonInfos, _nVertices);
 
   if (_isMonteCarlo) {
     CalcTrigEff( _IsoMu_SF_3, _IsoMu_SF_3_up, _IsoMu_SF_3_down, 
-		 _IsoMu_SF_3_hist, _muonInfos, false );
+     _IsoMu_SF_3_hist, _muonInfos, false );
     CalcTrigEff( _IsoMu_SF_4, _IsoMu_SF_4_up, _IsoMu_SF_4_down, 
-		 _IsoMu_SF_4_hist, _muonInfos, false );
+     _IsoMu_SF_4_hist, _muonInfos, false );
     CalcTrigEff( _IsoMu_SF_bug, _IsoMu_SF_bug_up, _IsoMu_SF_bug_down, 
-		 _IsoMu_SF_3_hist, _muonInfos, true );
+     _IsoMu_SF_3_hist, _muonInfos, true );
 
     CalcMuIDIsoEff( _MuID_SF_3, _MuID_SF_3_up, _MuID_SF_3_down,
-		    _MuIso_SF_3, _MuIso_SF_3_up, _MuIso_SF_3_down,
-		    _MuID_SF_3_hist, _MuIso_SF_3_hist,
-		    _MuID_SF_3_vtx, _MuIso_SF_3_vtx,
-		    _muonInfos, _nVertices);
+        _MuIso_SF_3, _MuIso_SF_3_up, _MuIso_SF_3_down,
+        _MuID_SF_3_hist, _MuIso_SF_3_hist,
+        _MuID_SF_3_vtx, _MuIso_SF_3_vtx,
+        _muonInfos, _nVertices);
     CalcMuIDIsoEff( _MuID_SF_4, _MuID_SF_4_up, _MuID_SF_4_down,
-		    _MuIso_SF_4, _MuIso_SF_4_up, _MuIso_SF_4_down,
-		    _MuID_SF_4_hist, _MuIso_SF_4_hist,
-		    _MuID_SF_4_vtx, _MuIso_SF_4_vtx,
-		    _muonInfos, _nVertices);
+        _MuIso_SF_4, _MuIso_SF_4_up, _MuIso_SF_4_down,
+        _MuID_SF_4_hist, _MuIso_SF_4_hist,
+        _MuID_SF_4_vtx, _MuIso_SF_4_vtx,
+        _muonInfos, _nVertices);
   }
 
 
@@ -368,9 +368,9 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   bool hasHighMass = false;
   for (int iPair = 0; iPair < _nMuPairs; iPair++) {
     if ( _muPairInfos.at(iPair).mass > 100              || _muPairInfos.at(iPair).mass_PF > 100          || 
-	 _muPairInfos.at(iPair).mass_trk > 100          || _muPairInfos.at(iPair).mass_KaMu > 100        || 
-	 _muPairInfos.at(iPair).mass_KaMu_clos_up > 100 || _muPairInfos.at(iPair).mass_KaMu_sys_up > 100 ||
-	 _muPairInfos.at(iPair).mass_Roch > 100         || _muPairInfos.at(iPair).mass_Roch_sys_up > 100  )
+   _muPairInfos.at(iPair).mass_trk > 100          || _muPairInfos.at(iPair).mass_KaMu > 100        || 
+   _muPairInfos.at(iPair).mass_KaMu_clos_up > 100 || _muPairInfos.at(iPair).mass_KaMu_sys_up > 100 ||
+   _muPairInfos.at(iPair).mass_Roch > 100         || _muPairInfos.at(iPair).mass_Roch_sys_up > 100  )
       hasHighMass = true;
   }
   if (!hasHighMass)
@@ -394,11 +394,11 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     std::vector<PileupSummaryInfo>::const_iterator PVI;
     for (PVI = PupInfo->begin(); PVI != PupInfo->end(); ++PVI) {
       if (PVI->getBunchCrossing() == 0) { 
-	_nPU = PVI->getTrueNumInteractions();
-	_PU_wgt      = _PU_wgt_hist->GetBinContent(_nPU);
-	_PU_wgt_up   = _PU_wgt_hist_up->GetBinContent(_nPU);
-	_PU_wgt_down = _PU_wgt_hist_down->GetBinContent(_nPU);
-	continue;
+  _nPU = PVI->getTrueNumInteractions();
+  _PU_wgt      = _PU_wgt_hist->GetBinContent(_nPU);
+  _PU_wgt_up   = _PU_wgt_hist_up->GetBinContent(_nPU);
+  _PU_wgt_down = _PU_wgt_hist_down->GetBinContent(_nPU);
+  continue;
       }
     }
   }
@@ -421,15 +421,41 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
 
   std::vector<std::array<bool, 4>> ele_ID_pass;
   pat::ElectronCollection elesSelected = SelectEles( eles, primaryVertex, ele_id_veto,
-  						     ele_id_loose, ele_id_medium, ele_id_tight,
-  						     _ele_ID, _ele_pT_min, _ele_eta_max,
-						     ele_ID_pass );
+                   ele_id_loose, ele_id_medium, ele_id_tight,
+                   _ele_ID, _ele_pT_min, _ele_eta_max,
+                 ele_ID_pass );
   
   // Sort the selected electrons by pT
   sort(elesSelected.begin(), elesSelected.end(), sortElesByPt);
   
   FillEleInfos( _eleInfos, elesSelected, primaryVertex, iEvent, ele_ID_pass );
   _nEles = _eleInfos.size();
+
+
+  // ------------
+  // DIELECTRON PAIRS -- copied from dimuon pairs
+  // ------------
+  if (_isVerbose) std::cout << "\nFilling ElePairInfo" << std::endl;
+  FillElePairInfos( _elePairInfos, _eleInfos );
+  _nElePairs = _elePairInfos.size();
+
+  // Throw away events with only low-mass pairs
+  // if ( _skim_nMuons == 2 && _nMuPairs == 1 )
+  //   if ( _muPairInfos.at(0).mass < 12 )
+  //     return;
+
+  // Throw away events without a high-mass pair
+  // bool hasHighMass = false;
+  // for (int iPair = 0; iPair < _nMuPairs; iPair++) {
+  //   if ( _muPairInfos.at(iPair).mass > 100              || _muPairInfos.at(iPair).mass_PF > 100          || 
+  //  _muPairInfos.at(iPair).mass_trk > 100          || _muPairInfos.at(iPair).mass_KaMu > 100        || 
+  //  _muPairInfos.at(iPair).mass_KaMu_clos_up > 100 || _muPairInfos.at(iPair).mass_KaMu_sys_up > 100 ||
+  //  _muPairInfos.at(iPair).mass_Roch > 100         || _muPairInfos.at(iPair).mass_Roch_sys_up > 100  )
+  //     hasHighMass = true;
+  // }
+  // if (!hasHighMass)
+  //   return;
+
 
   // // ----
   // // TAUS
@@ -471,14 +497,14 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   JME::JetResolutionScaleFactor JetResSF = JME::JetResolutionScaleFactor::get(iSetup, _jetType);
   
   pat::JetCollection jetsSelected = SelectJets( jets, JetCorPar, JetRes, JetResSF, "none",
-						_muonInfos, _eleInfos, _rho,
-						_jet_ID, _jet_pT_min, _jet_eta_max, _dMet );
+            _muonInfos, _eleInfos, _rho,
+            _jet_ID, _jet_pT_min, _jet_eta_max, _dMet );
   
   sort(jetsSelected.begin(), jetsSelected.end(), sortJetsByPt);
 
   FillJetInfos( _jetInfos, _nJetsFwd, 
-		_nBLoose, _nBMed, _nBTight, 
-		jetsSelected, _btagName );
+    _nBLoose, _nBMed, _nBTight, 
+    jetsSelected, _btagName );
   _nJets = _jetInfos.size();
   _nJetsCent = _nJets - _nJetsFwd;
   if (_slimOut) FillSlimJetInfos( _slimJetInfos, _jetInfos );
@@ -486,20 +512,20 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   // Alternate collections corresponding to jet energy scale up / down
   if (_doSys) {
     pat::JetCollection jets_JES_up   = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JES_up",
-						   _muonInfos, _eleInfos, _rho, 
-						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JES_up );
+               _muonInfos, _eleInfos, _rho, 
+               _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JES_up );
     pat::JetCollection jets_JES_down = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JES_down",
-						   _muonInfos, _eleInfos, _rho,
-						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JES_down );
+               _muonInfos, _eleInfos, _rho,
+               _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JES_down );
     // pat::JetCollection jets_JER_nom  = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JER_nom",
-    // 						   _muonInfos, _eleInfos, _rho,
-    // 						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_nom );
+    //               _muonInfos, _eleInfos, _rho,
+    //               _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_nom );
     // pat::JetCollection jets_JER_up   = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JER_up",
-    // 						   _muonInfos, _eleInfos, _rho,
-    // 						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_up );
+    //               _muonInfos, _eleInfos, _rho,
+    //               _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_up );
     // pat::JetCollection jets_JER_down = SelectJets( jets, JetCorPar, JetRes, JetResSF, "JER_down",
-    // 						   _muonInfos, _eleInfos, _rho,
-    // 						   _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_down );
+    //               _muonInfos, _eleInfos, _rho,
+    //               _jet_ID, _jet_pT_min, _jet_eta_max, _dMet_JER_down );
 
     sort(jets_JES_up.begin(),   jets_JES_up.end(),   sortJetsByPt);
     sort(jets_JES_down.begin(), jets_JES_down.end(), sortJetsByPt);
@@ -508,11 +534,11 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     // sort(jets_JER_down.begin(), jets_JER_down.end(), sortJetsByPt);
     
     FillJetInfos( _jetInfos_JES_up,   _nJetsFwd_JES_up,   
-		  _nBLoose_JES_up, _nBMed_JES_up, _nBTight_JES_up, 
-		  jets_JES_up,   _btagName );
+      _nBLoose_JES_up, _nBMed_JES_up, _nBTight_JES_up, 
+      jets_JES_up,   _btagName );
     FillJetInfos( _jetInfos_JES_down, _nJetsFwd_JES_down, 
-		  _nBLoose_JES_down, _nBMed_JES_down, _nBTight_JES_down, 
-		  jets_JES_down, _btagName );
+      _nBLoose_JES_down, _nBMed_JES_down, _nBTight_JES_down, 
+      jets_JES_down, _btagName );
     _nJets_JES_up   = _jetInfos_JES_up.size();
     _nJets_JES_down = _jetInfos_JES_down.size();
     _nJetsCent_JES_up   = _nJets_JES_up   - _nJetsFwd_JES_up;
@@ -521,13 +547,13 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     if (_slimOut) FillSlimJetInfos( _slimJetInfos_JES_down, _jetInfos_JES_down );
 
     // FillJetInfos( _jetInfos_JER_nom,  _nJetsFwd_JER_nom,   
-    // 		  _nBLoose_JER_nom,  _nBMed_JER_nom,  _nBTight_JER_nom, 
+    //      _nBLoose_JER_nom,  _nBMed_JER_nom,  _nBTight_JER_nom, 
     // FillJetInfos( _jetInfos_JER_up,   _nJetsFwd_JER_up,   
-    // 		  _nBLoose_JER_up,   _nBMed_JER_up,   _nBTight_JER_up, 
-    // 		  jets_JER_up,   _btagName );
+    //      _nBLoose_JER_up,   _nBMed_JER_up,   _nBTight_JER_up, 
+    //      jets_JER_up,   _btagName );
     // FillJetInfos( _jetInfos_JER_down, _nJetsFwd_JER_down, 
-    // 		  _nBLoose_JER_down, _nBMed_JER_down, _nBTight_JER_down, 
-    // 		  jets_JER_down, _btagName );
+    //      _nBLoose_JER_down, _nBMed_JER_down, _nBTight_JER_down, 
+    //      jets_JER_down, _btagName );
     // _nJets_JER_nom  = _jetInfos_JER_nom.size();
     // _nJets_JER_up   = _jetInfos_JER_up.size();
     // _nJets_JER_down = _jetInfos_JER_down.size();
@@ -601,8 +627,8 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
     if (_isVerbose) std::cout << "\nFilling GenParentInfo" << std::endl;
 
     FillGenParentInfos( _genParentInfos, genPartons, 
-			std::vector<int> {6, 22, 23, 24, 25}, 
-			_isMonteCarlo );
+      std::vector<int> {6, 22, 23, 24, 25}, 
+      _isMonteCarlo );
     _nGenParents = _genParentInfos.size();
 
     // Muons
@@ -636,7 +662,7 @@ void UFDiMuonsAnalyzer::analyze(const edm::Event& iEvent, const edm::EventSetup&
   return;  
 } // End void UFDiMuonsAnalyzer::analyze
 
-	
+  
 ///////////////////////////////////////////////////////////
 // BeginJob ==============================================
 //////////////////////////////////////////////////////////
@@ -684,6 +710,7 @@ void UFDiMuonsAnalyzer::beginJob() {
   _outTree->Branch("muons",             (MuonInfos*)     &_muonInfos         );
   _outTree->Branch("muPairs",           (MuPairInfos*)   &_muPairInfos       );
   _outTree->Branch("eles",              (EleInfos*)      &_eleInfos          );
+  _outTree->Branch("elePairs",          (ElePairInfos*)    &_elePairInfos          );
   // _outTree->Branch("taus",              (TauInfos*)      &_tauInfos          );
   _outTree->Branch("met",               (MetInfo*)       &_metInfo           );
   if (_doSys) {
@@ -706,6 +733,7 @@ void UFDiMuonsAnalyzer::beginJob() {
   _outTree->Branch("nMuons",             (int*) &_nMuons             );
   _outTree->Branch("nMuPairs",           (int*) &_nMuPairs           );
   _outTree->Branch("nEles",              (int*) &_nEles              );
+  _outTree->Branch("nElePairs",              (int*) &_nElePairs              );
   // _outTree->Branch("nTaus",              (int*) &_nTaus              );
   _outTree->Branch("nJets",              (int*) &_nJets              );
   _outTree->Branch("nJetPairs",          (int*) &_nJetPairs           );
@@ -818,7 +846,7 @@ if (_doSys) {
   if (_isMonteCarlo) {
 
     _outTree->Branch("LHE_HT",      &_LHE_HT,      "LHT_HT/F"      );
-    _outTree->Branch("nPU", 	    &_nPU,         "nPU/I"         );
+    _outTree->Branch("nPU",       &_nPU,         "nPU/I"         );
     _outTree->Branch("PU_wgt",      &_PU_wgt,      "PU_wgt/F"      );
     _outTree->Branch("PU_wgt_up",   &_PU_wgt_up,   "PU_wgt_up/F"   );
     _outTree->Branch("PU_wgt_down", &_PU_wgt_down, "PU_wgt_down/F" );
@@ -1055,4 +1083,3 @@ bool UFDiMuonsAnalyzer::sortMuonsByPt    (pat::Muon i,     pat::Muon j    ) { re
 bool UFDiMuonsAnalyzer::sortElesByPt     (pat::Electron i, pat::Electron j) { return (i.pt() > j.pt()); }
 // bool UFDiMuonsAnalyzer::sortTausByPt     (pat::Tau i,      pat::Tau j     ) { return (i.pt() > j.pt()); }
 bool UFDiMuonsAnalyzer::sortJetsByPt     (pat::Jet i,      pat::Jet j     ) { return (i.pt() > j.pt()); }
-

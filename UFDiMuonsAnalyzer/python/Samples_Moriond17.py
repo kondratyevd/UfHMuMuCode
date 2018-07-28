@@ -161,7 +161,7 @@ H2Mu_VBF_120 = sample( name = 'H2Mu_VBF_120',
                        DAS  = '/VBF_HToMuMu_M120_13TeV_powheg_pythia8/'+DAS_era_sig,
                        nEvt = 249200 ) ## 250 k
 
-H2Mu_VBF_120 = sample( name = 'H2Mu_VBF_130',
+H2Mu_VBF_130 = sample( name = 'H2Mu_VBF_130',
                        DAS  = '/VBF_HToMuMu_M130_13TeV_powheg_pythia8/'+DAS_era_sig,
                        nEvt = 249200 ) ## 250 k
 
@@ -358,7 +358,9 @@ Background.append(tW_neg_2)
 
 tt = sample( name = 'tt',
              DAS  = '/TTJets_TuneCUETP8M2T4_13TeV-amcatnloFXFX-pythia8/RunIISummer16MiniAODv2-PUMoriond17_backup_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM',
-             nEvt = 43561608 ) ## 43 million
+             nEvt = 43561608,
+             files = ['/store/mc/RunIISummer16MiniAODv2/TTJets_TuneCUETP8M2T4_13TeV-amcatnloFXFX-pythia8/MINIAODSIM/PUMoriond17_backup_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/120000/000161D3-22C4-E611-BBCB-002590494DE8.root' ]
+ ) ## 43 million
 
 tt_ll_MG_1 = sample( name = 'tt_ll_MG_1',
                      DAS  = '/TTJets_DiLept_TuneCUETP8M1_13TeV-madgraphMLM-pythia8/RunIISummer16MiniAODv2-PUMoriond17_80X_mcRun2_asymptotic_2016_TrancheIV_v6-v1/MINIAODSIM',

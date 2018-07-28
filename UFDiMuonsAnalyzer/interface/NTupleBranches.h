@@ -3,6 +3,7 @@
 #define NTUPLE_BRANCHES
 
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/EleInfo.h"  
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/ElePairInfo.h" 
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenJetInfo.h"   
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenMuonInfo.h"
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenMuPairInfo.h"

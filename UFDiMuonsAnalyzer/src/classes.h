@@ -34,5 +34,7 @@ namespace {
     VertexInfo dummy15;
     VertexInfos dummy15a;
     
+    ElePairInfo dummy16;
+    ElePairInfos dummy16a;
   };
 }

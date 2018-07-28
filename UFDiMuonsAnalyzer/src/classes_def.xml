@@ -5,6 +5,10 @@
   <class name="EleInfos"/>
   <class name="edm::Wrapper<EleInfos>"/>
   
+  <class name="ElePairInfo"/>
+  <class name="ElePairInfos"/>
+  <class name="edm::Wrapper<ElePairInfos>"/>
+
   <class name="GenJetInfo"/> 
   <class name="GenJetInfos"/> 
   <class name="edm::Wrapper<GenJetInfos>"/>

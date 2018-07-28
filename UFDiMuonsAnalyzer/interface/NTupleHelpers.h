@@ -2,7 +2,8 @@
 #ifndef NTUPLE_HELPER
 #define NTUPLE_HELPER
 
-#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/EleHelper.h"  
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/EleHelper.h"
+#include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/ElePairHelper.h"  
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenJetHelper.h"   
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenMuonHelper.h"
 #include "UfHMuMuCode/UFDiMuonsAnalyzer/interface/GenMuPairHelper.h"
