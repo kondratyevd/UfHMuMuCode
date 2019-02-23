@@ -125,16 +125,16 @@ process.dimuons = process.DiMuons.clone()
 # Electron Cut Based IDs
 # /////////////////////////////////////////////////////////////
 
-from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
+#from PhysicsTools.SelectorUtils.tools.vid_id_tools import *
 
-dataFormat = DataFormat.MiniAOD
-switchOnVIDElectronIdProducer(process, dataFormat)
+#dataFormat = DataFormat.MiniAOD
+#switchOnVIDElectronIdProducer(process, dataFormat)
 
 ## First need to run: git cms-merge-topic ikrav:egm_id_80X_v1
 ## https://twiki.cern.ch/twiki/bin/view/CMS/CutBasedElectronIdentificationRun2#Recipe_for_regular_users_for_8_0
-my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Summer16_80X_V1_cff']
-for idmod in my_id_modules:
-    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
+#my_id_modules = ['RecoEgamma.ElectronIdentification.Identification.cutBasedElectronID_Summer16_80X_V1_cff']
+#for idmod in my_id_modules:
+#    setupAllVIDIdsInModule(process,idmod,setupVIDElectronSelection)
 
 
 # /////////////////////////////////////////////////////////////
@@ -168,18 +168,18 @@ process.jecSequence = cms.Sequence(process.patJetCorrFactorsUpdatedJEC * process
 ##   - Last check that procedure was up-to-date: March 10, 2017 (AWB)
 
 ## First need to run: git cms-merge-topic cms-met:METRecipe_8020 -u
-from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
+#from PhysicsTools.PatUtils.tools.runMETCorrectionsAndUncertainties import runMetCorAndUncFromMiniAOD
 
 ## If you only want to re-correct and get the proper uncertainties
-runMetCorAndUncFromMiniAOD(process, isData=samp.isData)
+#runMetCorAndUncFromMiniAOD(process, isData=samp.isData)
 
 # /////////////////////////////////////////////////////////////
 # Set the order of operations
 # /////////////////////////////////////////////////////////////
     
 process.p = cms.Path( # process.BadPFMuonFilter *
-                      process.egmGsfElectronIDSequence *
+ #                     process.egmGsfElectronIDSequence *
                       process.jecSequence *
-                      process.fullPatMetSequence *
+#                      process.fullPatMetSequence *
                       process.dimuons )
 

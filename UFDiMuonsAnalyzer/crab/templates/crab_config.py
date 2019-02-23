@@ -23,11 +23,14 @@ config.Data.useParent = False
 config.Data.splitting = 'STR'
 config.Data.unitsPerJob = NUM  ## Should take ~10 minutes for 100k events
 
-config.Data.outLFNDirBase = '/store/group/phys_higgs/HiggsExo/H2Mu/UF/ntuples/Moriond17/Mar13_hiM/'
+config.Data.outLFNDirBase = '/store/user/dkondrat'
 config.Data.publication = False
 config.Data.outputDatasetTag = 'STR'
+config.Data.ignoreLocality = True 
 
 config.section_('User')
 
 config.section_('Site')
-config.Site.storageSite = 'T2_CH_CERN'
+config.Site.blacklist = ['T2_US_*']
+config.Site.whitelist = ['T2_US_Purdue']
+config.Site.storageSite = 'T2_US_Purdue'

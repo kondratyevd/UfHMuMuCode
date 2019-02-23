@@ -8,16 +8,17 @@ samps = []
 
 ## Get the samples you want to make a crab config file for 
 test_run = False
-test_str = '_hiM'
-# samps.extend(SingleMu)
-# samps.extend(Signal)
-# samps.extend(Background)
-samps.extend(DataAndMC)
+test_str = ''
+#samps.extend(SingleMu)
+#samps.extend(Signal)
+samps.extend(Background)
+# samps.extend(DataAndMC)
 
 # test_run = True
 # test_str = '_v1'
-# samps.append(SingleMu_2016C)
+#samps.append(SingleMu_2016G)
 # samps.append(H2Mu_gg)
+#samps.append(ZJets_AMC)
 # samps.append(ZJets_MG_HT_2500_inf)
 
 for samp in samps:
@@ -79,7 +80,7 @@ for samp in samps:
             # elif samp.name == 'ZJets_MG' or ('ZJets_MG' in samp.name and '_B' in samp.name) or samp.name == 'ZZ_4l_AMC':
             #     line = line.replace('= NUM', '= 3')  ## 10-file jobs fail with too much RAM
             else:
-                line = line.replace('= NUM', '= 25')  ## 5
+                line = line.replace('= NUM', '= 3')  ## 5
 
         if 'outputDatasetTag' in line:
             line = line.replace("= 'STR'", "= '%s'" % samp.name)
