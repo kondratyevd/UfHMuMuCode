@@ -9,9 +9,9 @@ samps = []
 ## Get the samples you want to make a crab config file for 
 test_run = False
 test_str = ''
-#samps.extend(SingleMu)
+samps.extend(SingleMu)
 #samps.extend(Signal)
-samps.extend(Background)
+#samps.extend(Background)
 # samps.extend(DataAndMC)
 
 # test_run = True
